@@ -1,0 +1,37 @@
+name: lint, build, test
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '23.9.0'
+          cache: 'yarn'
+
+      # TODO: Extract setup to reusable workflow?
+      # Then split this into lint, build+test.
+      # And maybe upload/download the build artifacts across workflows if possible.
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build
+        run: yarn build
+
+      - name: Test
+        run: yarn test
