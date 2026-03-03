@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.9.1...v0.9.2) (2026-03-03)
+
+
+### Bug Fixes
+
+* dont consider calls to be prop callbacks when they merely receive a prop arg ([3feb48f](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/3feb48f09e21548ff14de1185418794e2b63392e))
+
 ## [0.9.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.9.0...v0.9.1) (2026-02-15)
 
 
