@@ -3,26 +3,24 @@
  */
 
 /**
- * Get all references that ultimately flow into `ref`.
+ * Ascend the AST from `ref`, calling `visit` on each reference.
  *
  * @param {Rule.RuleContext} context
  * @param {Scope.Reference} ref
- * @param {"leaf" | "all"} [mode="all"]
+ * @param {(ref: Scope.Reference) => boolean|undefined} visit Return `false` to stop ascending at this reference.
  * @param {Set<Scope.Reference>} visited
- *
- * @returns {Scope.Reference[]}
  */
-export const getUpstreamRefs = (
-  context,
-  ref,
-  mode = "all",
-  visited = new Set(),
-) => {
-  // TODO: Probably best to track this here but let the downstream `traverse()` handle it?
-  // Especially if we can simplify/eliminate `getDownstreamRefs()` -> `findDownstreamNodes()` from the path.
+const ascend = (context, ref, visit, visited = new Set()) => {
+  if (visited.has(ref)) {
+    return;
+  }
+  const contine = visit(ref);
   visited.add(ref);
+  if (contine === false) {
+    return;
+  }
 
-  const upstreamRefs = ref.resolved?.defs
+  ref.resolved?.defs
     // We have no analytical use for import statements; terminate at the previous reference (actually using the imported thing).
     .filter((def) => def.type !== "ImportBinding")
     // Don't traverse parameter definitions.
@@ -33,30 +31,7 @@ export const getUpstreamRefs = (
     .map((def) => def.node.init ?? def.node.body)
     .filter(Boolean)
     .flatMap((node) => getDownstreamRefs(context, node))
-    // Prevent infinite recursion from circular references.
-    .filter((ref) => !visited.has(ref))
-    .flatMap((ref) => getUpstreamRefs(context, ref, mode, visited));
-
-  const isLeafRef =
-    // Unresolvable references (e.g. missing imports, misconfigured globals).
-    upstreamRefs === undefined ||
-    // Actually terminal references (e.g. parameters, imports, globals).
-    upstreamRefs.length === 0;
-
-  return mode === "leaf"
-    ? isLeafRef
-      ? [ref]
-      : upstreamRefs
-    : [ref].concat(upstreamRefs ?? []);
-  // We don't care to analyze non-prop parameters.
-  // They are local to the function and essentially duplicate the argument reference.
-  // NOTE: Okay to return them while we use `some()` on the result.
-  // .filter(
-  //   (ref) =>
-  //     isProp(ref) ||
-  //     !ref.resolved ||
-  //     ref.resolved.defs.some((def) => def.type !== "Parameter"),
-  // )
+    .forEach((ref) => ascend(context, ref, visit, visited));
 };
 
 /**
@@ -67,7 +42,7 @@ export const getUpstreamRefs = (
  * @param {(node: Rule.Node) => void} visit
  * @param {Set<Rule.Node>} visited
  */
-export const descend = (context, node, visit, visited = new Set()) => {
+const descend = (context, node, visit, visited = new Set()) => {
   if (visited.has(node)) {
     return;
   }
@@ -85,6 +60,31 @@ export const descend = (context, node, visit, visited = new Set()) => {
     // Check it's a valid AST node
     .filter((child) => typeof child.type === "string")
     .forEach((child) => descend(context, child, visit, visited));
+};
+
+/**
+ * Get all upstream references that ultimately flow into `ref`.
+ * Includes `ref` itself.
+ *
+ * @param {Rule.RuleContext} context
+ * @param {Scope.Reference} ref
+ *
+ * @returns {Scope.Reference[]}
+ */
+export const getUpstreamRefs = (context, ref) => {
+  const refs = [];
+  ascend(context, ref, (upRef) => refs.push(upRef));
+  return refs;
+
+  // We don't care to analyze non-prop parameters.
+  // They are local to the function and essentially duplicate the argument reference.
+  // (But it's okay to return them while we use `some()` on the result.)
+  // .filter(
+  //   (ref) =>
+  //     isProp(ref) ||
+  //     !ref.resolved ||
+  //     ref.resolved.defs.some((def) => def.type !== "Parameter"),
+  // )
 };
 
 /**
@@ -142,11 +142,10 @@ export const getCallExpr = (ref, current = ref.identifier.parent) => {
  *
  * @param {Rule.RuleContext} context
  * @param {Scope.Reference} ref
- * @param {"leaf" | "all"} [mode="all"] Whether to return all refs, or only leaf refs. Note that "all" includes `ref` itself.
  * @returns {Rule.Node[]}
  */
-export const getArgsUpstreamRefs = (context, ref, mode) =>
-  getUpstreamRefs(context, ref, mode)
+export const getArgsUpstreamRefs = (context, ref) =>
+  getUpstreamRefs(context, ref)
     .map((ref) => getCallExpr(ref))
     .filter(Boolean)
     .flatMap((callExpr) => callExpr.arguments)
@@ -201,11 +200,31 @@ export const getRef = (context, identifier) =>
     ?.references.find((ref) => ref.identifier == identifier);
 
 /**
+ * Checks whether `ref` is a call expression that eventually calls another expression matching the given predicate.
+ *
+ * Beware this can false negative when function refs are passed to external functions that call them internally (which we can't see).
+ * But we prefer that to assuming that refs passed to external functions are always called -
+ * we don't have type information, so would false positive on non-function refs passed to external functions.
+ *
  * @param {Rule.RuleContext} context
  * @param {Scope.Reference} ref
  * @param {(ref: Scope.Reference) => boolean} predicate
  * @returns {boolean} Whether this reference eventually calls a function matching the given predicate.
  */
-export const isEventualCallTo = (context, ref, predicate) =>
-  getCallExpr(ref) !== undefined &&
-  getUpstreamRefs(context, ref).some(predicate);
+export const isEventualCallTo = (context, ref, predicate) => {
+  const callExprRefs = [];
+  ascend(context, ref, (upRef) => {
+    const callExpr = getCallExpr(upRef);
+    if (callExpr) {
+      callExprRefs.push(upRef);
+    } else {
+      // TODO: Should still continue when this ref is 1:1 to the upstream ref.
+      // e.g. `const ref2 = ref1;` or `const { destructured } = props;`.
+      // Currently always returns false when checking `ref2()` or `destructured()` even though `ref1` or `props` might pass `predicate`.
+      // I believe this also applies to when functions are passed as arguments to other functions, even internal ones that we can analyze.
+      // Similar reason to `getArgsUpstreamRefs()` - we don't "follow" arguments to parameters.
+      return false;
+    }
+  });
+  return callExprRefs.some(predicate);
+};

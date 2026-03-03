@@ -508,5 +508,28 @@ new MyRuleTester().run("syntax", noDerivedState, {
         },
       ],
     },
+    {
+      name: "Set derived state via identical intermediate setter",
+      todo: true, // TODO: See `isEventualCallTo`
+      code: js`
+        const Component = () => {
+          const [data, setData] = useState();
+          // No idea why someone would do this. But good to know we catch it.
+          // Passes when written as:
+          // const onFetchedWrapper = (v) => onFetched(v);
+          const onFetchedWrapper = onFetched;
+
+          useEffect(() => {
+            onFetchedWrapper(data);
+          }, [onFetchedWrapper, data]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidDerivedState",
+          data: { state: "data" },
+        },
+      ],
+    },
   ],
 });

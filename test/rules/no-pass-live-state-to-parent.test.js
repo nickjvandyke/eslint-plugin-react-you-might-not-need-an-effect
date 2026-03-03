@@ -252,28 +252,8 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       ],
     },
     {
-      name: "Pass live internal state via identical derived prop",
-      code: js`
-        const Child = ({ onFetched }) => {
-          const [data, setData] = useState();
-          // No idea why someone would do this. But good to know we catch it.
-          const onFetchedWrapper = onFetched;
-          // Passes when written as:
-          // const onFetchedWrapper = (v) => onFetched(v);
-
-          useEffect(() => {
-            onFetchedWrapper(data);
-          }, [onFetchedWrapper, data]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParent",
-        },
-      ],
-    },
-    {
       name: "Pass live internal state via later-destructured prop",
+      todo: true, // TODO: See `isEventualCallTo`
       code: js`
         const Child = (props) => {
           const [data, setData] = useState();

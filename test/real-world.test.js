@@ -54,23 +54,45 @@ describe("recommended rules on real-world code", () => {
       {
         name: "Debouncing",
         code: js`
-        function useDebouncedState(value, delay) {
-          const [state, setState] = useState(value);
-          const [debouncedState, setDebouncedState] = useState(value);
+          function useDebouncedState(value, delay) {
+            const [state, setState] = useState(value);
+            const [debouncedState, setDebouncedState] = useState(value);
 
-          useEffect(() => {
-            const timeout = setTimeout(() => {
-              setDebouncedState(state);
+            useEffect(() => {
+              const timeout = setTimeout(() => {
+                setDebouncedState(state);
+              }, delay);
+
+              return () => {
+                clearTimeout(timeout);
+              };
+            }, [delay, state]);
+
+            return [state, debouncedState, setState];
+          }
+        `,
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/62
+        name: "Debouncing via Lodash",
+        code: js`
+          import { useState, useEffect } from 'react';
+          import debounce from 'lodash/debounce';
+
+          export const useDebouncedState = (delay) => {
+            const [value] = useState(0);
+
+            const debouncedFunction = debounce((newValue) => {
+              console.log(newValue);
             }, delay);
 
-            return () => {
-              clearTimeout(timeout);
-            };
-          }, [delay, state]);
+            useEffect(() => {
+              debouncedFunction(value);
+            }, [value, debouncedFunction]);
 
-          return [state, debouncedState, setState];
-        }
-      `,
+            return [];
+          };
+        `,
       },
       {
         name: "Listening for window events",

@@ -1,6 +1,6 @@
 import {
+  getArgsUpstreamRefs,
   getCallExpr,
-  getDownstreamRefs,
   getUpstreamRefs,
   isSynchronous,
 } from "../util/ast.js";
@@ -49,16 +49,13 @@ export default {
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
 
-          const argsUpstreamRefs = getUpstreamRefs(context, ref)
-            .map((ref) => getCallExpr(ref))
-            .filter(Boolean)
-            .flatMap((callExpr) => callExpr.arguments)
-            .flatMap((arg) => getDownstreamRefs(context, arg))
-            // Leaf because our "is data" check is essentially "is not all this other stuff",
+          const argsUpstreamRefs = getArgsUpstreamRefs(context, ref)
+            // Leaves only because our "is data" check is essentially "is not all this other stuff",
             // and the "other stuff" only works on leaf nodes.
             // Mid-stream nodes are effectively nothing, and so would pass those.
-            // TODO: DIYing getArgsUpstreamRefs for that reason.
-            .flatMap((ref) => getUpstreamRefs(context, ref, "leaf"));
+            // TODO: Is there a positive way to identify "data" nodes instead of process of elimination?
+            .filter((ref) => getUpstreamRefs(context, ref).length === 1);
+
           const isSomeArgsData = argsUpstreamRefs.some(
             (ref) =>
               // TODO: Ideally would use isState and isRef, not the hooks.
