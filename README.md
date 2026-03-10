@@ -1,9 +1,9 @@
-# ESLint - React - You Might Not Need An Effect
+# ESLint — React — You Might Not Need An Effect
 
-![NPM version](https://img.shields.io/npm/v/eslint-plugin-react-you-might-not-need-an-effect)
-![NPM Downloads](https://img.shields.io/npm/dw/eslint-plugin-react-you-might-not-need-an-effect)
+[![NPM version](https://img.shields.io/npm/v/eslint-plugin-react-you-might-not-need-an-effect)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect?activeTab=versions)
+[![NPM Downloads](https://img.shields.io/npm/dw/eslint-plugin-react-you-might-not-need-an-effect)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect)
 
-ESLint plugin to catch when [You Might Not Need An Effect](https://react.dev/learn/you-might-not-need-an-effect) (and more) to make your code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn its mental model, and even experienced developers may be surprised!
+[ESLint](https://eslint.org/) plugin to catch when [You Might Not Need An Effect](https://react.dev/learn/you-might-not-need-an-effect) (and more) to make your code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn its mental model, and even experienced developers may be surprised!
 
 - **Actionable fixes:** Reports specific anti-patterns, with suggestions and links.
 - **Deep analysis:** Analyzes state, props, refs, and their upstream sources.
@@ -80,16 +80,16 @@ import globals from "globals";
 
 ### Suggested
 
-Consider enforcing these rules in your codebase for more accurate analysis.
+Consider enforcing these other rules in your codebase for more accurate analysis:
 
-- [`react-hooks/exhaustive-deps`](https://www.npmjs.com/package/eslint-plugin-react-hooks): the plugin assumes your effects receive correct dependencies.
-- [`typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/): helps the plugin infer calls to asynchronous functions.
+- [`react-hooks/exhaustive-deps`](https://www.npmjs.com/package/eslint-plugin-react-hooks) — the plugin assumes your effects receive correct dependencies.
+- [`typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) — helps the plugin infer calls to asynchronous functions.
 
 ## 🔎 Rules
 
 See the [tests](./test) for extensive (in)valid examples for each rule.
 
-### `no-derived-state` — [docs](https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)
+### [`no-derived-state`](https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)
 
 Disallow storing derived state in an effect:
 
@@ -121,7 +121,7 @@ function Form() {
 }
 ```
 
-### `no-chain-state-updates` — [docs](https://react.dev/learn/you-might-not-need-an-effect#chains-of-computations)
+### [`no-chain-state-updates`](https://react.dev/learn/you-might-not-need-an-effect#chains-of-computations)
 
 Disallow chaining state updates in an effect:
 
@@ -139,7 +139,7 @@ function Game() {
 }
 ```
 
-### `no-event-handler` — [docs](https://react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers)
+### [`no-event-handler`](https://react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers)
 
 Disallow using state and an effect as an event handler:
 
@@ -154,7 +154,7 @@ function ProductPage({ product, addToCart }) {
 }
 ```
 
-### `no-adjust-state-on-prop-change` — [docs](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+### [`no-adjust-state-on-prop-change`](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
 
 Disallow adjusting state in an effect when a prop changes:
 
@@ -170,7 +170,7 @@ function List({ items }) {
 }
 ```
 
-### `no-reset-all-state-on-prop-change` — [docs](https://react.dev/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes)
+### [`no-reset-all-state-on-prop-change`](https://react.dev/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes)
 
 Disallow resetting all state in an effect when a prop changes:
 
@@ -185,7 +185,7 @@ function List({ items }) {
 }
 ```
 
-### `no-pass-live-state-to-parent` — [docs](https://react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes)
+### [`no-pass-live-state-to-parent`](https://react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes)
 
 Disallow passing live state to parents in an effect:
 
@@ -200,7 +200,7 @@ function Child({ onTextChanged }) {
 }
 ```
 
-### `no-pass-data-to-parent` — [docs](https://react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent)
+### [`no-pass-data-to-parent`](https://react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent)
 
 Disallow passing data to parents in an effect:
 
