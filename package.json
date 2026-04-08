@@ -5,22 +5,17 @@
   "author": "Nick van Dyke",
   "license": "MIT",
   "type": "module",
-  "module": "./src/index.js",
-  "main": "./dist/index.cjs",
-  "types": "./types/index.d.ts",
   "exports": {
     "import": {
-      "types": "./types/index.d.ts",
-      "default": "./src/index.js"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
     "require": {
-      "types": "./types/index.d.cts",
+      "types": "./dist/index.d.cts",
       "default": "./dist/index.cjs"
     }
   },
   "files": [
-    "src",
-    "types",
     "dist"
   ],
   "repository": {
@@ -28,7 +23,7 @@
     "url": "https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect.git"
   },
   "scripts": {
-    "build": "node build.js",
+    "build": "tsdown",
     "lint": "eslint",
     "test": "mocha --recursive"
   },
@@ -45,15 +40,19 @@
     "globals": "^16.2.0"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.2",
     "@eslint/js": "^9.28.0",
-    "esbuild": "^0.25.3",
+    "@typescript/native-preview": "^7.0.0-dev.20260408.1",
+    "attw": "^1.0.0",
     "eslint": "^9.20.1",
     "eslint-plugin-eslint-plugin": "^6.4.0",
     "eslint-plugin-n": "^17.17.0",
     "lint-staged": "^16.1.0",
     "mocha": "11.1.0",
     "prettier": "^3.5.3",
-    "simple-git-hooks": "^2.13.0"
+    "publint": "^0.3.18",
+    "simple-git-hooks": "^2.13.0",
+    "tsdown": "^0.21.7"
   },
   "peerDependencies": {
     "eslint": ">=8.40.0"

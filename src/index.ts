@@ -8,10 +8,8 @@ import noChainStateUpdates from "./rules/no-chain-state-updates.js";
 import noDerivedState from "./rules/no-derived-state.js";
 import noPassDataToParent from "./rules/no-pass-data-to-parent.js";
 import globals from "globals";
+import type { ESLint, Linter } from "eslint";
 
-/**
- * @type {import("eslint").ESLint.Plugin}
- */
 const plugin = {
   meta: {
     name: "react-you-might-not-need-an-effect",
@@ -30,11 +28,14 @@ const plugin = {
   },
 };
 
-const rules = (severity) =>
-  Object.keys(plugin.rules).reduce((acc, ruleName) => {
-    acc[plugin.meta.name + "/" + ruleName] = severity;
-    return acc;
-  }, {});
+const rules = (severity: "error" | "warn") =>
+  Object.keys(plugin.rules).reduce(
+    (acc, ruleName) => {
+      acc[plugin.meta.name + "/" + ruleName] = severity;
+      return acc;
+    },
+    {} as Record<string, "error" | "warn">,
+  );
 
 const languageOptions = {
   globals: {
@@ -81,4 +82,12 @@ Object.assign(plugin.configs, {
   },
 });
 
-export default plugin;
+// HACK: unsure how to type this properly because we need to gradually add fields to `plugin` so it can self-reference in the config definitions.
+export default plugin as unknown as ESLint.Plugin & {
+  configs: {
+    recommended: Linter.Config;
+    strict: Linter.Config;
+    "legacy-recommended": Linter.LegacyConfig;
+    "legacy-strict": Linter.LegacyConfig;
+  };
+};

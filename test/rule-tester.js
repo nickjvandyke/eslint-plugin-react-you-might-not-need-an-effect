@@ -1,6 +1,6 @@
 import assert from "assert";
 import { RuleTester } from "eslint";
-import plugin from "../src/index.js";
+import plugin from "../src/index.ts";
 
 // For syntax highlighting inside code under test
 export const js = String.raw;

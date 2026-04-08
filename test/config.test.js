@@ -2,7 +2,7 @@ import { ESLint } from "eslint";
 import { LegacyESLint } from "eslint/use-at-your-own-risk";
 import { js } from "./rule-tester.js";
 import assert from "assert";
-import plugin from "../src/index.js";
+import plugin from "../src/index.ts";
 
 describe("config", () => {
   const codeThatDerivesState = js`

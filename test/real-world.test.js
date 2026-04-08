@@ -1,5 +1,5 @@
 import { ESLint } from "eslint";
-import plugin from "../src/index.js";
+import plugin from "../src/index.ts";
 import { js } from "./rule-tester.js";
 import assert from "assert";
 
