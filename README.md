@@ -3,7 +3,7 @@
 [![NPM version](https://img.shields.io/npm/v/eslint-plugin-react-you-might-not-need-an-effect?color=3BB143)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect?activeTab=versions)
 [![NPM Downloads](https://img.shields.io/npm/dw/eslint-plugin-react-you-might-not-need-an-effect?color=000080)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect)
 
-[ESLint](https://eslint.org/) plugin to catch when [You Might Not Need An Effect](https://react.dev/learn/you-might-not-need-an-effect) (and more) to make your code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn its mental model, and even experienced developers may be surprised!
+[ESLint](https://eslint.org/) (and [Oxlint](https://oxc.rs/docs/guide/usage/linter/js-plugins.html)) plugin to catch when [You Might Not Need An Effect](https://react.dev/learn/you-might-not-need-an-effect) (and more) to make your code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn its mental model, and even experienced developers may be surprised!
 
 - **Actionable fixes:** Reports specific anti-patterns, with suggestions and links.
 - **Deep analysis:** Analyzes state, props, refs, and their upstream sources.
@@ -34,9 +34,10 @@ Add the plugin's `recommended` config to your ESLint configuration file to enabl
 
 Experimentally, use the `strict` config instead to enable every rule as an error.
 
-#### Legacy config (`.eslintrc`)
+#### Legacy config
 
-```js
+```json
+// .eslintrc.json
 {
   "extends": [
     "plugin:react-you-might-not-need-an-effect/legacy-recommended",
@@ -46,9 +47,10 @@ Experimentally, use the `strict` config instead to enable every rule as an error
 }
 ```
 
-#### Flat config (`eslint.config.js`)
+#### Flat config
 
-```js
+```javascript
+// eslint.config.js
 import reactYouMightNotNeedAnEffect from "eslint-plugin-react-you-might-not-need-an-effect";
 
 export default [
@@ -58,9 +60,41 @@ export default [
 ];
 ```
 
+### Oxlint
+
+Use this plugin with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) thanks to their [JS plugin support](https://oxc.rs/docs/guide/usage/linter/js-plugins.html)!
+
+```json
+// .oxlintrc.json
+{
+  "jsPlugins": ["eslint-plugin-react-you-might-not-need-an-effect"],
+  "rules": {
+    "react-you-might-not-need-an-effect/no-derived-state": "warn",
+    "react-you-might-not-need-an-effect/no-chain-state-updates": "warn",
+    "react-you-might-not-need-an-effect/no-event-handler": "warn",
+    "react-you-might-not-need-an-effect/no-adjust-state-on-prop-change": "warn",
+    "react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change": "warn",
+    "react-you-might-not-need-an-effect/no-pass-live-state-to-parent": "warn",
+    "react-you-might-not-need-an-effect/no-pass-data-to-parent": "warn",
+    "react-you-might-not-need-an-effect/no-initialize-state": "warn",
+    "react-you-might-not-need-an-effect/no-empty-effect": "warn"
+  },
+  "env": {
+    "browser": true
+  }
+}
+```
+
+### Suggested
+
+Enforce these other rules in your codebase for more accurate analysis:
+
+- [`react-hooks/exhaustive-deps`](https://www.npmjs.com/package/eslint-plugin-react-hooks) — the plugin assumes your effects receive correct dependencies.
+- [`typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) — helps the plugin infer calls to asynchronous functions.
+
 ### Custom
 
-If not using an included config, manually set your `languageOptions`:
+If not using a recommended config, manually set your `languageOptions`:
 
 ```js
 import globals from "globals";
@@ -77,13 +111,6 @@ import globals from "globals";
   },
 };
 ```
-
-### Suggested
-
-Consider enforcing these other rules in your codebase for more accurate analysis:
-
-- [`react-hooks/exhaustive-deps`](https://www.npmjs.com/package/eslint-plugin-react-hooks) — the plugin assumes your effects receive correct dependencies.
-- [`typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) — helps the plugin infer calls to asynchronous functions.
 
 ## 🔎 Rules
 

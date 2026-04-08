@@ -16,15 +16,15 @@ const plugin = {
   },
   configs: {},
   rules: {
-    "no-empty-effect": noEmptyEffect,
+    "no-derived-state": noDerivedState,
+    "no-chain-state-updates": noChainStateUpdates,
+    "no-event-handler": noEventHandler,
     "no-adjust-state-on-prop-change": noAdjustStateOnPropChange,
     "no-reset-all-state-on-prop-change": noResetAllStateOnPropChange,
-    "no-event-handler": noEventHandler,
     "no-pass-live-state-to-parent": noPassLiveStateToParent,
     "no-pass-data-to-parent": noPassDataToParent,
     "no-initialize-state": noInitializeState,
-    "no-chain-state-updates": noChainStateUpdates,
-    "no-derived-state": noDerivedState,
+    "no-empty-effect": noEmptyEffect,
   },
 };
 
@@ -83,6 +83,7 @@ Object.assign(plugin.configs, {
 });
 
 // HACK: unsure how to type this properly because we need to gradually add fields to `plugin` so it can self-reference in the config definitions.
+// TODO: Possible to type this such we can also spread it in `oxlint.config.ts`?
 export default plugin as unknown as ESLint.Plugin & {
   configs: {
     recommended: Linter.Config;
