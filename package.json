@@ -24,6 +24,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "typecheck": "tsgo",
     "lint": "eslint",
     "test": "mocha --recursive"
   },
