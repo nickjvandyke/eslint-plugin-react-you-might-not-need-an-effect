@@ -2,6 +2,9 @@
 
 ## [0.9.3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.9.2...v0.9.3) (2026-04-08)
 
+### Refactors
+
+* **build**: use tsdown, add publish validation ([cc2101a](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/cc2101a28ae83d4e11c421bbfaee11ffaa26bcb8))
 
 ### Miscellaneous Chores
 
