@@ -36,7 +36,7 @@ Experimentally, use the `strict` config instead to enable every rule as an error
 
 #### Legacy config
 
-```json
+```jsonc
 // .eslintrc.json
 {
   "extends": [
@@ -64,7 +64,7 @@ export default [
 
 Use this plugin with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) thanks to their [JS plugin support](https://oxc.rs/docs/guide/usage/linter/js-plugins.html)!
 
-```json
+```jsonc
 // .oxlintrc.json
 {
   "jsPlugins": ["eslint-plugin-react-you-might-not-need-an-effect"],
