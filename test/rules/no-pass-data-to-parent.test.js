@@ -137,7 +137,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
       // Alternate solutions exist, but this is arguably the most readable.
       name: "Pass cleanup function that depends on ref",
       code: js`
@@ -167,7 +167,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/43
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/43
       name: "Effect inside custom hook returns MemberExpression cleanup",
       code: js`
         function useActorLogger(actorRef) {

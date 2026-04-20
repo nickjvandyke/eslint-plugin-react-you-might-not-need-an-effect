@@ -117,7 +117,7 @@ describe("recommended rules on real-world code", () => {
       `,
       },
       {
-        // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/24
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/24
         name: "ResizeObserver",
         code: js`
           function useHasOverflow({ contentRef, maxHeight }) {
@@ -283,7 +283,7 @@ describe("recommended rules on real-world code", () => {
       `,
       },
       {
-        // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/28
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/28
         name: "Indexing ref state with internal state",
         code: js`
           import { useEffect, useRef, useState } from "react";
@@ -311,7 +311,7 @@ describe("recommended rules on real-world code", () => {
         `,
       },
       {
-        // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/30
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/30
         name: "Ref callback",
         code: js`
           export const useOnScreen = () => {
@@ -342,7 +342,7 @@ describe("recommended rules on real-world code", () => {
         `,
       },
       {
-        // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/49
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/49
         name: "Effect with recursion",
         code: js`
         function Component() {
@@ -424,7 +424,7 @@ describe("recommended rules on real-world code", () => {
       `,
       },
       {
-        // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/57
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/57
         name: "TanStack useInfinityQuery useInView",
         code: js`
           import React from 'react'
@@ -467,7 +467,7 @@ describe("recommended rules on real-world code", () => {
         `,
       },
       {
-        // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/57
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/57
         name: "TanStack useInfinityQuery useInView with state, prop and data in queryKey",
         code: js`
           import React from 'react'

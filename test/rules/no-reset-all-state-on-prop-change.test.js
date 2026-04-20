@@ -44,7 +44,7 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/31
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/31
       // Verifies that the rule doesn't crash when it can't find the containing component to count `useState`s.
       // This *is* a rule-break, but detecting the lowercased function name would probably introduce more false positives than it'd save in false negatives.
       name: "Reset all state when a prop changes inside lowercased function definition",
@@ -89,7 +89,7 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
       name: "Set state differently in callback to state-like hook",
       code: js`
         const Foo = () => {
@@ -107,7 +107,7 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
       name: "Set state differently in callback to state-like hook",
       code: js`
         const Foo = () => {
@@ -223,7 +223,7 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
       ],
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/8
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/8
       name: "Meow",
       code: js`
         const ExternalAssetItemRow = memo(

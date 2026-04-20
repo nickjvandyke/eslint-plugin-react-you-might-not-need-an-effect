@@ -110,7 +110,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/46
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/46
       name: "Pass internal state to weirdly-separately-wrapped HOC prop",
       code: js`
         import { withRouter } from 'react-router-dom';

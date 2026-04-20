@@ -118,7 +118,7 @@ new MyRuleTester().run("no-derived-state", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
       // While it *could* be an anti-pattern or unnecessary, effects *are* meant to synchronize systems.
       // So we guess that a "subscription effect" is usually valid, or may be more readable.
       name: "Synchronize internal state",
@@ -223,7 +223,7 @@ new MyRuleTester().run("no-derived-state", rule, {
     },
     // TODO: Maybe move some of these to/from `syntax.test.js`
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
       name: "Defined-then-called async external global function",
       code: js`
         function Component() {
@@ -242,7 +242,7 @@ new MyRuleTester().run("no-derived-state", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
       // For "always in sync" detection
       name: "Defined-then-called async function from API in deps",
       code: js`
@@ -278,7 +278,7 @@ new MyRuleTester().run("no-derived-state", rule, {
       `,
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/16
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/16
       name: "From external data retrieved in overly-complicated async IIFE",
       code: js`
         import { useEffect, useState } from 'react';

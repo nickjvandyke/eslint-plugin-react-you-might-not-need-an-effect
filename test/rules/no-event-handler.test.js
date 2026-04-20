@@ -204,7 +204,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       ],
     },
     {
-      // https://github.com/NickvanDyke/eslint-plugin-react-you-might-not-need-an-effect/issues/7
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/7
       name: "Klarna",
       code: js`
         function Klarna({ klarnaAppId }) {
