@@ -28,36 +28,59 @@ yarn add -D eslint-plugin-react-you-might-not-need-an-effect
 
 ## ⚙️ Configuration
 
-### Recommended
-
-Add the plugin's `recommended` config to your ESLint configuration file to enable every rule as a warning.
-
-Experimentally, use the `strict` config instead to enable every rule as an error.
-
-#### Legacy config
-
-```jsonc
-// .eslintrc.json
-{
-  "extends": [
-    "plugin:react-you-might-not-need-an-effect/legacy-recommended",
-    // or
-    "plugin:react-you-might-not-need-an-effect/legacy-strict",
-  ],
-}
-```
-
-#### Flat config
+### Flat Config
 
 ```javascript
 // eslint.config.js
 import reactYouMightNotNeedAnEffect from "eslint-plugin-react-you-might-not-need-an-effect";
+import globals from "globals";
 
 export default [
+  // Enable every rule as a warning
   reactYouMightNotNeedAnEffect.configs.recommended,
-  // or
+  // Or enable every rule as an error
   reactYouMightNotNeedAnEffect.configs.strict,
+  // Or enable only specific rules
+  {
+    plugins: {
+      reactYouMightNotNeedAnEffect,
+    },
+    rules: {
+      "reactYouMightNotNeedAnEffect/no-derived-state": "warn",
+    },
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+      },
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+  },
 ];
+```
+
+### Legacy Config
+
+```jsonc
+// .eslintrc
+{
+  "extends": [
+    // Enable every rule as a warning
+    "plugin:react-you-might-not-need-an-effect/legacy-recommended",
+    // Or enable every rule as an error
+    "plugin:react-you-might-not-need-an-effect/legacy-strict"
+  ],
+  // Or enable only specific rules
+  "plugins": [
+    "react-you-might-not-need-an-effect"
+  ],
+  "rules": {
+    "react-you-might-not-need-an-effect/no-derived-state": "warn"
+  }
+}
 ```
 
 ### Oxlint
@@ -91,26 +114,6 @@ Enforce these other rules in your codebase for more accurate analysis:
 
 - [`react-hooks/exhaustive-deps`](https://www.npmjs.com/package/eslint-plugin-react-hooks) — the plugin assumes your effects receive correct dependencies.
 - [`typescript-eslint/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises/) — helps the plugin infer calls to asynchronous functions.
-
-### Custom
-
-If not using a recommended config, manually set your `languageOptions`:
-
-```js
-import globals from "globals";
-
-// ...
-{
-  globals: {
-    ...globals.browser,
-  },
-  parserOptions: {
-    ecmaFeatures: {
-      jsx: true,
-    },
-  },
-};
-```
 
 ## 🔎 Rules
 
