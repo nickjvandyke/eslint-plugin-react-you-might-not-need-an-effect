@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.10.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.9.3...v0.10.0) (2026-05-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **no-empty-effect:** remove rule ([#67](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/67))
+
+### Features
+
+* **no-empty-effect:** remove rule ([#67](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/67)) ([1fbc74a](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/1fbc74a2833a84fee2f388fb37102d346e520d52))
+
 ## [0.9.3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.9.2...v0.9.3) (2026-04-08)
 
 ### Refactors
