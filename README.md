@@ -99,8 +99,7 @@ Use this plugin with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) thank
     "react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change": "warn",
     "react-you-might-not-need-an-effect/no-pass-live-state-to-parent": "warn",
     "react-you-might-not-need-an-effect/no-pass-data-to-parent": "warn",
-    "react-you-might-not-need-an-effect/no-initialize-state": "warn",
-    "react-you-might-not-need-an-effect/no-empty-effect": "warn"
+    "react-you-might-not-need-an-effect/no-initialize-state": "warn"
   },
   "env": {
     "browser": true
@@ -257,17 +256,6 @@ function Component() {
     // ❌ Avoid initializing state in an effect. Instead, initialize "state"'s `useState()` with "Hello World". For SSR hydration, prefer `useSyncExternalStore()`.
     setState("Hello World");
   }, []);
-}
-```
-
-### `no-empty-effect`
-
-Disallow empty effects:
-
-```js
-function Component() {
-  // ❌ This effect is empty and could be removed.
-  useEffect(() => {}, []);
 }
 ```
 

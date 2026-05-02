@@ -1,4 +1,3 @@
-import noEmptyEffect from "./rules/no-empty-effect.js";
 import noAdjustStateOnPropChange from "./rules/no-adjust-state-on-prop-change.js";
 import noResetAllStateOnPropChange from "./rules/no-reset-all-state-on-prop-change.js";
 import noEventHandler from "./rules/no-event-handler.js";
@@ -24,7 +23,6 @@ const plugin = {
     "no-pass-live-state-to-parent": noPassLiveStateToParent,
     "no-pass-data-to-parent": noPassDataToParent,
     "no-initialize-state": noInitializeState,
-    "no-empty-effect": noEmptyEffect,
   },
 };
 
