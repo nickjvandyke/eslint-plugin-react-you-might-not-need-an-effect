@@ -9,11 +9,10 @@ import {
   isStateSetterCall,
   isProp,
   getUseStateDecl,
-  isReactFunctionalComponent,
-  isReactFunctionalHOC,
   isCustomHook,
   isState,
   isUseEffect,
+  findContainingNode,
 } from "../util/react.js";
 
 /**
@@ -30,7 +29,7 @@ export default {
     schema: [],
     messages: {
       avoidResettingAllStateWhenAPropChanges:
-        'Avoid resetting all state when a prop changes. If "{{prop}}" is a key, pass it as `key` instead so React will reset the component.',
+        'Avoid resetting all state when a prop changes. Instead, if "{{prop}}" is a key, pass it as `key` so React will reset the component\'s state.',
     },
   },
   create: (context) => ({
@@ -125,22 +124,4 @@ const countUseStates = (context, componentNode) => {
 
   return getDownstreamRefs(context, componentNode).filter((ref) => isState(ref))
     .length;
-};
-
-// Returns the component or custom hook that contains the `useEffect` node.
-// WARNING: Per the `isReactFunctionalComponent` etc. internals, this will return undefined for some non-idiomatic component definitions.
-// e.g. `function buildComponent(arg1, arg2) { return <div />; }`
-// Not sure we can account for that without introducing false positives, and those are rare and arguably bad practice.
-const findContainingNode = (context, node) => {
-  if (!node) {
-    return undefined;
-  } else if (
-    isReactFunctionalComponent(node) ||
-    isReactFunctionalHOC(context, node) ||
-    isCustomHook(node)
-  ) {
-    return node;
-  } else {
-    return findContainingNode(context, node.parent);
-  }
 };

@@ -221,7 +221,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       // and the above test case relies on that behavior.
       // errors: [
       //   {
-      //     messageId: "avoidPassingDataToParent",
+      //     messageId: "avoidPassingDataToParentInComponent",
       //   },
       // ],
     },
@@ -240,7 +240,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       // TODO:
       // errors: [
       //   {
-      //     messageId: "avoidPassingDataToParent",
+      //     messageId: "avoidPassingDataToParentInComponent",
       //   },
       // ],
     },
@@ -265,7 +265,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       // TODO:
       // errors: [
       //   {
-      //     messageId: "avoidPassingDataToParent",
+      //     messageId: "avoidPassingDataToParentInComponent",
       //   },
       // ],
     },
@@ -284,7 +284,24 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingDataToParent",
+          messageId: "avoidPassingDataToParentInComponent",
+        },
+      ],
+    },
+    {
+      name: "Pass external state in custom hook",
+      code: js`
+        const useCustomHook = ({ onFetched }) => {
+          const data = useSomeAPI();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingDataToParentInHook",
         },
       ],
     },
@@ -302,7 +319,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingDataToParent",
+          messageId: "avoidPassingDataToParentInComponent",
         },
       ],
     },

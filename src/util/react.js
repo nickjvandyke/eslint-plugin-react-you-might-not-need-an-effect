@@ -279,7 +279,7 @@ export const isRefCall = (context, ref) =>
   isEventualCallTo(context, ref, (ref) => isRefCurrent(ref) || isRef(ref));
 
 /**
- * @param context {Rule.RuleContext}
+ * @param {Rule.RuleContext} context
  * @param {Scope.Reference} ref
  * @returns {Rule.Node | undefined} The `VariableDeclarator` node of the `useState` call.
  */
@@ -313,4 +313,29 @@ export const hasCleanup = (node) => {
       (stmt) => stmt.type === "ReturnStatement" && stmt.argument,
     )
   );
+};
+
+/**
+ * Returns the component or custom hook that contains the `useEffect` node.
+ *
+ * WARNING: Per the `isReactFunctionalComponent` etc. internals, this will return undefined for some non-idiomatic component definitions.
+ * e.g. `function buildComponent(arg1, arg2) { return <div />; }`
+ * Not sure we can account for that without introducing false positives, and those are rare and arguably bad practice.
+ *
+ * @param {Rule.Node} node
+ * @param context {Rule.RuleContext}
+ * @returns {Rule.Node | undefined}
+ */
+export const findContainingNode = (context, node) => {
+  if (!node) {
+    return undefined;
+  } else if (
+    isReactFunctionalComponent(node) ||
+    isReactFunctionalHOC(context, node) ||
+    isCustomHook(node)
+  ) {
+    return node;
+  } else {
+    return findContainingNode(context, node.parent);
+  }
 };

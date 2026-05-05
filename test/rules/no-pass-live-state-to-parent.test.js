@@ -179,7 +179,24 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingLiveStateToParent",
+          messageId: "avoidPassingLiveStateToParentInComponent",
+        },
+      ],
+    },
+    {
+      name: "Pass live derived internal state in custom hook",
+      code: js`
+        const useCustomHook = ({ onTextChanged }) => {
+          const [text, setText] = useState();
+
+          useEffect(() => {
+            onTextChanged(text);
+          }, [onTextChanged, text]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingLiveStateToParentInHook",
         },
       ],
     },
@@ -204,7 +221,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingLiveStateToParent",
+          messageId: "avoidPassingLiveStateToParentInComponent",
         },
       ],
     },
@@ -229,7 +246,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingLiveStateToParent",
+          messageId: "avoidPassingLiveStateToParentInComponent",
         },
       ],
     },
@@ -247,7 +264,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingLiveStateToParent",
+          messageId: "avoidPassingLiveStateToParentInComponent",
         },
       ],
     },
@@ -266,7 +283,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingLiveStateToParent",
+          messageId: "avoidPassingLiveStateToParentInComponent",
         },
       ],
     },
@@ -297,7 +314,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       `,
       errors: [
         {
-          messageId: "avoidPassingLiveStateToParent",
+          messageId: "avoidPassingLiveStateToParentInComponent",
         },
       ],
     },

@@ -10,6 +10,8 @@ import {
   isState,
   isUseEffect,
   getEffectFn,
+  isCustomHook,
+  findContainingNode,
 } from "../util/react.js";
 
 /**
@@ -19,14 +21,15 @@ export default {
   meta: {
     type: "suggestion",
     docs: {
-      description:
-        "Disallow passing live state to parent components in an effect.",
+      description: "Disallow passing live state to parents in an effect.",
       url: "https://react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes",
     },
     schema: [],
     messages: {
-      avoidPassingLiveStateToParent:
+      avoidPassingLiveStateToParentInComponent:
         "Avoid passing live state to parents in an effect. Instead, lift the state to the parent and pass it down to the child as a prop.",
+      avoidPassingLiveStateToParentInHook:
+        "Avoid passing live state to parents in an effect. Instead, return the state from the hook.",
     },
   },
   create: (context) => ({
@@ -46,9 +49,15 @@ export default {
           );
 
           if (isStateInArgs) {
+            const containingNode = findContainingNode(context, node);
+            const isInCustomHook =
+              containingNode && isCustomHook(containingNode);
+
             context.report({
               node: callExpr,
-              messageId: "avoidPassingLiveStateToParent",
+              messageId: isInCustomHook
+                ? "avoidPassingLiveStateToParentInHook"
+                : "avoidPassingLiveStateToParentInComponent",
             });
           }
         });

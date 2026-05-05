@@ -17,6 +17,8 @@ import {
   isUseEffect,
   isRefCall,
   getEffectFn,
+  isCustomHook,
+  findContainingNode,
 } from "../util/react.js";
 
 /**
@@ -31,8 +33,10 @@ export default {
     },
     schema: [],
     messages: {
-      avoidPassingDataToParent:
-        "Avoid passing data to parents in an effect. Instead, let the parent fetch the data itself and pass it down to the child as a prop.",
+      avoidPassingDataToParentInComponent:
+        "Avoid passing data to parents in an effect. Instead, fetch the data in the parent and pass it down to the child as a prop.",
+      avoidPassingDataToParentInHook:
+        "Avoid passing data to parents in an effect. Instead, return the data from the hook.",
     },
   },
   create: (context) => ({
@@ -68,9 +72,15 @@ export default {
           );
 
           if (isSomeArgsData) {
+            const containingNode = findContainingNode(context, node);
+            const isInCustomHook =
+              containingNode && isCustomHook(containingNode);
+
             context.report({
               node: callExpr,
-              messageId: "avoidPassingDataToParent",
+              messageId: isInCustomHook
+                ? "avoidPassingDataToParentInHook"
+                : "avoidPassingDataToParentInComponent",
             });
           }
         });
