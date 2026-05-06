@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.10.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.0...v0.10.1) (2026-05-06)
+
+
+### Features
+
+* more idiomatic recommendation for passing to parent inside custom hooks ([b0dacf4](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/b0dacf4bacbe746c635f6f4efd3134b2a76173f0))
+* **no-event-handler:** flag props ([d246668](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/d246668dc8f4f1c34bd9cc134d539992b38e8cb5))
+
+
+### Bug Fixes
+
+* **no-initialize-state:** analyze effects that only have setter in deps ([1a7174f](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/1a7174fc1296165fecaa8ef518d7b5b5faaecd8e))
+* when deps is missing, still run rules that don't rely on them ([cefdfcd](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/cefdfcdbd1c199be0747997b0de3a4ed9476e657))
+
 ## [0.10.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.9.3...v0.10.0) (2026-05-02)
 
 
