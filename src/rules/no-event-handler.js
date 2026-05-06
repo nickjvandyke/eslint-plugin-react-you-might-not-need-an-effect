@@ -6,6 +6,7 @@ import {
 import {
   getEffectFnRefs,
   hasCleanup,
+  isProp,
   isState,
   isUseEffect,
 } from "../util/react.js";
@@ -24,6 +25,8 @@ export default {
     messages: {
       avoidEventHandler:
         "Avoid using state and effects as an event handler. Instead, call the event handling code directly when the event occurs.",
+      avoidPropHandler:
+        "Avoid using props and effects as an event handler. Instead, move the handler to the parent component.",
     },
   },
   create: (context) => ({
@@ -35,18 +38,29 @@ export default {
       // TODO: Can we also flag this when the deps are internal, and the body calls internal stuff?
       // That'd overlap with other rules though... maybe just useRefs?
 
-      findDownstreamNodes(context, node, "IfStatement")
+      const ifTestRefs = findDownstreamNodes(context, node, "IfStatement")
         .filter((ifNode) => !ifNode.alternate)
-        .filter((ifNode) =>
-          getDownstreamRefs(context, ifNode.test)
-            .flatMap((ref) => getUpstreamRefs(context, ref))
-            // TODO: Should flag props too, but maybe with a different message?
-            .some((ref) => isState(ref)),
-        )
-        .forEach((ifNode) => {
+        .flatMap((ifNode) =>
+          getDownstreamRefs(context, ifNode.test).flatMap((ref) =>
+            getUpstreamRefs(context, ref),
+          ),
+        );
+
+      ifTestRefs
+        .filter((ref) => isState(ref))
+        .forEach((ref) => {
           context.report({
-            node: ifNode.test,
+            node: ref.identifier,
             messageId: "avoidEventHandler",
+          });
+        });
+
+      ifTestRefs
+        .filter((ref) => isProp(context, ref))
+        .forEach((ref) => {
+          context.report({
+            node: ref.identifier,
+            messageId: "avoidPropHandler",
           });
         });
     },

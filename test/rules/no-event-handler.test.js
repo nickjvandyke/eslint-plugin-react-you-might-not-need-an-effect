@@ -34,10 +34,12 @@ new MyRuleTester().run("no-event-handler", rule, {
         }
       `,
     },
+  ],
+  invalid: [
     {
-      name: "Using prop to handle an event and call a prop",
+      name: "Using props to handle an event and call an external function",
       code: js`
-        function Form({ dataToSubmit, submitData }) {
+        function Form({ dataToSubmit }) {
           useEffect(() => {
             if (dataToSubmit) {
               submitData(dataToSubmit);
@@ -45,9 +47,12 @@ new MyRuleTester().run("no-event-handler", rule, {
           }, [dataToSubmit]);
         }
       `,
+      errors: [
+        {
+          messageId: "avoidPropHandler",
+        },
+      ],
     },
-  ],
-  invalid: [
     {
       name: "Using state to handle an event and call an external function",
       code: js`
@@ -188,7 +193,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       ],
     },
     {
-      name: "More complex if test",
+      name: "Member access and double test in condition",
       code: js`
         function Form() {
           const [name, setName] = useState();
@@ -213,6 +218,9 @@ new MyRuleTester().run("no-event-handler", rule, {
         }
       `,
       errors: [
+        {
+          messageId: "avoidEventHandler",
+        },
         {
           messageId: "avoidEventHandler",
         },
