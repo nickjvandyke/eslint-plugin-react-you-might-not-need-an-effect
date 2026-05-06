@@ -5,7 +5,6 @@ import {
 } from "../util/ast.js";
 import {
   getEffectFnRefs,
-  getEffectDepsRefs,
   isPropCall,
   isState,
   isUseEffect,
@@ -36,8 +35,7 @@ export default {
     CallExpression: (node) => {
       if (!isUseEffect(node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
-      const depsRefs = getEffectDepsRefs(context, node);
-      if (!effectFnRefs || !depsRefs) return;
+      if (!effectFnRefs) return;
 
       effectFnRefs
         .filter((ref) => isPropCall(context, ref))

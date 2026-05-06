@@ -289,6 +289,40 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       ],
     },
     {
+      name: "Pass external state, no deps argument",
+      code: js`
+        const Child = ({ onFetched }) => {
+          const data = useSomeAPI();
+
+          useEffect(() => {
+            onFetched(data);
+          });
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingDataToParentInComponent",
+        },
+      ],
+    },
+    {
+      name: "Pass external state, empty deps",
+      code: js`
+        const Child = ({ onFetched }) => {
+          const data = useSomeAPI();
+
+          useEffect(() => {
+            onFetched(data);
+          }, []);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingDataToParentInComponent",
+        },
+      ],
+    },
+    {
       name: "Pass external state in custom hook",
       code: js`
         const useCustomHook = ({ onFetched }) => {

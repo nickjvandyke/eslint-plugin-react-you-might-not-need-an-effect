@@ -80,6 +80,52 @@ new MyRuleTester().run("no-event-handler", rule, {
       ],
     },
     {
+      name: "Using state to handle an event, no deps argument",
+      code: js`
+        function Form() {
+          const [dataToSubmit, setDataToSubmit] = useState();
+
+          useEffect(() => {
+            if (dataToSubmit) {
+              submitData(dataToSubmit);
+            }
+          });
+
+          return (
+            <button onClick={() => setDataToSubmit({ name: 'test' })}>Submit</button>
+          )
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidEventHandler",
+        },
+      ],
+    },
+    {
+      name: "Using state to handle an event, empty deps",
+      code: js`
+        function Form() {
+          const [dataToSubmit, setDataToSubmit] = useState();
+
+          useEffect(() => {
+            if (dataToSubmit) {
+              submitData(dataToSubmit);
+            }
+          }, []);
+
+          return (
+            <button onClick={() => setDataToSubmit({ name: 'test' })}>Submit</button>
+          )
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidEventHandler",
+        },
+      ],
+    },
+    {
       name: "Using state to handle an event and call a prop",
       code: js`
         function Form({ submitData }) {

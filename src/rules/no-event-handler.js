@@ -5,7 +5,6 @@ import {
 } from "../util/ast.js";
 import {
   getEffectFnRefs,
-  getEffectDepsRefs,
   hasCleanup,
   isState,
   isUseEffect,
@@ -31,8 +30,7 @@ export default {
     CallExpression: (node) => {
       if (!isUseEffect(node) || hasCleanup(node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
-      const depsRefs = getEffectDepsRefs(context, node);
-      if (!effectFnRefs || !depsRefs) return;
+      if (!effectFnRefs) return;
 
       // TODO: Can we also flag this when the deps are internal, and the body calls internal stuff?
       // That'd overlap with other rules though... maybe just useRefs?

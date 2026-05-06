@@ -184,6 +184,54 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       ],
     },
     {
+      name: "Pass live internal state, no deps argument",
+      code: js`
+        const Child = ({ onTextChanged }) => {
+          const [text, setText] = useState();
+
+          useEffect(() => {
+            onTextChanged(text);
+          });
+
+          return (
+            <input
+              type="text"
+              onChange={(e) => setText(e.target.value)}
+            />
+          );
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingLiveStateToParentInComponent",
+        },
+      ],
+    },
+    {
+      name: "Pass live internal state, empty deps",
+      code: js`
+        const Child = ({ onTextChanged }) => {
+          const [text, setText] = useState();
+
+          useEffect(() => {
+            onTextChanged(text);
+          }, []);
+
+          return (
+            <input
+              type="text"
+              onChange={(e) => setText(e.target.value)}
+            />
+          );
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingLiveStateToParentInComponent",
+        },
+      ],
+    },
+    {
       name: "Pass live derived internal state in custom hook",
       code: js`
         const useCustomHook = ({ onTextChanged }) => {
