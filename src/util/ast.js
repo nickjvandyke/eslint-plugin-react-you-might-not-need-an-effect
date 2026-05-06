@@ -137,9 +137,6 @@ export const getCallExpr = (ref, current = ref.identifier.parent) => {
 };
 
 /**
- * When using this, we assume that args passed to the derived function are always eventually passed to underlying functions.
- * Which they may not be. Would be better to trace the actual flow of values, but that's complex. We'll start with this for now.
- *
  * @param {Rule.RuleContext} context
  * @param {Scope.Reference} ref
  * @returns {Rule.Node[]}
