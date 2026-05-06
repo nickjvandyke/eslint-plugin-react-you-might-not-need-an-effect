@@ -85,6 +85,20 @@ new MyRuleTester().run("no-initialize-state", rule, {
         };
       `,
     },
+    {
+      // We ignore this because `react-hooks/exhaustive-deps` will flag the unnecessary dependency
+      name: "Setter with other dependency",
+      code: js`
+        function MyComponent() {
+          const [state, setState] = useState();
+          const [other, setOther] = useState();
+
+          useEffect(() => {
+            setState("Hello");
+          }, [other]);
+        }
+      `,
+    },
   ],
   invalid: [
     {
@@ -180,6 +194,24 @@ new MyRuleTester().run("no-initialize-state", rule, {
         {
           messageId: "avoidInitializingState",
           data: { state: "state", arguments: "upstreamTwo" },
+        },
+      ],
+    },
+    {
+      name: "Only setter in deps",
+      code: js`
+        function MyComponent() {
+          const [state, setState] = useState();
+
+          useEffect(() => {
+            setState("Hello");
+          }, [setState]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidInitializingState",
+          data: { state: "state", arguments: '"Hello"' },
         },
       ],
     },

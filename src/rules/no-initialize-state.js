@@ -4,6 +4,7 @@ import {
   getEffectFn,
   getEffectFnRefs,
   getUseStateDecl,
+  isStateSetter,
   isStateSetterCall,
   isUseEffect,
 } from "../util/react.js";
@@ -31,8 +32,10 @@ export default {
       const depsRefs = getEffectDepsRefs(context, node);
       if (!effectFnRefs || !depsRefs) return;
 
-      // TODO: Should this length check account for the setter in the deps? exhaustive-deps doesn't warn one way or the other
-      if (depsRefs.length > 0) return;
+      const isEffectRunOnlyOnMount =
+        // `react-hooks/exhaustive-deps` doesn't flag state setters one way or the other, so filter them out first
+        depsRefs.filter((ref) => !isStateSetter(ref)).length === 0;
+      if (!isEffectRunOnlyOnMount) return;
 
       effectFnRefs
         .filter((ref) => isStateSetterCall(context, ref))
