@@ -13,7 +13,6 @@ const plugin = {
   meta: {
     name: "react-you-might-not-need-an-effect",
   },
-  configs: {},
   rules: {
     "no-derived-state": noDerivedState,
     "no-chain-state-updates": noChainStateUpdates,
@@ -24,6 +23,8 @@ const plugin = {
     "no-pass-data-to-parent": noPassDataToParent,
     "no-initialize-state": noInitializeState,
   },
+  // Later `Object.assign`ed because it needs to self-reference `plugin`
+  configs: {},
 };
 
 const rules = (severity: "error" | "warn") =>
@@ -37,7 +38,7 @@ const rules = (severity: "error" | "warn") =>
 
 const languageOptions = {
   globals: {
-    // Required so we can resolve global references to their upstream global variables
+    // Required to resolve global references to their upstream global variables
     ...globals.browser,
   },
   parserOptions: {
@@ -47,41 +48,30 @@ const languageOptions = {
   },
 };
 
-const flatConfig = {
+const flat = (severity: "error" | "warn") => ({
   files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"],
   plugins: {
-    // Object.assign above so we can reference `plugin` here
     [plugin.meta.name]: plugin,
   },
   languageOptions,
-};
-
-const legacyConfig = {
-  plugins: [plugin.meta.name],
-  ...languageOptions,
-};
-
-Object.assign(plugin.configs, {
-  recommended: {
-    ...flatConfig,
-    rules: rules("warn"),
-  },
-  strict: {
-    ...flatConfig,
-    rules: rules("error"),
-  },
-  "legacy-recommended": {
-    ...legacyConfig,
-    rules: rules("warn"),
-  },
-  "legacy-strict": {
-    ...legacyConfig,
-    rules: rules("error"),
-  },
+  rules: rules(severity),
 });
 
-// HACK: unsure how to type this properly because we need to gradually add fields to `plugin` so it can self-reference in the config definitions.
-// TODO: Possible to type this such we can also spread it in `oxlint.config.ts`?
+const legacy = (severity: "error" | "warn") => ({
+  plugins: [plugin.meta.name],
+  ...languageOptions,
+  rules: rules(severity),
+});
+
+Object.assign(plugin.configs, {
+  recommended: flat("warn"),
+  strict: flat("error"),
+  "legacy-recommended": legacy("warn"),
+  "legacy-strict": legacy("error"),
+});
+
+// HACK: Need to cast because of the `Object.assign`. Unsure of workaround - that's the official method...
+// TODO: Possible to type this such we can spread it in `oxlint.config.ts`?
 export default plugin as unknown as ESLint.Plugin & {
   configs: {
     recommended: Linter.Config;
