@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.2](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.1...v0.10.2) (2026-05-24)
+
+
+### Bug Fixes
+
+* **no-event-handler:** flag at usage instead of declaration ([bffa6ab](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/bffa6ab27236c59e38fba9235c8d7e165a00e899))
+
 ## [0.10.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.0...v0.10.1) (2026-05-06)
 
 
