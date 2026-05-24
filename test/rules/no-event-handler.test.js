@@ -220,9 +220,38 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          line: 7,
+          column: 17,
         },
         {
           messageId: "avoidEventHandler",
+          line: 7,
+          column: 38,
+        },
+      ],
+    },
+    {
+      name: "Derived prop in multiple if tests",
+      code: js`
+        import { useEffect } from "react";
+
+        function Form({ value }) {
+          const derived = String(value);
+
+          useEffect(() => {
+            if (derived === "a") return;
+            if (derived === "b") return;
+          }, [derived]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPropHandler",
+          line: 8,
+        },
+        {
+          messageId: "avoidPropHandler",
+          line: 9,
         },
       ],
     },

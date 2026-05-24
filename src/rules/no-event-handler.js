@@ -38,30 +38,25 @@ export default {
       // TODO: Can we also flag this when the deps are internal, and the body calls internal stuff?
       // That'd overlap with other rules though... maybe just useRefs?
 
-      const ifTestRefs = findDownstreamNodes(context, node, "IfStatement")
+      findDownstreamNodes(context, node, "IfStatement")
         .filter((ifNode) => !ifNode.alternate)
-        .flatMap((ifNode) =>
-          getDownstreamRefs(context, ifNode.test).flatMap((ref) =>
-            getUpstreamRefs(context, ref),
-          ),
-        );
+        .map((ifNode) => ifNode.test)
+        .flatMap((ifTestNode) => getDownstreamRefs(context, ifTestNode))
+        .forEach((ifTestRef) => {
+          const upstreamRefs = getUpstreamRefs(context, ifTestRef);
 
-      ifTestRefs
-        .filter((ref) => isState(ref))
-        .forEach((ref) => {
-          context.report({
-            node: ref.identifier,
-            messageId: "avoidEventHandler",
-          });
-        });
-
-      ifTestRefs
-        .filter((ref) => isProp(context, ref))
-        .forEach((ref) => {
-          context.report({
-            node: ref.identifier,
-            messageId: "avoidPropHandler",
-          });
+          if (upstreamRefs.some((ref) => isState(ref))) {
+            context.report({
+              node: ifTestRef.identifier,
+              messageId: "avoidEventHandler",
+            });
+          }
+          if (upstreamRefs.some((ref) => isProp(context, ref))) {
+            context.report({
+              node: ifTestRef.identifier,
+              messageId: "avoidPropHandler",
+            });
+          }
         });
     },
   }),
