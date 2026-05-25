@@ -1,4 +1,4 @@
-# ESLint — React — You Might Not Need An Effect
+# ESLint – React – You Might Not Need An Effect
 
 [![NPM version](https://img.shields.io/npm/v/eslint-plugin-react-you-might-not-need-an-effect?color=3BB143)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect?activeTab=versions)
 [![NPM Downloads](https://img.shields.io/npm/dw/eslint-plugin-react-you-might-not-need-an-effect?color=000080)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect)
