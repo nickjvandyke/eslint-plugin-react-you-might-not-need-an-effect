@@ -17,7 +17,7 @@ import {
   isRefCall,
   getEffectFn,
   isCustomHook,
-  findContainingNode,
+  findEnclosingReactNode,
 } from "../util/react.js";
 
 /**
@@ -45,9 +45,9 @@ export default {
       if (!effectFnRefs) return;
 
       effectFnRefs
+        .filter((ref) => isSynchronous(ref.identifier, getEffectFn(node)))
         .filter((ref) => isPropCall(context, ref))
         .filter((ref) => !isRefCall(context, ref))
-        .filter((ref) => isSynchronous(ref.identifier, getEffectFn(node)))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
 
@@ -70,7 +70,7 @@ export default {
           );
 
           if (isSomeArgsData) {
-            const containingNode = findContainingNode(context, node);
+            const containingNode = findEnclosingReactNode(context, node);
             const isInCustomHook =
               containingNode && isCustomHook(containingNode);
 

@@ -6,13 +6,13 @@ import {
 import {
   getEffectFnRefs,
   getEffectDepsRefs,
-  isStateSetterCall,
+  isStateCall,
   isProp,
   getUseStateDecl,
   isCustomHook,
   isState,
   isUseEffect,
-  findContainingNode,
+  findEnclosingReactNode,
 } from "../util/react.js";
 
 /**
@@ -39,7 +39,7 @@ export default {
       const depsRefs = getEffectDepsRefs(context, node);
       if (!effectFnRefs || !depsRefs) return;
       // Skip custom hooks because they can't receive `key` like components can.
-      const containingNode = findContainingNode(context, node);
+      const containingNode = findEnclosingReactNode(context, node);
       if (containingNode && isCustomHook(containingNode)) return;
 
       const propUsedToResetAllState = findPropUsedToResetAllState(
@@ -67,14 +67,14 @@ const findPropUsedToResetAllState = (
   useEffectNode,
 ) => {
   const stateSetterRefs = effectFnRefs.filter((ref) =>
-    isStateSetterCall(context, ref),
+    isStateCall(context, ref),
   );
 
   const isAllStateReset =
     stateSetterRefs.length > 0 &&
     stateSetterRefs.every((ref) => isSetStateToInitialValue(context, ref)) &&
     stateSetterRefs.length ===
-      countUseStates(context, findContainingNode(context, useEffectNode));
+      countUseStates(context, findEnclosingReactNode(context, useEffectNode));
 
   return isAllStateReset
     ? depsRefs
@@ -120,6 +120,15 @@ const isSetStateToInitialValue = (context, setterRef) => {
 const countUseStates = (context, componentNode) => {
   if (!componentNode) {
     return 0;
+  }
+
+  if (
+    componentNode.type === "VariableDeclarator" &&
+    componentNode.init.type === "CallExpression"
+  ) {
+    // Because `descend` will ignore the arguments.
+    // TODO: Maybe an indicator we should filter out arguments somewhere else?
+    componentNode = componentNode.init.arguments[0];
   }
 
   return getDownstreamRefs(context, componentNode).filter((ref) => isState(ref))

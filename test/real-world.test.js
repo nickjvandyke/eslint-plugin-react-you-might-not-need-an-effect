@@ -467,6 +467,30 @@ describe("recommended rules on real-world code", () => {
         `,
       },
       {
+        name: "React Query: fresh data synced to state",
+        code: js`
+          import { useState, useEffect } from 'react'
+          import { useQuery } from '@tanstack/react-query'
+
+          function Items() {
+            const [filter, setFilter] = useState('all')
+            const { data } = useQuery({
+              queryKey: ['items', filter],
+              queryFn: () => fetchItems(filter),
+            })
+            const [items, setItems] = useState([])
+
+            useEffect(() => {
+              if (data) {
+                setItems(data)
+              }
+            }, [data])
+
+            return <div>{items}</div>
+          }
+        `,
+      },
+      {
         // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/57
         name: "TanStack useInfinityQuery useInView with state, prop and data in queryKey",
         code: js`

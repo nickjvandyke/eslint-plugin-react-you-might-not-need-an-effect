@@ -1,7 +1,7 @@
 import {
   getDownstreamRefs,
+  getSynchronousCallChain,
   getUpstreamRefs,
-  isEventualCallTo,
   getRef,
 } from "./ast.js";
 
@@ -13,7 +13,7 @@ import {
  * @param {Rule.Node} node
  * @returns {boolean}
  */
-export const isReactFunctionalComponent = (node) =>
+export const isFunctionalComponent = (node) =>
   (node.type === "FunctionDeclaration" ||
     (node.type === "VariableDeclarator" &&
       (node.init.type === "ArrowFunctionExpression" ||
@@ -29,7 +29,7 @@ export const isReactFunctionalComponent = (node) =>
  * @param {Rule.RuleContext} context
  * @param {Rule.Node} node
  */
-export const isReactFunctionalHOC = (context, node) => {
+export const isFunctionalHOC = (context, node) => {
   const knownPureHocs = ["memo", "forwardRef"];
 
   // e.g. `const MyComponent = withRouter(() => ...)`
@@ -56,7 +56,7 @@ export const isReactFunctionalHOC = (context, node) => {
       .some((wrapper) => !knownPureHocs.includes(wrapper.callee.name)) ?? false;
 
   return (
-    isReactFunctionalComponent(node) &&
+    isFunctionalComponent(node) &&
     (isWrappedInline(node) || isWrappedSeparately(node))
   );
 };
@@ -113,6 +113,13 @@ export const isUseEffect = (node) =>
     (node.callee.type === "MemberExpression" &&
       node.callee.object.name === "React" &&
       node.callee.property.name === "useEffect"));
+
+export const isUseCallback = (node) =>
+  node.type === "CallExpression" &&
+  ((node.callee.type === "Identifier" && node.callee.name === "useCallback") ||
+    (node.callee.type === "MemberExpression" &&
+      node.callee.object.name === "React" &&
+      node.callee.property.name === "useCallback"));
 
 /**
  * @param {Rule.Node} node - The `useEffect` `CallExpression` node
@@ -204,8 +211,8 @@ export const isProp = (context, ref) =>
         : def.node;
     return (
       def.type === "Parameter" &&
-      ((isReactFunctionalComponent(declaringNode) &&
-        !isReactFunctionalHOC(context, declaringNode)) ||
+      ((isFunctionalComponent(declaringNode) &&
+        !isFunctionalHOC(context, declaringNode)) ||
         isCustomHook(declaringNode))
     );
   });
@@ -259,8 +266,10 @@ export const isRefCurrent = (ref) =>
  * @param {Scope.Reference} ref
  * @returns {boolean} Whether this reference eventually calls a state setter function or a method on state.
  */
-export const isStateSetterCall = (context, ref) =>
-  isEventualCallTo(context, ref, isStateSetter);
+export const isStateCall = (context, ref) =>
+  getSynchronousCallChain(context, ref).some((callChainRef) =>
+    isStateSetter(callChainRef),
+  );
 
 /**
  * @param {Rule.RuleContext} context
@@ -268,7 +277,9 @@ export const isStateSetterCall = (context, ref) =>
  * @returns {boolean} Whether this reference eventually calls a prop function or a method on a prop.
  */
 export const isPropCall = (context, ref) =>
-  isEventualCallTo(context, ref, (ref) => isProp(context, ref));
+  getSynchronousCallChain(context, ref).some((callChainRef) =>
+    isProp(context, callChainRef),
+  );
 
 /**
  * @param {Rule.RuleContext} context
@@ -276,7 +287,9 @@ export const isPropCall = (context, ref) =>
  * @returns {boolean} Whether this reference eventually calls a method on a ref.
  */
 export const isRefCall = (context, ref) =>
-  isEventualCallTo(context, ref, (ref) => isRefCurrent(ref) || isRef(ref));
+  getSynchronousCallChain(context, ref).some(
+    (callChainRef) => isRefCurrent(callChainRef) || isRef(callChainRef),
+  );
 
 /**
  * @param {Rule.RuleContext} context
@@ -326,16 +339,16 @@ export const hasCleanup = (node) => {
  * @param context {Rule.RuleContext}
  * @returns {Rule.Node | undefined}
  */
-export const findContainingNode = (context, node) => {
+export const findEnclosingReactNode = (context, node) => {
   if (!node) {
     return undefined;
   } else if (
-    isReactFunctionalComponent(node) ||
-    isReactFunctionalHOC(context, node) ||
+    isFunctionalComponent(node) ||
+    isFunctionalHOC(context, node) ||
     isCustomHook(node)
   ) {
     return node;
   } else {
-    return findContainingNode(context, node.parent);
+    return findEnclosingReactNode(context, node.parent);
   }
 };

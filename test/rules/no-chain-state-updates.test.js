@@ -68,6 +68,20 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
         }
       `,
     },
+    {
+      // Because we don't trace the args passed to `JSON.stringify` (hard to generalize)
+      name: "JSON.stringifying internal state in deps",
+      code: js`
+        function Feed() {
+          const [posts, setPosts] = useState([]);
+          const [scrollPosition, setScrollPosition] = useState(0);
+
+          useEffect(() => {
+            setScrollPosition(0);
+          }, [JSON.stringify(posts)]);
+        }
+      `,
+    },
   ],
   invalid: [
     {
@@ -103,24 +117,6 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
               setIsGameOver(finalRound);
             }
           }, [round]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidChainingStateUpdates",
-        },
-      ],
-    },
-    {
-      name: "JSON.stringifying internal state in deps",
-      code: js`
-        function Feed() {
-          const [posts, setPosts] = useState([]);
-          const [scrollPosition, setScrollPosition] = useState(0);
-
-          useEffect(() => {
-            setScrollPosition(0);
-          }, [JSON.stringify(posts)]);
         }
       `,
       errors: [

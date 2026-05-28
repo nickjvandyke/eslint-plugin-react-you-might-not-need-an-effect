@@ -6,7 +6,7 @@ import {
 import {
   getEffectFnRefs,
   getEffectDepsRefs,
-  isStateSetterCall,
+  isStateCall,
   getUseStateDecl,
   isProp,
   hasCleanup,
@@ -39,8 +39,8 @@ export default {
       if (!effectFnRefs || !depsRefs) return;
 
       effectFnRefs
-        .filter((ref) => isStateSetterCall(context, ref))
         .filter((ref) => isSynchronous(ref.identifier, getEffectFn(node)))
+        .filter((ref) => isStateCall(context, ref))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           const useStateNode = getUseStateDecl(context, ref);

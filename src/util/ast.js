@@ -10,13 +10,13 @@
  * @param {(ref: Scope.Reference) => boolean|undefined} visit Return `false` to stop ascending at this reference.
  * @param {Set<Scope.Reference>} visited
  */
-const ascend = (context, ref, visit, visited = new Set()) => {
+export const ascend = (context, ref, visit, visited = new Set()) => {
   if (visited.has(ref)) {
     return;
   }
-  const contine = visit(ref);
+  const cont = visit(ref);
   visited.add(ref);
-  if (contine === false) {
+  if (cont === false) {
     return;
   }
 
@@ -42,7 +42,7 @@ const ascend = (context, ref, visit, visited = new Set()) => {
  * @param {(node: Rule.Node) => void} visit
  * @param {Set<Rule.Node>} visited
  */
-const descend = (context, node, visit, visited = new Set()) => {
+export const descend = (context, node, visit, visited = new Set()) => {
   if (visited.has(node)) {
     return;
   }
@@ -50,6 +50,11 @@ const descend = (context, node, visit, visited = new Set()) => {
   visited.add(node);
 
   (context.sourceCode.visitorKeys[node.type] || [])
+    // Many times simpler to just ignore arguments (to CallExpressions and NewExpressions).
+    // Too complicated to follow them, and often we can't at all (imported functions).
+    // Assuming they are used in a particular way introduces false positives, and sometimes libraries _intend_ for such uses.
+    // Ignoring introduces some false negatives for uncommon patterns, but that's much preferred.
+    .filter((key) => key !== "arguments")
     .map((key) => node[key])
     // Some `visitorKeys` are optional, e.g. `IfStatement.alternate`.
     .filter(Boolean)
@@ -57,8 +62,6 @@ const descend = (context, node, visit, visited = new Set()) => {
     .flatMap((child) => (Array.isArray(child) ? child : [child]))
     // Can rarely be `null`, e.g. `ArrayPattern.elements[1]` when an element is skipped - `const [a, , b] = arr`
     .filter(Boolean)
-    // Check it's a valid AST node
-    .filter((child) => typeof child.type === "string")
     .forEach((child) => descend(context, child, visit, visited));
 };
 
@@ -150,42 +153,6 @@ export const getArgsUpstreamRefs = (context, ref) =>
     .flatMap((ref) => getUpstreamRefs(context, ref));
 
 /**
- * Walks up the AST until `within` (returns `true`) or finding any of (returns `false`):
- * - An `async` function
- * - A function declaration, which may be called at an arbitrary later time.
- *   - While we return false for *this* call, we may still return true for a call to a function containing this call. Combined with `getUpstreamRefs()`, it will still flag calls to the containing function.
- * - A function passed as a callback to another function or `new` - event handler, `setTimeout`, `Promise.then()` `new ResizeObserver()`, etc.
- *
- * Inspired by https://eslint-react.xyz/docs/rules/hooks-extra-no-direct-set-state-in-use-effect
- *
- * @param {Rule.Node} node
- * @param {Rule.Node} within
- * @returns {boolean}
- */
-export const isSynchronous = (node, within) => {
-  if (node == within) {
-    // Reached the top without finding any blocking conditions
-    return true;
-  } else if (
-    // Obviously not immediate if async. I think this never occurs in isolation from the below conditions? But just in case for now.
-    node.async ||
-    // Present when calling externally-defined async functions (`node.async` is only true on the function definition).
-    // We'll play it safe and assume that any state, props, etc. used in this function or its upstreams may be used asynchronously.
-    node.type === "AwaitExpression" ||
-    (node.type === "UnaryExpression" && node.operator === "void") ||
-    // Inside a named or anonymous function that may be called later, either as a callback or by the developer.
-    node.type === "FunctionDeclaration" ||
-    node.type === "FunctionExpression" ||
-    node.type === "ArrowFunctionExpression"
-  ) {
-    return false;
-  } else {
-    // Keep going up
-    return isSynchronous(node.parent, within);
-  }
-};
-
-/**
  * @param {Rule.RuleContext} context
  * @param {Rule.Node} identifier
  *
@@ -197,24 +164,67 @@ export const getRef = (context, identifier) =>
     ?.references.find((ref) => ref.identifier == identifier);
 
 /**
- * Checks whether `ref` is a call expression that eventually calls another expression matching the given predicate.
+ * @param {Rule.Node} node
+ * @param {Rule.Node} within
+ * @returns {boolean}
+ */
+export const isSynchronous = (node, within) => {
+  if (node === within) {
+    // Reached the top without finding any blocking conditions
+    return true;
+  } else if (
+    // Obviously not immediate if async. I think this never occurs in isolation from the below conditions? But just in case for now.
+    node.async ||
+    // Present when calling externally-defined async functions (`node.parent.async` is only true on the function definition).
+    // We'll play it safe and assume that any state, props, etc. used in this function or its upstreams may be used asynchronously.
+    node.type === "AwaitExpression" ||
+    (node.type === "UnaryExpression" && node.operator === "void") ||
+    // Inside a named or anonymous function that may be called later, either as a callback or by the developer.
+    node.type === "FunctionDeclaration" ||
+    node.type === "FunctionExpression" ||
+    node.type === "ArrowFunctionExpression"
+  ) {
+    return false;
+  } else {
+    return isSynchronous(node.parent, within);
+  }
+};
+
+/**
+ * Follow the synchronous call chain from `ref`.
  *
- * Beware this can false negative when function refs are passed to external functions that call them internally (which we can't see).
- * But we prefer that to assuming that refs passed to external functions are always called -
- * we don't have type information, so would false positive on non-function refs passed to external functions.
+ * Beware the call chain stops at external functions, even when internal functions are passed to them.
+ * The external function may call the passed function, but we can't see/check that.
+ * And we don't have type information to know whether the passed ref is a function or just state.
+ * We prefer the false-negative solution here - less noise.
  *
  * @param {Rule.RuleContext} context
  * @param {Scope.Reference} ref
- * @param {(ref: Scope.Reference) => boolean} predicate
- * @returns {boolean} Whether this reference eventually calls a function matching the given predicate.
+ * @returns {Scope.Reference[]} Call Expression references that are called synchronously upon calling the given `ref`.
  */
-export const isEventualCallTo = (context, ref, predicate) => {
+export const getSynchronousCallChain = (context, ref) => {
+  const findEnclosingFunction = (node) => {
+    if (!node) {
+      return undefined;
+    } else if (
+      node.type === "FunctionDeclaration" ||
+      node.type === "FunctionExpression" ||
+      node.type === "ArrowFunctionExpression"
+    ) {
+      return node;
+    } else {
+      return findEnclosingFunction(node.parent);
+    }
+  };
+
   const callExprRefs = [];
   ascend(context, ref, (upRef) => {
     const callExpr = getCallExpr(upRef);
-    if (callExpr) {
+    const enclosingFn = findEnclosingFunction(callExpr);
+    if (callExpr && isSynchronous(callExpr, enclosingFn)) {
       callExprRefs.push(upRef);
     } else {
+      // Synchronous call chain has ended - stop ascending
       // TODO: Should still continue when this ref is 1:1 to the upstream ref.
       // e.g. `const ref2 = ref1;` or `const { destructured } = props;`.
       // Currently always returns false when checking `ref2()` or `destructured()` even though `ref1` or `props` might pass `predicate`.
@@ -223,5 +233,5 @@ export const isEventualCallTo = (context, ref, predicate) => {
       return false;
     }
   });
-  return callExprRefs.some(predicate);
+  return callExprRefs;
 };

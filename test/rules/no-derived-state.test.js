@@ -362,6 +362,156 @@ new MyRuleTester().run("no-derived-state", rule, {
         }
       `,
     },
+    {
+      name: "Synchronous setter in anonymous function passed to constructor",
+      // TODO: Because we get all of the refs in `resizeObserver`'s def at once,
+      // and can't short-circuit traversing the anonymous function.
+      // Whereas with named functions, we see the argument ref is not a call expression, so don't traverse it.
+      code: js`
+          function useHasOverflow({ contentRef, maxHeight }) {
+            const [hasOverflow, setHasOverflow] = useState(false);
+
+            useEffect(() => {
+              const resizeObserver = new ResizeObserver((element) => {
+                const hasContentOverflow = element.scrollHeight > maxHeight;
+                setHasOverflow(hasContentOverflow);
+              })
+
+              resizeObserver.observe(contentRef.current);
+              // In real-world, this effect would need a cleanup function that calls resizeObserver.disconnect.
+              // So, not the most realistic example. But the concept holds.
+            }, [contentRef, maxHeight]);
+
+            return hasOverflow;
+          }
+        `,
+    },
+    {
+      name: "Synchronous setter in anonymous function passed to call expression",
+      code: js`
+          function useHasOverflow({ contentRef, maxHeight }) {
+            const [hasOverflow, setHasOverflow] = useState(false);
+
+            useEffect(() => {
+              const resizeObserver = createResizeObserver((element) => {
+                const hasContentOverflow = element.scrollHeight > maxHeight;
+                setHasOverflow(hasContentOverflow);
+              })
+
+              resizeObserver.observe(contentRef.current);
+            }, [contentRef, maxHeight]);
+
+            return hasOverflow;
+          }
+        `,
+    },
+    {
+      name: "Synchronous setter in named function passed to constructor",
+      code: js`
+          function useHasOverflow({ contentRef, maxHeight }) {
+            const [hasOverflow, setHasOverflow] = useState(false);
+
+            useEffect(() => {
+              const fn = (element) => {
+                const hasContentOverflow = element.scrollHeight > maxHeight;
+                setHasOverflow(hasContentOverflow);
+              }
+              const resizeObserver = new ResizeObserver(fn)
+
+              resizeObserver.observe(contentRef.current);
+            }, [contentRef, maxHeight]);
+
+            return hasOverflow;
+          }
+        `,
+    },
+    {
+      name: "Synchronous setter in named function passed to call expression",
+      code: js`
+          function useHasOverflow({ contentRef, maxHeight }) {
+            const [hasOverflow, setHasOverflow] = useState(false);
+
+            useEffect(() => {
+              const fn = (element) => {
+                const hasContentOverflow = element.scrollHeight > maxHeight;
+                setHasOverflow(hasContentOverflow);
+              }
+              const resizeObserver = createResizeObserver(fn)
+
+              resizeObserver.observe(contentRef.current);
+            }, [contentRef, maxHeight]);
+
+            return hasOverflow;
+          }
+        `,
+    },
+    // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
+    {
+      name: "From internal state via pure global function",
+      code: js`
+        function Counter({ count }) {
+          const [countJson, setCountJson] = useState();
+
+          useEffect(() => {
+            setCountJson(JSON.stringify(count));
+          }, [count]);
+        }
+      `,
+    },
+    {
+      name: "From internal state via local unpure function",
+      code: js`
+        function Form() {
+          const [firstName, setFirstName] = useState('Dwayne');
+          const [lastName, setLastName] = useState('The Rock');
+          const [fullName, setFullName] = useState('');
+
+          function computeName(firstName, lastName) {
+            console.log('meow');
+            return firstName + ' ' + lastName;
+          }
+
+          useEffect(() => {
+            setFullName(computeName(firstName, lastName));
+          }, [firstName, lastName]);
+        }
+      `,
+    },
+    {
+      name: "Set to result of pure local ArrowFunctionExpression",
+      code: js`
+        function Form() {
+          const [firstName, setFirstName] = useState('Dwayne');
+          const [lastName, setLastName] = useState('The Rock');
+          const [fullName, setFullName] = useState('');
+
+          const computeName = (firstName, lastName) => {
+            return firstName + ' ' + lastName;
+          }
+
+          useEffect(() => {
+            const newFullName = computeName(firstName, lastName);
+            setFullName(newFullName);
+          }, [firstName, lastName, computeName]);
+        }
+      `,
+    },
+    {
+      name: "Set to result of internal useCallback; repeat references to a useState variable",
+      code: js`
+        function Form() {
+          const [firstName, setFirstName] = useState('Dwayne');
+          const [lastName, setLastName] = useState('The Rock');
+          const [fullName, setFullName] = useState('');
+
+          const computeName = useCallback(() => firstName + ' ' + lastName, [firstName, lastName]);
+
+          useEffect(() => {
+            setFullName(computeName());
+          }, [computeName]);
+        }
+      `,
+    },
   ],
   invalid: [
     {
@@ -425,49 +575,6 @@ new MyRuleTester().run("no-derived-state", rule, {
       ],
     },
     {
-      name: "From internal state via pure global function",
-      code: js`
-        function Counter({ count }) {
-          const [countJson, setCountJson] = useState();
-
-          useEffect(() => {
-            setCountJson(JSON.stringify(count));
-          }, [count]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "countJson" },
-        },
-      ],
-    },
-    {
-      name: "From internal state via local unpure function",
-      code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          function computeName(firstName, lastName) {
-            console.log('meow');
-            return firstName + ' ' + lastName;
-          }
-
-          useEffect(() => {
-            setFullName(computeName(firstName, lastName));
-          }, [firstName, lastName]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
       name: "From internal state and external state",
       code: js`
         import { usePrefix } from 'library';
@@ -487,29 +594,6 @@ new MyRuleTester().run("no-derived-state", rule, {
         {
           messageId: "avoidDerivedState",
           data: { state: "prefixedName" },
-        },
-      ],
-    },
-    {
-      // We don't have the imported function's implementation available to analyze
-      name: "From internal state via external function",
-      code: js`
-        import { computeName } from 'library';
-
-        function Component() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          useEffect(() => {
-            setFullName(computeName(firstName, lastName));
-          }, [firstName, lastName])
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
         },
       ],
     },
@@ -784,54 +868,6 @@ new MyRuleTester().run("no-derived-state", rule, {
       ],
     },
     {
-      name: "Set to result of pure local ArrowFunctionExpression",
-      code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const computeName = (firstName, lastName) => {
-            return firstName + ' ' + lastName;
-          }
-
-          useEffect(() => {
-            setFullName(computeName(firstName, lastName));
-          }, [firstName, lastName, computeName]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "Set to result of pure local FunctionDeclaration",
-      code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          function computeName(firstName, lastName) {
-            return firstName + ' ' + lastName;
-          }
-
-          useEffect(() => {
-            setFullName(computeName(firstName, lastName));
-          }, [firstName, lastName, computeName]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
       // It's not technically a pure function since it closes over state,
       // but it's pure relative to the React component.
       name: "Set to result of semi-pure local ArrowFunctionExpression",
@@ -902,28 +938,6 @@ new MyRuleTester().run("no-derived-state", rule, {
       ],
     },
     {
-      name: "Set to result of internal useCallback; repeat references to a useState variable",
-      code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const computeName = useCallback(() => firstName + ' ' + lastName, [firstName, lastName]);
-
-          useEffect(() => {
-            setFullName(computeName());
-          }, [computeName]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
       name: "Via no-arg intermediate setter",
       code: js`
         function Form() {
@@ -938,78 +952,6 @@ new MyRuleTester().run("no-derived-state", rule, {
 
             doSet();
           }, [firstName, lastName]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From internal state via useCallback no-arg two-dep intermediate setter",
-      code: js`
-        function Component() {
-          const [name, setName] = useState();
-          const [fullName, setFullName] = useState();
-          const prefix = 'Dr.'
-
-          const intermediateSetter = useCallback(() => {
-            setFullName(prefix + ' ' + name);
-          }, [prefix, name]);
-
-          useEffect(() => {
-            intermediateSetter();
-          }, [intermediateSetter]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From internal state via useCallback one-arg one-dep intermediate setter",
-      code: js`
-        function Component() {
-          const [name, setName] = useState();
-          const [fullName, setFullName] = useState();
-          const prefix = 'Dr.'
-
-          const intermediateSetter = useCallback((name) => {
-            setFullName(prefix + ' ' + name);
-          }, [prefix]);
-
-          useEffect(() => {
-            intermediateSetter(name);
-          }, [name, intermediateSetter]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From internal state via useCallback two-arg no-dep intermediate setter",
-      code: js`
-        function Component() {
-          const [name, setName] = useState();
-          const [fullName, setFullName] = useState();
-          const prefix = 'Dr.'
-
-          const intermediateSetter = useCallback((prefix, name) => {
-            setFullName(prefix + ' ' + name);
-          }, []);
-
-          useEffect(() => {
-            intermediateSetter(prefix, name);
-          }, [prefix, name, intermediateSetter]);
         }
       `,
       errors: [

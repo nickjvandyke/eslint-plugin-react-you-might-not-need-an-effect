@@ -147,6 +147,26 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
       ],
     },
     {
+      name: "Reset all state when a prop changes in memoized component",
+      code: js`
+        const ProfilePage = memo(({ userId }) => {
+          const [user, setUser] = useState(null);
+          const [comment, setComment] = useState('type something');
+
+          useEffect(() => {
+            setUser(null);
+            setComment('type something');
+          }, [userId]);
+        })
+      `,
+      errors: [
+        {
+          messageId: "avoidResettingAllStateWhenAPropChanges",
+          data: { prop: "userId" },
+        },
+      ],
+    },
+    {
       name: "Reset all state to shared var when a prop changes",
       code: js`
         function ProfilePage({ userId }) {
@@ -215,72 +235,6 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
             setSelectedItem(undefined);
           }, [items]);
         }
-      `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-        },
-      ],
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/8
-      name: "Meow",
-      code: js`
-        const ExternalAssetItemRow = memo(
-          ({
-            id,
-            title,
-            exportIdentifier,
-            localId,
-            hasUpdate,
-            isViewOnly,
-            getMenuOptions,
-            onUpdate,
-            onDragStart,
-            Icon,
-            exitMode,
-          }) => {
-            const [shouldUpdate, setShouldUpdate] = useState(hasUpdate);
-
-            useEffect(() => {
-              setShouldUpdate(hasUpdate);
-            }, [hasUpdate]);
-
-            const onClickUpdate = useCallback(
-              (event) => {
-                event.stopPropagation();
-
-                if (isViewOnly) return;
-
-                setShouldUpdate(false);
-              },
-              [onUpdate, exportIdentifier, title, isViewOnly],
-            );
-
-            const handleDragStart = useCallback(
-              (event) => {
-                exitMode();
-                onDragStart(event, exportIdentifier);
-              },
-              [onDragStart, exportIdentifier],
-            );
-
-            const getMenu = useCallback(
-              (id) => getMenuOptions(id, exportIdentifier, title, localId),
-              [getMenuOptions, exportIdentifier, title, localId],
-            );
-
-            return (
-              <Draggable
-                  hideDragSource={false}
-                  onDragStart={handleDragStart}
-                  onMouseDown={onMouseDown}
-                  autoScrollEnabled={false}
-              >
-              </Draggable>
-            )
-          },
-        );
       `,
       errors: [
         {

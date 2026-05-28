@@ -246,8 +246,6 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
     },
     {
       // TODO: This could be done (possibly conditionally) in the parent because it doesn't depend on anything in the child?
-      // May fit better as a new, more general rule.
-      // Unflagged right now because it's not a synchronous call. I don't remember the GH issue we added that for... but it's somewhere.
       name: "Pass window event data to parent",
       code: js`
         const Child = ({ onResized }) => {
@@ -262,12 +260,6 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onResized]);
         }
       `,
-      // TODO:
-      // errors: [
-      //   {
-      //     messageId: "avoidPassingDataToParentInComponent",
-      //   },
-      // ],
     },
   ],
   invalid: [

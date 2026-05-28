@@ -4,13 +4,13 @@ import {
   isSynchronous,
 } from "../util/ast.js";
 import {
+  getEffectFn,
   getEffectFnRefs,
   isPropCall,
   isState,
   isUseEffect,
-  getEffectFn,
   isCustomHook,
-  findContainingNode,
+  findEnclosingReactNode,
 } from "../util/react.js";
 
 /**
@@ -38,8 +38,8 @@ export default {
       if (!effectFnRefs) return;
 
       effectFnRefs
-        .filter((ref) => isPropCall(context, ref))
         .filter((ref) => isSynchronous(ref.identifier, getEffectFn(node)))
+        .filter((ref) => isPropCall(context, ref))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           const isStateInArgs = getArgsUpstreamRefs(context, ref).some((ref) =>
@@ -47,7 +47,7 @@ export default {
           );
 
           if (isStateInArgs) {
-            const containingNode = findContainingNode(context, node);
+            const containingNode = findEnclosingReactNode(context, node);
             const isInCustomHook =
               containingNode && isCustomHook(containingNode);
 

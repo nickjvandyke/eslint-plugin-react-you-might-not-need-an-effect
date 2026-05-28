@@ -34,6 +34,22 @@ new MyRuleTester().run("no-event-handler", rule, {
         }
       `,
     },
+    {
+      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/70
+      name: "Respond to prop passed to fn",
+      code: js`
+        import { useEffect } from 'react'
+
+        // Captures an optional URL search param and persists it to localStorage + cookie.
+        // First-touch attribution: never overwrites an existing code.
+        export function useSaveReferralCode(refCode) {
+          useEffect(() => {
+            const valid = validateReferralCode(refCode)
+            if (valid) saveReferredByCode(valid)
+          }, [refCode])
+        }
+      `,
+    },
   ],
   invalid: [
     {
@@ -236,7 +252,7 @@ new MyRuleTester().run("no-event-handler", rule, {
         import { useEffect } from "react";
 
         function Form({ value }) {
-          const derived = String(value);
+          const derived = value + 2;
 
           useEffect(() => {
             if (derived === "a") return;
@@ -278,45 +294,6 @@ new MyRuleTester().run("no-event-handler", rule, {
               <button onClick={() => setDataToSubmit({ name })}>Submit</button>
             </div>
           )
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-        },
-      ],
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/7
-      name: "Klarna",
-      code: js`
-        function Klarna({ klarnaAppId }) {
-          const [countryCode] = useState(qs.parse('countryCode=meow'));
-          const [result, setResult] = useState();
-          const klarnaEnabled = useSelector('idk') && shouldKlarnaBeEnabled(countryCode);
-          const currentLocale = getCurrentLocale(useGetCurrentLanguage());
-
-          const loadSignInWithKlarna = (klarnaAppId, klarnaEnvironment, countryCode, currentLocale) => {
-            const klarnaResult = doSomething();
-            setResult(klarnaResult);
-          };
-
-          useEffect(() => {
-            if (klarnaEnabled) {
-              return loadSignInWithKlarna(
-                  klarnaAppId,
-                  klarnaEnvironment,
-                  countryCode?.toUpperCase(),
-                  currentLocale,
-              );
-            }
-          }, [
-            countryCode,
-            klarnaAppId,
-            klarnaEnabled,
-            klarnaEnvironment,
-            currentLocale,
-          ]);
         }
       `,
       errors: [

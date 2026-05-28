@@ -4,6 +4,7 @@ import {
   getUpstreamRefs,
 } from "../util/ast.js";
 import {
+  getEffectFn,
   getEffectFnRefs,
   hasCleanup,
   isProp,
@@ -38,7 +39,10 @@ export default {
       // TODO: Can we also flag this when the deps are internal, and the body calls internal stuff?
       // That'd overlap with other rules though... maybe just useRefs?
 
-      findDownstreamNodes(context, node, "IfStatement")
+      const effectFn = getEffectFn(node);
+      if (!effectFn) return;
+
+      findDownstreamNodes(context, effectFn, "IfStatement")
         .filter((ifNode) => !ifNode.alternate)
         .map((ifNode) => ifNode.test)
         .flatMap((ifTestNode) => getDownstreamRefs(context, ifTestNode))
