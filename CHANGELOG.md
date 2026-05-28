@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.10.3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.2...v0.10.3) (2026-05-28)
+
+
+### Features
+
+* **no-derived-state:** remove `avoidSingleSetter` case ([06a1874](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/06a187427904fac4893ce12563fb0e7841d18dbf))
+
+
+### Bug Fixes
+
+* ignore arguments to upstream calls when searching for state/props ([b457d15](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/b457d153cd733c35fca14665bb23928302a753d4))
+
 ## [0.10.2](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.1...v0.10.2) (2026-05-24)
 
 
