@@ -143,21 +143,6 @@ function Form() {
 }
 ```
 
-Disallow storing state derived from *any* state (even external) when the setter is only called once:
-
-```js
-function Form() {
-  const prefix = useQuery('/prefix');
-  const [name, setName] = useState();
-  const [prefixedName, setPrefixedName] = useState();
-
-  useEffect(() => {
-    // ❌ Avoid storing derived state. "prefixedName" is only set here, and thus could be computed directly during render.
-    setPrefixedName(prefix + name)
-  }, [prefix, name]);
-}
-```
-
 ### [`no-chain-state-updates`](https://react.dev/learn/you-might-not-need-an-effect#chains-of-computations)
 
 Disallow chaining state updates in an effect:

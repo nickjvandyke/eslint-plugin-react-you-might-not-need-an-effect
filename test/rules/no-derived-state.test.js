@@ -628,25 +628,6 @@ new MyRuleTester().run("no-derived-state", rule, {
       ],
     },
     {
-      name: "From external state with single setter call",
-      code: js`
-        function Feed() {
-          const { data: posts } = fetch('/posts');
-          const [selectedPost, setSelectedPost] = useState();
-
-          useEffect(() => {
-            setSelectedPost(posts[0]);
-          }, [posts, setSelectedPost]);
-        }
-      `,
-      errors: [
-        {
-          messageId: "avoidSingleSetter",
-          data: { state: "selectedPost" },
-        },
-      ],
-    },
-    {
       name: "From internal plus external state with single setter call",
       code: js`
         function Form() {
@@ -663,26 +644,6 @@ new MyRuleTester().run("no-derived-state", rule, {
         {
           messageId: "avoidDerivedState",
           data: { state: "prefixedName" },
-        },
-      ],
-    },
-    {
-      name: "From HOC prop with single setter call",
-      code: js`
-        import { withRouter } from 'react-router-dom';
-
-        const MyComponent = withRouter(({ history }) => {
-          const [location, setLocation] = useState();
-
-          useEffect(() => {
-            setLocation(history.location);
-          }, [history.location]);
-        });
-      `,
-      errors: [
-        {
-          messageId: "avoidSingleSetter",
-          data: { state: "location" },
         },
       ],
     },

@@ -1,7 +1,6 @@
 import {
   getArgsUpstreamRefs,
   getCallExpr,
-  getUpstreamRefs,
   isSynchronous,
 } from "../util/ast.js";
 import {
@@ -30,8 +29,6 @@ export default {
     messages: {
       avoidDerivedState:
         'Avoid storing derived state. Compute "{{state}}" directly during render, optionally with `useMemo` if it\'s expensive.',
-      avoidSingleSetter:
-        'Avoid storing derived state. "{{state}}" is only set here, and thus could be computed directly during render.',
     },
   },
   create: (context) => ({
@@ -52,21 +49,9 @@ export default {
           )?.name;
 
           const argsUpstreamRefs = getArgsUpstreamRefs(context, ref);
-          const depsUpstreamRefs = depsRefs.flatMap((ref) =>
-            getUpstreamRefs(context, ref),
-          );
           const isSomeArgsInternal = argsUpstreamRefs.some(
             (ref) => isState(ref) || isProp(context, ref),
           );
-
-          const isAllArgsInDeps =
-            argsUpstreamRefs.length &&
-            argsUpstreamRefs.every((argRef) =>
-              depsUpstreamRefs.some(
-                (depRef) => argRef.resolved == depRef.resolved,
-              ),
-            );
-          const isValueAlwaysInSync = isAllArgsInDeps && countCalls(ref) === 1;
 
           if (isSomeArgsInternal) {
             context.report({
@@ -74,19 +59,8 @@ export default {
               messageId: "avoidDerivedState",
               data: { state: stateName },
             });
-          } else if (isValueAlwaysInSync) {
-            context.report({
-              node: callExpr,
-              messageId: "avoidSingleSetter",
-              data: { state: stateName },
-            });
           }
         });
     },
   }),
 };
-
-const countCalls = (ref) =>
-  ref.resolved.references.filter(
-    (ref) => ref.identifier.parent.type === "CallExpression",
-  ).length;
