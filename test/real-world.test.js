@@ -545,7 +545,9 @@ describe("recommended rules on real-world code", () => {
         assert.strictEqual(
           messages.length,
           0,
-          `Expected no lint errors for: ${name}, but got: ${JSON.stringify(messages)}`,
+          `Expected no lint errors for: ${name}, but got: ${JSON.stringify(
+            messages,
+          )}`,
         );
       });
     });

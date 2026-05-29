@@ -1,8 +1,9 @@
+import type { Rule, Scope } from "eslint";
 import {
   getCallExpr,
   getDownstreamRefs,
   getUpstreamRefs,
-} from "../util/ast.js";
+} from "../util/ast.ts";
 import {
   getEffectFnRefs,
   getEffectDepsRefs,
@@ -13,12 +14,9 @@ import {
   isState,
   isUseEffect,
   findEnclosingReactNode,
-} from "../util/react.js";
+} from "../util/react.ts";
 
-/**
- * @type {import("eslint").Rule.RuleModule}
- */
-export default {
+const rule: Rule.RuleModule = {
   meta: {
     type: "suggestion",
     docs: {
@@ -32,8 +30,8 @@ export default {
         'Avoid resetting all state when a prop changes. Instead, if "{{prop}}" is a key, pass it as `key` so React will reset the component\'s state.',
     },
   },
-  create: (context) => ({
-    CallExpression: (node) => {
+  create: (context: Rule.RuleContext) => ({
+    CallExpression: (node: Rule.Node) => {
       if (!isUseEffect(node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
       const depsRefs = getEffectDepsRefs(context, node);
@@ -61,39 +59,57 @@ export default {
 };
 
 const findPropUsedToResetAllState = (
-  context,
-  effectFnRefs,
-  depsRefs,
-  useEffectNode,
-) => {
-  const stateSetterRefs = effectFnRefs.filter((ref) =>
+  context: Rule.RuleContext,
+  effectFnRefs: Scope.Reference[],
+  depsRefs: Scope.Reference[],
+  useEffectNode: Rule.Node,
+): Scope.Reference | undefined => {
+  const stateSetterRefs = effectFnRefs.filter((ref: Scope.Reference) =>
     isStateCall(context, ref),
   );
 
   const isAllStateReset =
     stateSetterRefs.length > 0 &&
-    stateSetterRefs.every((ref) => isSetStateToInitialValue(context, ref)) &&
+    stateSetterRefs.every((ref: Scope.Reference) =>
+      isSetStateToInitialValue(context, ref),
+    ) &&
     stateSetterRefs.length ===
       countUseStates(context, findEnclosingReactNode(context, useEffectNode));
 
   return isAllStateReset
     ? depsRefs
-        .flatMap((ref) => getUpstreamRefs(context, ref))
-        .find((ref) => isProp(context, ref))
+        .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
+        .find((ref: Scope.Reference) => isProp(context, ref))
     : undefined;
 };
 
-const isSetStateToInitialValue = (context, setterRef) => {
-  const setStateToValue = getCallExpr(setterRef).arguments[0];
-  const stateInitialValue = getUseStateDecl(context, setterRef).init
-    .arguments[0];
+const isSetStateToInitialValue = (
+  context: Rule.RuleContext,
+  setterRef: Scope.Reference,
+): boolean => {
+  const callExpr = getCallExpr(setterRef);
+  if (!callExpr || callExpr.type !== "CallExpression") return false;
+  const setStateToValue: Rule.Node | undefined = callExpr.arguments[0] as
+    | Rule.Node
+    | undefined;
+  const useStateDecl = getUseStateDecl(context, setterRef);
+  if (
+    !useStateDecl ||
+    useStateDecl.type !== "VariableDeclarator" ||
+    !useStateDecl.init ||
+    useStateDecl.init.type !== "CallExpression"
+  )
+    return false;
+  const stateInitialValue: Rule.Node | undefined = useStateDecl.init
+    .arguments[0] as Rule.Node | undefined;
 
   // `useState()` (with no args) defaults to `undefined`,
   // so ommitting the arg is equivalent to passing `undefined`.
   // Technically this would false positive if they shadowed
   // `undefined` in only one of the scopes (only possible via `var`),
   // but I hope no one would do that.
-  const isUndefined = (node) => node === undefined || node.name === "undefined";
+  const isUndefined = (node: Rule.Node | undefined): boolean =>
+    node === undefined || ("name" in node && node.name === "undefined");
   if (isUndefined(setStateToValue) && isUndefined(stateInitialValue)) {
     return true;
   }
@@ -111,26 +127,33 @@ const isSetStateToInitialValue = (context, setterRef) => {
   // TODO: This is one of the few times we compare just the immediate nodes,
   // not upstream variables - that seems pretty complicated here?
   // At the least, upstream functions would have to return literals for us to consider too, not just variables...
+  if (!setStateToValue || !stateInitialValue) return false;
   return (
     context.sourceCode.getText(setStateToValue) ===
     context.sourceCode.getText(stateInitialValue)
   );
 };
 
-const countUseStates = (context, componentNode) => {
+const countUseStates = (
+  context: Rule.RuleContext,
+  componentNode: Rule.Node | undefined,
+): number => {
   if (!componentNode) {
     return 0;
   }
 
   if (
     componentNode.type === "VariableDeclarator" &&
-    componentNode.init.type === "CallExpression"
+    componentNode.init?.type === "CallExpression"
   ) {
     // Because `descend` will ignore the arguments.
     // TODO: Maybe an indicator we should filter out arguments somewhere else?
-    componentNode = componentNode.init.arguments[0];
+    componentNode = componentNode.init.arguments[0] as Rule.Node;
   }
 
-  return getDownstreamRefs(context, componentNode).filter((ref) => isState(ref))
-    .length;
+  return getDownstreamRefs(context, componentNode).filter(
+    (ref: Scope.Reference) => isState(ref),
+  ).length;
 };
+
+export default rule;

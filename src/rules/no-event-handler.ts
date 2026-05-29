@@ -1,8 +1,9 @@
+import type { Rule, Scope } from "eslint";
 import {
   findDownstreamNodes,
   getDownstreamRefs,
   getUpstreamRefs,
-} from "../util/ast.js";
+} from "../util/ast.ts";
 import {
   getEffectFn,
   getEffectFnRefs,
@@ -10,12 +11,9 @@ import {
   isProp,
   isState,
   isUseEffect,
-} from "../util/react.js";
+} from "../util/react.ts";
 
-/**
- * @type {import("eslint").Rule.RuleModule}
- */
-export default {
+const rule: Rule.RuleModule = {
   meta: {
     type: "suggestion",
     docs: {
@@ -30,8 +28,8 @@ export default {
         "Avoid using props and effects as an event handler. Instead, move the handler to the parent component.",
     },
   },
-  create: (context) => ({
-    CallExpression: (node) => {
+  create: (context: Rule.RuleContext) => ({
+    CallExpression: (node: Rule.Node) => {
       if (!isUseEffect(node) || hasCleanup(node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
       if (!effectFnRefs) return;
@@ -43,19 +41,31 @@ export default {
       if (!effectFn) return;
 
       findDownstreamNodes(context, effectFn, "IfStatement")
-        .filter((ifNode) => !ifNode.alternate)
+        .filter(
+          (
+            ifNode,
+          ): ifNode is Rule.Node & {
+            type: "IfStatement";
+            test: Rule.Node;
+            alternate: Rule.Node | null;
+          } => ifNode.type === "IfStatement" && !ifNode.alternate,
+        )
         .map((ifNode) => ifNode.test)
-        .flatMap((ifTestNode) => getDownstreamRefs(context, ifTestNode))
-        .forEach((ifTestRef) => {
+        .flatMap((ifTestNode: Rule.Node) =>
+          getDownstreamRefs(context, ifTestNode),
+        )
+        .forEach((ifTestRef: Scope.Reference) => {
           const upstreamRefs = getUpstreamRefs(context, ifTestRef);
 
-          if (upstreamRefs.some((ref) => isState(ref))) {
+          if (upstreamRefs.some((ref: Scope.Reference) => isState(ref))) {
             context.report({
               node: ifTestRef.identifier,
               messageId: "avoidEventHandler",
             });
           }
-          if (upstreamRefs.some((ref) => isProp(context, ref))) {
+          if (
+            upstreamRefs.some((ref: Scope.Reference) => isProp(context, ref))
+          ) {
             context.report({
               node: ifTestRef.identifier,
               messageId: "avoidPropHandler",
@@ -65,3 +75,5 @@ export default {
     },
   }),
 };
+
+export default rule;

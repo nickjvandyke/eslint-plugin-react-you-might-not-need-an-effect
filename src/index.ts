@@ -1,11 +1,11 @@
-import noAdjustStateOnPropChange from "./rules/no-adjust-state-on-prop-change.js";
-import noResetAllStateOnPropChange from "./rules/no-reset-all-state-on-prop-change.js";
-import noEventHandler from "./rules/no-event-handler.js";
-import noPassLiveStateToParent from "./rules/no-pass-live-state-to-parent.js";
-import noInitializeState from "./rules/no-initialize-state.js";
-import noChainStateUpdates from "./rules/no-chain-state-updates.js";
-import noDerivedState from "./rules/no-derived-state.js";
-import noPassDataToParent from "./rules/no-pass-data-to-parent.js";
+import noAdjustStateOnPropChange from "./rules/no-adjust-state-on-prop-change.ts";
+import noResetAllStateOnPropChange from "./rules/no-reset-all-state-on-prop-change.ts";
+import noEventHandler from "./rules/no-event-handler.ts";
+import noPassLiveStateToParent from "./rules/no-pass-live-state-to-parent.ts";
+import noInitializeState from "./rules/no-initialize-state.ts";
+import noChainStateUpdates from "./rules/no-chain-state-updates.ts";
+import noDerivedState from "./rules/no-derived-state.ts";
+import noPassDataToParent from "./rules/no-pass-data-to-parent.ts";
 import globals from "globals";
 import type { ESLint, Linter } from "eslint";
 
@@ -28,13 +28,10 @@ const plugin = {
 };
 
 const rules = (severity: "error" | "warn") =>
-  Object.keys(plugin.rules).reduce(
-    (acc, ruleName) => {
-      acc[plugin.meta.name + "/" + ruleName] = severity;
-      return acc;
-    },
-    {} as Record<string, "error" | "warn">,
-  );
+  Object.keys(plugin.rules).reduce((acc, ruleName) => {
+    acc[plugin.meta.name + "/" + ruleName] = severity;
+    return acc;
+  }, {} as Record<string, "error" | "warn">);
 
 const languageOptions = {
   globals: {

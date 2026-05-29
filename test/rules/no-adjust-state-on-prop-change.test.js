@@ -1,5 +1,5 @@
 import { MyRuleTester, js } from "../rule-tester.js";
-import rule from "../../src/rules/no-adjust-state-on-prop-change.js";
+import rule from "../../src/rules/no-adjust-state-on-prop-change.ts";
 
 new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
   valid: [

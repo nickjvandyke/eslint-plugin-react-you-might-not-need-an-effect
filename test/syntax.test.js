@@ -1,5 +1,5 @@
 import { MyRuleTester, js } from "./rule-tester.js";
-import noDerivedState from "../src/rules/no-derived-state.js";
+import noDerivedState from "../src/rules/no-derived-state.ts";
 
 // Analysis is quite syntax-dependent,
 // so here we have a bunch of semantically equivalent simple tests to verify various syntax.
@@ -510,7 +510,7 @@ new MyRuleTester().run("syntax", noDerivedState, {
     },
     {
       name: "Set derived state via identical intermediate setter",
-      todo: true, // TODO: See `isEventualCallTo`
+      todo: true,
       code: js`
         const Component = () => {
           const [data, setData] = useState();

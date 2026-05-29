@@ -1,8 +1,9 @@
+import type { Rule, Scope } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
   isSynchronous,
-} from "../util/ast.js";
+} from "../util/ast.ts";
 import {
   getEffectFn,
   getEffectFnRefs,
@@ -11,12 +12,9 @@ import {
   isUseEffect,
   isCustomHook,
   findEnclosingReactNode,
-} from "../util/react.js";
+} from "../util/react.ts";
 
-/**
- * @type {import("eslint").Rule.RuleModule}
- */
-export default {
+const rule: Rule.RuleModule = {
   meta: {
     type: "suggestion",
     docs: {
@@ -31,19 +29,24 @@ export default {
         "Avoid passing live state to parents in an effect. Instead, return the state from the hook.",
     },
   },
-  create: (context) => ({
-    CallExpression: (node) => {
+  create: (context: Rule.RuleContext) => ({
+    CallExpression: (node: Rule.Node) => {
       if (!isUseEffect(node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
       if (!effectFnRefs) return;
 
+      const effectFn = getEffectFn(node);
+      if (!effectFn) return;
       effectFnRefs
-        .filter((ref) => isSynchronous(ref.identifier, getEffectFn(node)))
-        .filter((ref) => isPropCall(context, ref))
-        .forEach((ref) => {
+        .filter((ref: Scope.Reference) =>
+          isSynchronous(ref.identifier as Rule.Node, effectFn),
+        )
+        .filter((ref: Scope.Reference) => isPropCall(context, ref))
+        .forEach((ref: Scope.Reference) => {
           const callExpr = getCallExpr(ref);
-          const isStateInArgs = getArgsUpstreamRefs(context, ref).some((ref) =>
-            isState(ref),
+          if (!callExpr) return;
+          const isStateInArgs = getArgsUpstreamRefs(context, ref).some(
+            (ref: Scope.Reference) => isState(ref),
           );
 
           if (isStateInArgs) {
@@ -62,3 +65,5 @@ export default {
     },
   }),
 };
+
+export default rule;

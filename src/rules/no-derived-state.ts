@@ -1,8 +1,9 @@
+import type { Rule, Scope } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
   isSynchronous,
-} from "../util/ast.js";
+} from "../util/ast.ts";
 import {
   getEffectFnRefs,
   getEffectDepsRefs,
@@ -13,12 +14,9 @@ import {
   isState,
   isUseEffect,
   getEffectFn,
-} from "../util/react.js";
+} from "../util/react.ts";
 
-/**
- * @type {import('eslint').Rule.RuleModule}
- */
-export default {
+const rule: Rule.RuleModule = {
   meta: {
     type: "suggestion",
     docs: {
@@ -31,26 +29,45 @@ export default {
         'Avoid storing derived state. Compute "{{state}}" directly during render, optionally with `useMemo` if it\'s expensive.',
     },
   },
-  create: (context) => ({
-    CallExpression: (node) => {
+  create: (context: Rule.RuleContext) => ({
+    CallExpression: (node: Rule.Node) => {
       if (!isUseEffect(node) || hasCleanup(node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
       const depsRefs = getEffectDepsRefs(context, node);
       if (!effectFnRefs || !depsRefs) return;
 
+      const effectFn = getEffectFn(node);
+      if (!effectFn) return;
       effectFnRefs
-        .filter((ref) => isSynchronous(ref.identifier, getEffectFn(node)))
-        .filter((ref) => isStateCall(context, ref))
-        .forEach((ref) => {
+        .filter((ref: Scope.Reference) =>
+          isSynchronous(ref.identifier as Rule.Node, effectFn),
+        )
+        .filter((ref: Scope.Reference) => isStateCall(context, ref))
+        .forEach((ref: Scope.Reference) => {
           const callExpr = getCallExpr(ref);
+          if (!callExpr) return;
           const useStateNode = getUseStateDecl(context, ref);
           const stateName = (
-            useStateNode?.id.elements[0] ?? useStateNode?.id.elements[1]
+            (
+              useStateNode as
+                | (Rule.Node & {
+                    id: { elements: ({ name: string } | null)[] };
+                  })
+                | undefined
+            )?.id?.elements[0] ??
+            (
+              useStateNode as
+                | (Rule.Node & {
+                    id: { elements: ({ name: string } | null)[] };
+                  })
+                | undefined
+            )?.id?.elements[1]
           )?.name;
+          if (!stateName) return;
 
           const argsUpstreamRefs = getArgsUpstreamRefs(context, ref);
           const isSomeArgsInternal = argsUpstreamRefs.some(
-            (ref) => isState(ref) || isProp(context, ref),
+            (ref: Scope.Reference) => isState(ref) || isProp(context, ref),
           );
 
           if (isSomeArgsInternal) {
@@ -64,3 +81,5 @@ export default {
     },
   }),
 };
+
+export default rule;

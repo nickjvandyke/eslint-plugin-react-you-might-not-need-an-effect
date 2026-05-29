@@ -1,9 +1,10 @@
+import type { Rule, Scope } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
   getUpstreamRefs,
   isSynchronous,
-} from "../util/ast.js";
+} from "../util/ast.ts";
 import {
   getEffectDepsRefs,
   getEffectFn,
@@ -11,12 +12,9 @@ import {
   isProp,
   isStateCall,
   isUseEffect,
-} from "../util/react.js";
+} from "../util/react.ts";
 
-/**
- * @type {import("eslint").Rule.RuleModule}
- */
-export default {
+const rule: Rule.RuleModule = {
   meta: {
     type: "suggestion",
     docs: {
@@ -29,26 +27,31 @@ export default {
         "Avoid adjusting state when a prop changes. Instead, adjust the state directly during render, or refactor your state to avoid this need entirely.",
     },
   },
-  create: (context) => ({
-    CallExpression: (node) => {
+  create: (context: Rule.RuleContext) => ({
+    CallExpression: (node: Rule.Node) => {
       if (!isUseEffect(node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
       const depsRefs = getEffectDepsRefs(context, node);
       if (!effectFnRefs || !depsRefs) return;
 
       const isSomeDepsProps = depsRefs
-        .flatMap((ref) => getUpstreamRefs(context, ref))
-        .some((ref) => isProp(context, ref));
+        .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
+        .some((ref: Scope.Reference) => isProp(context, ref));
 
+      const effectFn = getEffectFn(node);
+      if (!effectFn) return;
       effectFnRefs
-        .filter((ref) => isSynchronous(ref.identifier, getEffectFn(node)))
-        .filter((ref) => isStateCall(context, ref))
-        .forEach((ref) => {
+        .filter((ref: Scope.Reference) =>
+          isSynchronous(ref.identifier as Rule.Node, effectFn),
+        )
+        .filter((ref: Scope.Reference) => isStateCall(context, ref))
+        .forEach((ref: Scope.Reference) => {
           const callExpr = getCallExpr(ref);
+          if (!callExpr) return;
 
           // Avoid overlap with no-derived-state
           const isSomeArgsProps = getArgsUpstreamRefs(context, ref).some(
-            (ref) => isProp(context, ref),
+            (ref: Scope.Reference) => isProp(context, ref),
           );
 
           if (isSomeDepsProps && !isSomeArgsProps) {
@@ -61,3 +64,5 @@ export default {
     },
   }),
 };
+
+export default rule;

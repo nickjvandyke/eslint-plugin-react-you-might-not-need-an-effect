@@ -1,5 +1,5 @@
 import { MyRuleTester, js } from "../rule-tester.js";
-import rule from "../../src/rules/no-initialize-state.js";
+import rule from "../../src/rules/no-initialize-state.ts";
 
 new MyRuleTester().run("no-initialize-state", rule, {
   valid: [

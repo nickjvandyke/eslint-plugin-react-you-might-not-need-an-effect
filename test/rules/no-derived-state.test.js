@@ -1,5 +1,5 @@
 import { MyRuleTester, js } from "../rule-tester.js";
-import rule from "../../src/rules/no-derived-state.js";
+import rule from "../../src/rules/no-derived-state.ts";
 
 new MyRuleTester().run("no-derived-state", rule, {
   valid: [
