@@ -26,7 +26,9 @@
     "build": "tsdown",
     "typecheck": "tsgo",
     "lint": "eslint",
-    "test": "mocha --recursive ./src ./test"
+    "test": "mocha --recursive ./src ./test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "eslint",
@@ -63,7 +65,7 @@
     "pre-commit": "yarn lint-staged"
   },
   "lint-staged": {
-    "*.js": [
+    "*": [
       "prettier --write"
     ]
   }

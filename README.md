@@ -71,23 +71,21 @@ export default [
     // Enable every rule as a warning
     "plugin:react-you-might-not-need-an-effect/legacy-recommended",
     // Or enable every rule as an error
-    "plugin:react-you-might-not-need-an-effect/legacy-strict"
+    "plugin:react-you-might-not-need-an-effect/legacy-strict",
   ],
   // Or enable only specific rules
-  "plugins": [
-    "react-you-might-not-need-an-effect"
-  ],
+  "plugins": ["react-you-might-not-need-an-effect"],
   "rules": {
-    "react-you-might-not-need-an-effect/no-derived-state": "warn"
+    "react-you-might-not-need-an-effect/no-derived-state": "warn",
   },
   "env": {
-    "browser": true
+    "browser": true,
   },
   "parserOptions": {
     "ecmaFeatures": {
-      "jsx": true
-    }
-  }
+      "jsx": true,
+    },
+  },
 }
 ```
 
@@ -107,11 +105,11 @@ Use this plugin with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) thank
     "react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change": "warn",
     "react-you-might-not-need-an-effect/no-pass-live-state-to-parent": "warn",
     "react-you-might-not-need-an-effect/no-pass-data-to-parent": "warn",
-    "react-you-might-not-need-an-effect/no-initialize-state": "warn"
+    "react-you-might-not-need-an-effect/no-initialize-state": "warn",
   },
   "env": {
-    "browser": true
-  }
+    "browser": true,
+  },
 }
 ```
 
@@ -132,13 +130,13 @@ Disallow storing derived state in an effect:
 
 ```js
 function Form() {
-  const [firstName, setFirstName] = useState('Taylor');
-  const [lastName, setLastName] = useState('Swift');
+  const [firstName, setFirstName] = useState("Taylor");
+  const [lastName, setLastName] = useState("Swift");
 
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName] = useState("");
   useEffect(() => {
     // ❌ Avoid storing derived state. Compute "fullName" directly during render, optionally with `useMemo` if it's expensive.
-    setFullName(firstName + ' ' + lastName);
+    setFullName(firstName + " " + lastName);
   }, [firstName, lastName]);
 }
 ```
@@ -228,11 +226,11 @@ Disallow passing data to parents in an effect:
 
 ```js
 function Child({ onDataFetched }) {
-  const { data } = useQuery('/data')
+  const { data } = useQuery("/data");
 
   useEffect(() => {
     // ❌ Avoid passing data to parents in an effect. Instead, let the parent fetch the data itself and pass it down to the child as a prop.
-    onDataFetched(data)
+    onDataFetched(data);
   }, [data, onDataFetched]);
 }
 ```
