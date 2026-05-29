@@ -28,10 +28,13 @@ const plugin = {
 };
 
 const rules = (severity: "error" | "warn") =>
-  Object.keys(plugin.rules).reduce((acc, ruleName) => {
-    acc[plugin.meta.name + "/" + ruleName] = severity;
-    return acc;
-  }, {} as Record<string, "error" | "warn">);
+  Object.keys(plugin.rules).reduce(
+    (acc, ruleName) => {
+      acc[plugin.meta.name + "/" + ruleName] = severity;
+      return acc;
+    },
+    {} as Record<string, "error" | "warn">,
+  );
 
 const languageOptions = {
   globals: {

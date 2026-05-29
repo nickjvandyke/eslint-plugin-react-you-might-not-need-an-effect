@@ -4,7 +4,7 @@ import {
   getEffectDepsRefs,
   getEffectFn,
   getEffectFnRefs,
-  getUseStateDecl,
+  getStateName,
   isStateSetter,
   isStateCall,
   isUseEffect,
@@ -45,23 +45,7 @@ const rule: Rule.RuleModule = {
         .forEach((ref: Scope.Reference) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
-          const useStateNode = getUseStateDecl(context, ref);
-          const stateName = (
-            (
-              useStateNode as
-                | (Rule.Node & {
-                    id: { elements: ({ name: string } | null)[] };
-                  })
-                | undefined
-            )?.id?.elements[0] ??
-            (
-              useStateNode as
-                | (Rule.Node & {
-                    id: { elements: ({ name: string } | null)[] };
-                  })
-                | undefined
-            )?.id?.elements[1]
-          )?.name;
+          const stateName = getStateName(context, ref);
           if (!stateName) return;
           let argumentText = "undefined";
           if (

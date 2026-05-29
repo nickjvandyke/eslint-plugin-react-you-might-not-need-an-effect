@@ -278,17 +278,33 @@ export const isRefCall = (
     (callChainRef) => isRefCurrent(callChainRef) || isRef(callChainRef),
   );
 
+export const getStateName = (
+  context: Rule.RuleContext,
+  ref: Scope.Reference,
+): string | undefined => {
+  const decl = getUseStateDecl(context, ref);
+  if (!decl || decl.id.type !== "ArrayPattern") return undefined;
+  const elements = decl.id.elements;
+  const first = elements[0];
+  const second = elements[1];
+  return (
+    (first?.type === "Identifier" ? first : undefined) ??
+    (second?.type === "Identifier" ? second : undefined)
+  )?.name;
+};
+
 export const getUseStateDecl = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
-): Rule.Node | undefined => {
-  let node: Rule.Node | undefined = getUpstreamRefs(context, ref).find(
-    (upRef) => isUseState(upRef.identifier as Rule.Node),
+): (Rule.Node & { type: "VariableDeclarator" }) | undefined => {
+  const node = getUpstreamRefs(context, ref).find((upRef) =>
+    isUseState(upRef.identifier as Rule.Node),
   )?.identifier as Rule.Node | undefined;
-  while (node && node.type !== "VariableDeclarator") {
-    node = node.parent;
+  let result = node;
+  while (result && result.type !== "VariableDeclarator") {
+    result = result.parent;
   }
-  return node;
+  return result as (Rule.Node & { type: "VariableDeclarator" }) | undefined;
 };
 
 // While it *could* be an anti-pattern or unnecessary, effects *are* meant to synchronize systems.

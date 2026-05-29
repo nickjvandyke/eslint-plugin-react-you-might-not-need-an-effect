@@ -95,7 +95,6 @@ const isSetStateToInitialValue = (
   const useStateDecl = getUseStateDecl(context, setterRef);
   if (
     !useStateDecl ||
-    useStateDecl.type !== "VariableDeclarator" ||
     !useStateDecl.init ||
     useStateDecl.init.type !== "CallExpression"
   )
