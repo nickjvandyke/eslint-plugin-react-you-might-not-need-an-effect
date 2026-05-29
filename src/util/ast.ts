@@ -178,11 +178,37 @@ export const getSynchronousCallChain = (
     }
   };
 
+  const isAliasRef = (ref: Scope.Reference): boolean => {
+    const containerParents = [
+      "Property",
+      "ObjectExpression",
+      "ArrayExpression",
+      "SequenceExpression",
+    ];
+    let node: Rule.Node = ref.identifier as Rule.Node;
+    for (;;) {
+      const parent = node.parent;
+      if (
+        parent.type === "VariableDeclarator" &&
+        (parent as Rule.Node & { init: Rule.Node }).init === node
+      ) {
+        return true;
+      }
+      if (containerParents.includes(parent.type)) {
+        node = parent;
+        continue;
+      }
+      return false;
+    }
+  };
+
   const callExprRefs: Scope.Reference[] = [];
   ascend(context, ref, (upRef) => {
     const callExpr = getCallExpr(upRef);
     const enclosingFn = findEnclosingFunction(callExpr);
     if (callExpr && enclosingFn && isSynchronous(callExpr, enclosingFn)) {
+      callExprRefs.push(upRef);
+    } else if (isAliasRef(upRef)) {
       callExprRefs.push(upRef);
     } else {
       return false;

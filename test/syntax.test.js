@@ -509,19 +509,54 @@ new MyRuleTester().run("syntax", noDerivedState, {
       ],
     },
     {
-      name: "Set derived state via identical intermediate setter",
-      todo: true,
+      name: "Set derived state via direct alias",
       code: js`
         const Component = () => {
           const [data, setData] = useState();
           // No idea why someone would do this. But good to know we catch it.
-          // Passes when written as:
-          // const onFetchedWrapper = (v) => onFetched(v);
-          const onFetchedWrapper = onFetched;
+          const setDataWrapper = setData;
 
           useEffect(() => {
-            onFetchedWrapper(data);
-          }, [onFetchedWrapper, data]);
+            setDataWrapper(data);
+          }, [data]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidDerivedState",
+          data: { state: "data" },
+        },
+      ],
+    },
+    {
+      name: "Set derived state via destructured alias",
+      code: js`
+        const Component = () => {
+          const [data, setData] = useState();
+          const { setData: setDataAlias } = { setData };
+
+          useEffect(() => {
+            setDataAlias(data);
+          }, [data]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidDerivedState",
+          data: { state: "data" },
+        },
+      ],
+    },
+    {
+      name: "Set derived state via wrapped alias",
+      code: js`
+        const Component = () => {
+          const [data, setData] = useState();
+          const setDataWrapper = (v) => setData(v);
+
+          useEffect(() => {
+            setDataWrapper(data);
+          }, [data]);
         }
       `,
       errors: [

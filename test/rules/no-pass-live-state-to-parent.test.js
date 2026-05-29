@@ -318,7 +318,6 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
     },
     {
       name: "Pass live internal state via later-destructured prop",
-      todo: true, // TODO: See `isEventualCallTo`
       code: js`
         const Child = (props) => {
           const [data, setData] = useState();
