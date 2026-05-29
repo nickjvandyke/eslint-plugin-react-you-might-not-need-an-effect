@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.11.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.4...v0.11.0) (2026-05-29)
+
+
+### ⚠ BREAKING CHANGES
+
+* **no-external-store-subscription:** new recommended rule
+
+### Features
+
+* **no-external-store-subscription:** new recommended rule ([83267dc](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/83267dcde6315a5a1509a8edf554086e2a75ee20))
+
 ## [0.10.4](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.3...v0.10.4) (2026-05-29)
 
 
