@@ -454,9 +454,7 @@ new MyRuleTester().run("syntax", noDerivedState, {
       ],
     },
     {
-      // We don't follow functions passed directly to the effect right now
       name: "Passing non-anonymous function to effect",
-      todo: true,
       code: js`
         function Form() {
           const [firstName, setFirstName] = useState('');
@@ -473,7 +471,7 @@ new MyRuleTester().run("syntax", noDerivedState, {
       errors: [
         {
           messageId: "avoidDerivedState",
-          data: { state: "isOpen" },
+          data: { state: "name" },
         },
       ],
     },

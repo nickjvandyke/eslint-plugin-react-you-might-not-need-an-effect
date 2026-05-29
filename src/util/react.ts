@@ -127,24 +127,35 @@ export const isUseCallback = (node: Rule.Node): boolean =>
       node.callee.property.type === "Identifier" &&
       node.callee.property.name === "useCallback"));
 
-export const getEffectFn = (node: Rule.Node): Rule.Node | undefined => {
+export const getEffectFn = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): Rule.Node | undefined => {
   if (node.type !== "CallExpression") return undefined;
   const effectFn = node.arguments[0];
   if (
-    effectFn?.type !== "ArrowFunctionExpression" &&
-    effectFn?.type !== "FunctionExpression"
+    effectFn?.type === "ArrowFunctionExpression" ||
+    effectFn?.type === "FunctionExpression"
   ) {
-    return undefined;
+    return effectFn as Rule.Node;
+  } else if (effectFn?.type === "Identifier") {
+    const ref = getRef(context, effectFn as Rule.Node);
+    const def = ref?.resolved?.defs[0];
+    if (!def) return undefined;
+    return (
+      (def.node as Rule.Node & { init?: Rule.Node }).init ??
+      (def.node as Rule.Node & { body?: Rule.Node }).body
+    );
   }
 
-  return effectFn as Rule.Node;
+  return undefined;
 };
 
 export const getEffectFnRefs = (
   context: Rule.RuleContext,
   node: Rule.Node,
 ): Scope.Reference[] | undefined => {
-  const effectFn = getEffectFn(node);
+  const effectFn = getEffectFn(context, node);
   return effectFn ? getDownstreamRefs(context, effectFn) : undefined;
 };
 

@@ -35,7 +35,7 @@ const rule: Rule.RuleModule = {
           .length === 0;
       if (!isEffectRunOnlyOnMount) return;
 
-      const effectFn = getEffectFn(node);
+      const effectFn = getEffectFn(context, node);
       if (!effectFn) return;
       effectFnRefs
         .filter((ref: Scope.Reference) =>

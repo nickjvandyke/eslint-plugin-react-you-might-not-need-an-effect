@@ -37,7 +37,7 @@ const rule: Rule.RuleModule = {
       // TODO: Can we also flag this when the deps are internal, and the body calls internal stuff?
       // That'd overlap with other rules though... maybe just useRefs?
 
-      const effectFn = getEffectFn(node);
+      const effectFn = getEffectFn(context, node);
       if (!effectFn) return;
 
       findDownstreamNodes(context, effectFn, "IfStatement")

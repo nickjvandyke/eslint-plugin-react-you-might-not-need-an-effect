@@ -36,7 +36,7 @@ const rule: Rule.RuleModule = {
       const depsRefs = getEffectDepsRefs(context, node);
       if (!effectFnRefs || !depsRefs) return;
 
-      const effectFn = getEffectFn(node);
+      const effectFn = getEffectFn(context, node);
       if (!effectFn) return;
       effectFnRefs
         .filter((ref: Scope.Reference) =>

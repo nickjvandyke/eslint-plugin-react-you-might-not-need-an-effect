@@ -39,7 +39,7 @@ const rule: Rule.RuleModule = {
         .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
         .some((ref: Scope.Reference) => isState(ref));
 
-      const effectFn = getEffectFn(node);
+      const effectFn = getEffectFn(context, node);
       if (!effectFn) return;
       effectFnRefs
         .filter((ref: Scope.Reference) =>
