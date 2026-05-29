@@ -364,9 +364,6 @@ new MyRuleTester().run("no-derived-state", rule, {
     },
     {
       name: "Synchronous setter in anonymous function passed to constructor",
-      // TODO: Because we get all of the refs in `resizeObserver`'s def at once,
-      // and can't short-circuit traversing the anonymous function.
-      // Whereas with named functions, we see the argument ref is not a call expression, so don't traverse it.
       code: js`
           function useHasOverflow({ contentRef, maxHeight }) {
             const [hasOverflow, setHasOverflow] = useState(false);

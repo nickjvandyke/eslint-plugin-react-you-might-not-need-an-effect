@@ -529,11 +529,10 @@ describe("recommended rules on real-world code", () => {
             })
 
             React.useEffect(() => {
-              // TODO: Should maybe ideally also not flag no-event-handler here?
-              // if (inView && hasNextPage && !isFetchingNextPage) {
+              if (inView && hasNextPage && !isFetchingNextPage) {
                 // Must have "void" so we can infer it's an async function
                 void fetchNextPage()
-              // }
+              }
             }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
           }
         `,

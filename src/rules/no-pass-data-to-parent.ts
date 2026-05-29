@@ -59,8 +59,9 @@ const rule: Rule.RuleModule = {
             // and the "other stuff" only works on leaf nodes.
             // Mid-stream nodes are effectively nothing, and so would pass those.
             // TODO: Is there a positive way to identify "data" nodes instead of process of elimination?
-            .filter((ref: Scope.Reference) =>
-              getUpstreamRefs(context, ref).length === 1,
+            .filter(
+              (ref: Scope.Reference) =>
+                getUpstreamRefs(context, ref).length === 1,
             );
 
           const isSomeArgsData = argsUpstreamRefs.some(
