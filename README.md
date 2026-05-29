@@ -106,6 +106,7 @@ Use this plugin with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) thank
     "react-you-might-not-need-an-effect/no-pass-live-state-to-parent": "warn",
     "react-you-might-not-need-an-effect/no-pass-data-to-parent": "warn",
     "react-you-might-not-need-an-effect/no-initialize-state": "warn",
+    "react-you-might-not-need-an-effect/no-external-store-subscription": "warn",
   },
   "env": {
     "browser": true,
@@ -246,6 +247,31 @@ function Component() {
   useEffect(() => {
     // ❌ Avoid initializing state in an effect. Instead, initialize "state"'s `useState()` with "Hello World". For SSR hydration, prefer `useSyncExternalStore()`.
     setState("Hello World");
+  }, []);
+}
+```
+
+### [`no-external-store-subscription`](https://react.dev/learn/you-might-not-need-an-effect#subscribing-to-an-external-store)
+
+Disallow subscribing to an external store in an effect:
+
+```js
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(true);
+
+  useEffect(() => {
+    function updateState() {
+      setIsOnline(navigator.onLine);
+    }
+
+    updateState();
+    window.addEventListener("online", updateState);
+    window.addEventListener("offline", updateState);
+    return () => {
+      // ❌ Avoid using an effect to subscribe to an external store. Instead, use `useSyncExternalStore`.
+      window.removeEventListener("online", updateState);
+      window.removeEventListener("offline", updateState);
+    };
   }, []);
 }
 ```

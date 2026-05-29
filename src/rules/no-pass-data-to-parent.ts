@@ -13,7 +13,7 @@ import {
   isUseState,
   isUseRef,
   isProp,
-  hasCleanup,
+  getEffectCleanup,
   isUseEffect,
   isRefCall,
   getEffectFn,
@@ -38,12 +38,13 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node) || hasCleanup(node)) return;
+      if (!isUseEffect(node) || getEffectCleanup(context, node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
       if (!effectFnRefs) return;
 
       const effectFn = getEffectFn(context, node);
       if (!effectFn) return;
+
       effectFnRefs
         .filter((ref: Scope.Reference) =>
           isSynchronous(ref.identifier as Rule.Node, effectFn),

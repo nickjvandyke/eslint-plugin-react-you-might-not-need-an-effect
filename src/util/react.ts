@@ -307,22 +307,26 @@ export const getUseStateDecl = (
   return result as (Rule.Node & { type: "VariableDeclarator" }) | undefined;
 };
 
-// While it *could* be an anti-pattern or unnecessary, effects *are* meant to synchronize systems.
-// So we presume that a "subscription effect" is usually valid, or at least may be more readable.
-//
-// TODO: We might be able to use this more granularly, e.g. ignore state setters inside a subscription effect,
-// instead of ignoring the whole effect...? But it'd have to be more complicated, like also ignore the same state setters called in the body.
-export const hasCleanup = (node: Rule.Node): boolean => {
-  if (node.type !== "CallExpression") return false;
-  const effectFn = node.arguments[0];
-  return (
-    (effectFn.type === "ArrowFunctionExpression" ||
-      effectFn.type === "FunctionExpression") &&
-    effectFn.body.type === "BlockStatement" &&
-    effectFn.body.body.some(
-      (stmt) => stmt.type === "ReturnStatement" && stmt.argument,
-    )
-  );
+export const getEffectCleanup = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): (Rule.Node & { type: "ReturnStatement" }) | undefined => {
+  const effectFn = getEffectFn(context, node);
+  if (!effectFn) return undefined;
+  if (
+    (effectFn.type !== "ArrowFunctionExpression" &&
+      effectFn.type !== "FunctionExpression") ||
+    effectFn.body.type !== "BlockStatement"
+  ) {
+    return undefined;
+  }
+
+  return effectFn.body.body
+    .concat()
+    .reverse()
+    .find((stmt) => stmt.type === "ReturnStatement" && stmt.argument) as
+    | (Rule.Node & { type: "ReturnStatement" })
+    | undefined;
 };
 
 // Returns the component or custom hook that contains the `useEffect` node.

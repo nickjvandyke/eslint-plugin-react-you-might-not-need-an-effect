@@ -8,7 +8,7 @@ import {
 import {
   getEffectDepsRefs,
   getEffectFnRefs,
-  hasCleanup,
+  getEffectCleanup,
   isState,
   isStateCall,
   isUseEffect,
@@ -30,7 +30,7 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node) || hasCleanup(node)) return;
+      if (!isUseEffect(node) || getEffectCleanup(context, node)) return;
       const effectFnRefs = getEffectFnRefs(context, node);
       const depsRefs = getEffectDepsRefs(context, node);
       if (!effectFnRefs || !depsRefs) return;

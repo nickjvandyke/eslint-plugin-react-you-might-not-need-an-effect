@@ -6,6 +6,7 @@ import noInitializeState from "./rules/no-initialize-state.ts";
 import noChainStateUpdates from "./rules/no-chain-state-updates.ts";
 import noDerivedState from "./rules/no-derived-state.ts";
 import noPassDataToParent from "./rules/no-pass-data-to-parent.ts";
+import noExternalStoreSubscription from "./rules/no-external-store-subscription.ts";
 import globals from "globals";
 import type { ESLint, Linter } from "eslint";
 
@@ -22,6 +23,7 @@ const plugin = {
     "no-pass-live-state-to-parent": noPassLiveStateToParent,
     "no-pass-data-to-parent": noPassDataToParent,
     "no-initialize-state": noInitializeState,
+    "no-external-store-subscription": noExternalStoreSubscription,
   },
   // Later `Object.assign`ed because it needs to self-reference `plugin`
   configs: {},
