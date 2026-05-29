@@ -1,5 +1,5 @@
-import { MyRuleTester, js } from "../rule-tester.js";
-import rule from "../../src/rules/no-reset-all-state-on-prop-change.ts";
+import { MyRuleTester, js } from "../../test/rule-tester.js";
+import rule from "./no-reset-all-state-on-prop-change.ts";
 
 new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
   valid: [

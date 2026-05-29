@@ -1,5 +1,5 @@
-import { MyRuleTester, js } from "../rule-tester.js";
-import rule from "../../src/rules/no-chain-state-updates.ts";
+import { MyRuleTester, js } from "../../test/rule-tester.js";
+import rule from "./no-chain-state-updates.ts";
 
 new MyRuleTester().run("no-chain-state-updates", rule, {
   valid: [

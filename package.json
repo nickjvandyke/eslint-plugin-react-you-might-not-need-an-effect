@@ -26,7 +26,7 @@
     "build": "tsdown",
     "typecheck": "tsgo",
     "lint": "eslint",
-    "test": "mocha --recursive"
+    "test": "mocha --recursive ./src ./test"
   },
   "keywords": [
     "eslint",

@@ -1,5 +1,5 @@
-import { MyRuleTester, js } from "../rule-tester.js";
-import rule from "../../src/rules/no-pass-data-to-parent.ts";
+import { MyRuleTester, js } from "../../test/rule-tester.js";
+import rule from "./no-pass-data-to-parent.ts";
 
 new MyRuleTester().run("no-pass-data-to-parent", rule, {
   valid: [
