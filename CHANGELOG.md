@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.4](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.3...v0.10.4) (2026-05-29)
+
+
+### Features
+
+* follow call chains involving aliases ([ddbbb5d](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/ddbbb5d7458ee57dddf054a4eb879ad38b9faf05))
+* follow named functions passed to `useEffect`s ([d98285e](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/d98285e166d520aa02e9ac7b4c6982a8ea86cc60))
+
 ## [0.10.3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.2...v0.10.3) (2026-05-28)
 
 
