@@ -105,8 +105,8 @@ Use this plugin with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) thank
     "react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change": "warn",
     "react-you-might-not-need-an-effect/no-pass-live-state-to-parent": "warn",
     "react-you-might-not-need-an-effect/no-pass-data-to-parent": "warn",
-    "react-you-might-not-need-an-effect/no-initialize-state": "warn",
     "react-you-might-not-need-an-effect/no-external-store-subscription": "warn",
+    "react-you-might-not-need-an-effect/no-initialize-state": "warn",
   },
   "env": {
     "browser": true,
@@ -136,7 +136,7 @@ function Form() {
 
   const [fullName, setFullName] = useState("");
   useEffect(() => {
-    // ❌ Avoid storing derived state. Compute "fullName" directly during render, optionally with `useMemo` if it's expensive.
+    // ❌ Avoid storing derived state. Instead, compute "fullName" directly during render.
     setFullName(firstName + " " + lastName);
   }, [firstName, lastName]);
 }
@@ -153,7 +153,7 @@ function Game() {
 
   useEffect(() => {
     if (round > 10) {
-      // ❌ Avoid chaining state changes. When possible, update all relevant state simultaneously.
+      // ❌ Avoid chaining state changes. When possible, update "isGameOver" along with other relevant state simultaneously.
       setIsGameOver(true);
     }
   }, [round]);
@@ -165,10 +165,25 @@ function Game() {
 Disallow using state and an effect as an event handler:
 
 ```js
+function Form() {
+  const [dataToSubmit, setDataToSubmit] = useState();
+
+  useEffect(() => {
+    if (dataToSubmit) {
+      // ❌ Avoid using state and effects as an event handler. Instead, call the code that uses "dataToSubmit" directly when the event occurs.
+      submitData(dataToSubmit);
+    }
+  }, [dataToSubmit]);
+}
+```
+
+Disallow using props and an effect as an event handler:
+
+```js
 function ProductPage({ product, addToCart }) {
   useEffect(() => {
     if (product.isInCart) {
-      // ❌ Avoid using state and effects as an event handler. Instead, call the event handling code directly when the event occurs.
+      // ❌ Avoid using props and effects as an event handler. Instead, move the code that uses "product" to the parent component.
       showNotification(`Added ${product.name} to the shopping cart!`);
     }
   }, [product]);
@@ -185,7 +200,7 @@ function List({ items }) {
   const [selection, setSelection] = useState(null);
 
   useEffect(() => {
-    // ❌ Avoid adjusting state when a prop changes. Instead, adjust the state directly during render, or refactor your state to avoid this need entirely.
+    // ❌ Avoid adjusting state when a prop changes. Instead, adjust "selection" directly during render when "items" changes, or refactor your state to avoid this need entirely.
     setSelection(null);
   }, [items]);
 }
@@ -200,7 +215,7 @@ function List({ items }) {
   const [selection, setSelection] = useState(null);
 
   useEffect(() => {
-    // ❌ Avoid resetting all state when a prop changes. If "items" is a key, pass it as `key` instead so React will reset the component.
+    // ❌ Avoid resetting all state when a prop changes. If "items" is a key, pass it as "key" instead so React will reset the component.
     setSelection(null);
   }, [items]);
 }
@@ -208,47 +223,58 @@ function List({ items }) {
 
 ### [`no-pass-live-state-to-parent`](https://react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes)
 
-Disallow passing live state to parents in an effect:
+Disallow passing live state to parents in an effect from a component:
 
 ```js
 function Child({ onTextChanged }) {
   const [text, setText] = useState();
 
   useEffect(() => {
-    // ❌ Avoid passing live state to parents in an effect. Instead, lift the state to the parent and pass it down to the child as a prop.
+    // ❌ Avoid passing live state to parents in an effect. Instead, lift "text" to the parent and pass it down to "Child" as a prop.
     onTextChanged(text);
   }, [onTextChanged, text]);
 }
 ```
 
+Disallow passing live state to parents in an effect from a custom hook:
+
+```js
+const useCustomHook = ({ onTextChanged }) => {
+  const [text, setText] = useState();
+
+  useEffect(() => {
+    // ❌ Avoid passing live state to parents in an effect. Instead, return "text" from "useCustomHook".
+    onTextChanged(text);
+  }, [onTextChanged, text]);
+};
+```
+
 ### [`no-pass-data-to-parent`](https://react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent)
 
-Disallow passing data to parents in an effect:
+Disallow passing data to parents in an effect from a component:
 
 ```js
 function Child({ onDataFetched }) {
   const { data } = useQuery("/data");
 
   useEffect(() => {
-    // ❌ Avoid passing data to parents in an effect. Instead, let the parent fetch the data itself and pass it down to the child as a prop.
+    // ❌ Avoid passing data to parents in an effect. Instead, fetch "useQuery" in the parent and pass it down to "Child" as a prop.
     onDataFetched(data);
   }, [data, onDataFetched]);
 }
 ```
 
-### `no-initialize-state`
-
-Disallow initializing state in an effect:
+Disallow passing data to parents in an effect from a custom hook:
 
 ```js
-function Component() {
-  const [state, setState] = useState();
+const useCustomHook = ({ onFetched }) => {
+  const data = useSomeAPI();
 
   useEffect(() => {
-    // ❌ Avoid initializing state in an effect. Instead, initialize "state"'s `useState()` with "Hello World". For SSR hydration, prefer `useSyncExternalStore()`.
-    setState("Hello World");
-  }, []);
-}
+    // ❌ Avoid passing data to parents in an effect. Instead, return "useSomeAPI" from "useCustomHook".
+    onFetched(data);
+  }, [onFetched, data]);
+};
 ```
 
 ### [`no-external-store-subscription`](https://react.dev/learn/you-might-not-need-an-effect#subscribing-to-an-external-store)
@@ -268,10 +294,25 @@ function useOnlineStatus() {
     window.addEventListener("online", updateState);
     window.addEventListener("offline", updateState);
     return () => {
-      // ❌ Avoid using an effect to subscribe to an external store. Instead, use `useSyncExternalStore`.
+      // ❌ Avoid using an effect to subscribe to an external store. Instead, use "useSyncExternalStore" to manage "isOnline".
       window.removeEventListener("online", updateState);
       window.removeEventListener("offline", updateState);
     };
+  }, []);
+}
+```
+
+### `no-initialize-state`
+
+Disallow initializing state in an effect:
+
+```js
+function Component() {
+  const [state, setState] = useState();
+
+  useEffect(() => {
+    // ❌ Avoid initializing state in an effect. Instead, initialize "state"'s "useState()" with "Hello World". For SSR hydration, prefer "useSyncExternalStore".
+    setState("Hello World");
   }, []);
 }
 ```

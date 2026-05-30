@@ -23,9 +23,9 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidEventHandler:
-        "Avoid using state and effects as an event handler. Instead, call the event handling code directly when the event occurs.",
+        'Avoid using state and effects as an event handler. Instead, call the code that uses "{{name}}" directly when the event occurs.',
       avoidPropHandler:
-        "Avoid using props and effects as an event handler. Instead, move the handler to the parent component.",
+        'Avoid using props and effects as an event handler. Instead, move the code that uses "{{name}}" to the parent component.',
     },
   },
   create: (context: Rule.RuleContext) => ({
@@ -57,10 +57,13 @@ const rule: Rule.RuleModule = {
         .forEach((ifTestRef: Scope.Reference) => {
           const upstreamRefs = getUpstreamRefs(context, ifTestRef);
 
+          const name = ifTestRef.identifier.name;
+
           if (upstreamRefs.some((ref: Scope.Reference) => isState(ref))) {
             context.report({
               node: ifTestRef.identifier,
               messageId: "avoidEventHandler",
+              data: { name },
             });
           }
           if (
@@ -69,6 +72,7 @@ const rule: Rule.RuleModule = {
             context.report({
               node: ifTestRef.identifier,
               messageId: "avoidPropHandler",
+              data: { name },
             });
           }
         });

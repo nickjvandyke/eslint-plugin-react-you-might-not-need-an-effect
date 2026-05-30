@@ -10,6 +10,7 @@ import {
   getEffectFnRefs,
   getEffectFn,
   getEffectCleanup,
+  getStateName,
   isStateCall,
   isUseEffect,
 } from "../util/react.ts";
@@ -24,7 +25,7 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidExternalStoreSubscription:
-        "Avoid using an effect to subscribe to an external store. Instead, use `useSyncExternalStore`.",
+        'Avoid using an effect to subscribe to an external store. Instead, use "useSyncExternalStore" to manage "{{state}}".',
     },
   },
   create: (context: Rule.RuleContext) => ({
@@ -73,11 +74,17 @@ const rule: Rule.RuleModule = {
           (upRef) => upRef.resolved && cleanupVars.has(upRef.resolved),
         );
         if (!sharesCleanupVar) continue;
+
         const callExpr = getCallExpr(ref);
         if (!callExpr) continue;
+
+        const stateName = getStateName(context, ref);
+        if (!stateName) continue;
+
         context.report({
           node: callExpr,
           messageId: "avoidExternalStoreSubscription",
+          data: { state: stateName },
         });
       }
     },

@@ -350,3 +350,18 @@ export const findEnclosingReactNode = (
     return findEnclosingReactNode(context, node.parent);
   }
 };
+
+// Extracts the component/hook name from a node found by `findEnclosingReactNode`.
+// Returns `undefined` for anonymous functions or when the node cannot be identified.
+export const getComponentName = (
+  containingNode: Rule.Node | undefined,
+): string | undefined => {
+  if (!containingNode) return undefined;
+  if (
+    containingNode.type !== "FunctionDeclaration" &&
+    containingNode.type !== "VariableDeclarator"
+  )
+    return undefined;
+  return (containingNode as Rule.Node & { id: { name?: string } | null }).id
+    ?.name;
+};

@@ -66,6 +66,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidPropHandler",
+          data: { name: "dataToSubmit" },
         },
       ],
     },
@@ -97,6 +98,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
         },
       ],
     },
@@ -120,6 +122,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
         },
       ],
     },
@@ -143,6 +146,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
         },
       ],
     },
@@ -174,6 +178,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
         },
       ],
     },
@@ -205,6 +210,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
         },
       ],
     },
@@ -236,11 +242,13 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
           line: 7,
           column: 17,
         },
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
           line: 7,
           column: 38,
         },
@@ -263,10 +271,12 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidPropHandler",
+          data: { name: "derived" },
           line: 8,
         },
         {
           messageId: "avoidPropHandler",
+          data: { name: "derived" },
           line: 9,
         },
       ],
@@ -299,6 +309,7 @@ new MyRuleTester().run("no-event-handler", rule, {
       errors: [
         {
           messageId: "avoidEventHandler",
+          data: { name: "dataToSubmit" },
         },
       ],
     },

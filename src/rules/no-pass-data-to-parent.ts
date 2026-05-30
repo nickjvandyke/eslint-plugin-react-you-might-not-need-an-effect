@@ -6,6 +6,7 @@ import {
   isSynchronous,
 } from "../util/ast.ts";
 import {
+  getComponentName,
   getEffectFnRefs,
   isPropCall,
   isConstant,
@@ -31,9 +32,9 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidPassingDataToParentInComponent:
-        "Avoid passing data to parents in an effect. Instead, fetch the data in the parent and pass it down to the child as a prop.",
+        'Avoid passing data to parents in an effect. Instead, fetch "{{data}}" in the parent and pass it down to {{name}} as a prop.',
       avoidPassingDataToParentInHook:
-        "Avoid passing data to parents in an effect. Instead, return the data from the hook.",
+        'Avoid passing data to parents in an effect. Instead, return "{{data}}" from {{name}}.',
     },
   },
   create: (context: Rule.RuleContext) => ({
@@ -55,7 +56,7 @@ const rule: Rule.RuleModule = {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
 
-          const argsUpstreamRefs = getArgsUpstreamRefs(context, ref)
+          const dataArgs = getArgsUpstreamRefs(context, ref)
             // Leaves only because our "is data" check is essentially "is not all this other stuff",
             // and the "other stuff" only works on leaf nodes.
             // Mid-stream nodes are effectively nothing, and so would pass those.
@@ -63,31 +64,45 @@ const rule: Rule.RuleModule = {
             .filter(
               (ref: Scope.Reference) =>
                 getUpstreamRefs(context, ref).length === 1,
+            )
+            .filter(
+              (ref: Scope.Reference) =>
+                // TODO: Ideally would use isState and isRef, not the hooks.
+                // But because it goes to leaves. Must be some other way?
+                !isUseState(ref.identifier as Rule.Node) &&
+                !isProp(context, ref) &&
+                !isUseRef(ref.identifier as Rule.Node) &&
+                !isRefCurrent(ref) &&
+                !isConstant(ref),
             );
 
-          const isSomeArgsData = argsUpstreamRefs.some(
-            (ref: Scope.Reference) =>
-              // TODO: Ideally would use isState and isRef, not the hooks.
-              // But because it goes to leaves. Must be some other way?
-              !isUseState(ref.identifier as Rule.Node) &&
-              !isProp(context, ref) &&
-              !isUseRef(ref.identifier as Rule.Node) &&
-              !isRefCurrent(ref) &&
-              !isConstant(ref),
-          );
+          if (dataArgs.length === 0) return;
 
-          if (isSomeArgsData) {
-            const containingNode = findEnclosingReactNode(context, node);
-            const isInCustomHook =
-              containingNode && isCustomHook(containingNode);
+          const containingNode = findEnclosingReactNode(context, node);
+          const isInCustomHook = containingNode && isCustomHook(containingNode);
 
-            context.report({
-              node: callExpr,
-              messageId: isInCustomHook
-                ? "avoidPassingDataToParentInHook"
-                : "avoidPassingDataToParentInComponent",
-            });
-          }
+          context.report({
+            node: callExpr,
+            messageId: isInCustomHook
+              ? "avoidPassingDataToParentInHook"
+              : "avoidPassingDataToParentInComponent",
+            data: {
+              // TODO: Due to leaves above, name is the function called.
+              // We'd prefer the variable name that it's assigned to.
+              data: dataArgs
+                .map((r) => r.identifier.name)
+                .map((n) => `"${n}"`)
+                .join(" and "),
+              name: (() => {
+                const n = getComponentName(containingNode);
+                return n
+                  ? `"${n}"`
+                  : isInCustomHook
+                    ? "this custom hook"
+                    : "this component";
+              })(),
+            },
+          });
         });
     },
   }),

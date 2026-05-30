@@ -26,7 +26,7 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidDerivedState:
-        'Avoid storing derived state. Compute "{{state}}" directly during render, optionally with `useMemo` if it\'s expensive.',
+        'Avoid storing derived state. Instead, compute "{{state}}" directly during render.',
     },
   },
   create: (context: Rule.RuleContext) => ({

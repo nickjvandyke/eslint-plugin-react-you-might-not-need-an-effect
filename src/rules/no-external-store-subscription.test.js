@@ -230,7 +230,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return isOnline;
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "isOnline" },
+        },
+      ],
     },
     {
       name: "Inline arrow cleanup with same closure chain",
@@ -246,7 +251,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return isOnline;
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "isOnline" },
+        },
+      ],
     },
     {
       name: "Setter referenced directly in cleanup",
@@ -259,7 +269,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "isOnline" },
+        },
+      ],
     },
     {
       name: "Handler referenced in cleanup calls the setter",
@@ -275,7 +290,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return value;
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "value" },
+        },
+      ],
     },
     {
       name: "Multiple setters, one matching cleanup",
@@ -298,8 +318,8 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
         }
       `,
       errors: [
-        { messageId: "avoidExternalStoreSubscription" },
-        { messageId: "avoidExternalStoreSubscription" },
+        { messageId: "avoidExternalStoreSubscription", data: { state: "x" } },
+        { messageId: "avoidExternalStoreSubscription", data: { state: "y" } },
       ],
     },
     {
@@ -315,7 +335,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "value" },
+        },
+      ],
     },
     {
       name: "Intermediate synchronous function call pattern",
@@ -331,7 +356,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return value;
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "value" },
+        },
+      ],
     },
     {
       name: "Multiple sync setters, cleanup references one via arrow body",
@@ -348,7 +378,9 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        { messageId: "avoidExternalStoreSubscription", data: { state: "x" } },
+      ],
     },
     {
       name: "Setter via callback setter (setX(c => ...)) both in body and cleanup",
@@ -361,7 +393,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "count" },
+        },
+      ],
     },
     {
       name: "Body aliases setter directly, cleanup uses original name",
@@ -375,7 +412,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "count" },
+        },
+      ],
     },
     {
       name: "Body wraps setter in arrow function, cleanup uses original name",
@@ -389,7 +431,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [{ messageId: "avoidExternalStoreSubscription" }],
+      errors: [
+        {
+          messageId: "avoidExternalStoreSubscription",
+          data: { state: "count" },
+        },
+      ],
     },
   ],
 });

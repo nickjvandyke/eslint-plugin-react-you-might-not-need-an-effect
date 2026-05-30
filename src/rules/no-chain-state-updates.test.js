@@ -101,6 +101,7 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
       errors: [
         {
           messageId: "avoidChainingStateUpdates",
+          data: { state: "isGameOver" },
         },
       ],
     },
@@ -122,6 +123,7 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
       errors: [
         {
           messageId: "avoidChainingStateUpdates",
+          data: { state: "isGameOver" },
         },
       ],
     },
@@ -143,6 +145,7 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
       errors: [
         {
           messageId: "avoidChainingStateUpdates",
+          data: { state: "isGameOver" },
         },
       ],
     },
@@ -164,6 +167,7 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
       errors: [
         {
           messageId: "avoidChainingStateUpdates",
+          data: { state: "isGameOver" },
         },
       ],
     },

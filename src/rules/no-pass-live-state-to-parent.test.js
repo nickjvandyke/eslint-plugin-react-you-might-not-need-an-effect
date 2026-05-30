@@ -180,6 +180,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"text"', name: '"Child"' },
         },
       ],
     },
@@ -204,6 +205,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"text"', name: '"Child"' },
         },
       ],
     },
@@ -228,6 +230,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"text"', name: '"Child"' },
         },
       ],
     },
@@ -245,6 +248,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInHook",
+          data: { state: '"text"', name: '"useCustomHook"' },
         },
       ],
     },
@@ -270,6 +274,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"text"', name: '"Child"' },
         },
       ],
     },
@@ -295,6 +300,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"text"', name: '"Child"' },
         },
       ],
     },
@@ -313,6 +319,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"data"', name: '"Child"' },
         },
       ],
     },
@@ -331,6 +338,7 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"data"', name: '"Child"' },
         },
       ],
     },
@@ -362,6 +370,26 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"dataToSubmit"', name: '"Form"' },
+        },
+      ],
+    },
+    {
+      name: "Pass multiple live internal state",
+      code: js`
+        const Child = ({ onChanged }) => {
+          const [text, setText] = useState();
+          const [count, setCount] = useState(0);
+
+          useEffect(() => {
+            onChanged(text, count);
+          }, [onChanged, text, count]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingLiveStateToParentInComponent",
+          data: { state: '"text" and "count"', name: '"Child"' },
         },
       ],
     },

@@ -27,7 +27,7 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidResettingAllStateWhenAPropChanges:
-        'Avoid resetting all state when a prop changes. Instead, if "{{prop}}" is a key, pass it as `key` so React will reset the component\'s state.',
+        'Avoid resetting all state when a prop changes. Instead, if "{{prop}}" is a key, pass it as "key" so React will reset the component\'s state.',
     },
   },
   create: (context: Rule.RuleContext) => ({

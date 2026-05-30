@@ -277,6 +277,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingDataToParentInComponent",
+          data: { data: '"useSomeAPI"', name: '"Child"' },
         },
       ],
     },
@@ -294,6 +295,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingDataToParentInComponent",
+          data: { data: '"useSomeAPI"', name: '"Child"' },
         },
       ],
     },
@@ -311,6 +313,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingDataToParentInComponent",
+          data: { data: '"useSomeAPI"', name: '"Child"' },
         },
       ],
     },
@@ -328,6 +331,7 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingDataToParentInHook",
+          data: { data: '"useSomeAPI"', name: '"useCustomHook"' },
         },
       ],
     },
@@ -346,6 +350,45 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
       errors: [
         {
           messageId: "avoidPassingDataToParentInComponent",
+          data: { data: '"useSomeAPI"', name: '"Child"' },
+        },
+      ],
+    },
+    {
+      name: "Pass multiple external state",
+      code: js`
+        const Child = ({ onResult }) => {
+          const data = useSomeAPI();
+          const meta = useOtherAPI();
+
+          useEffect(() => {
+            onResult(data, meta);
+          }, [onResult, data, meta]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingDataToParentInComponent",
+          data: { data: '"useSomeAPI" and "useOtherAPI"', name: '"Child"' },
+        },
+      ],
+    },
+    {
+      name: "Pass external data and internal state (only data in message)",
+      code: js`
+        const Child = ({ onChanged }) => {
+          const [count, setCount] = useState(0);
+          const data = useSomeAPI();
+
+          useEffect(() => {
+            onChanged(data, count);
+          }, [onChanged, data, count]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidPassingDataToParentInComponent",
+          data: { data: '"useSomeAPI"', name: '"Child"' },
         },
       ],
     },

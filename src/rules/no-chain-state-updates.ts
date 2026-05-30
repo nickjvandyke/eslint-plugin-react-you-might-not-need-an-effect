@@ -9,6 +9,7 @@ import {
   getEffectDepsRefs,
   getEffectFnRefs,
   getEffectCleanup,
+  getStateName,
   isState,
   isStateCall,
   isUseEffect,
@@ -25,7 +26,7 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidChainingStateUpdates:
-        "Avoid chaining state changes. When possible, update all relevant state simultaneously.",
+        'Avoid chaining state changes. When possible, update "{{state}}" along with other relevant state simultaneously.',
     },
   },
   create: (context: Rule.RuleContext) => ({
@@ -56,9 +57,13 @@ const rule: Rule.RuleModule = {
           );
 
           if (isSomeDepsState && !isSomeArgsState) {
+            const stateName = getStateName(context, ref);
+            if (!stateName) return;
+
             context.report({
               node: callExpr,
               messageId: "avoidChainingStateUpdates",
+              data: { state: stateName },
             });
           }
         });

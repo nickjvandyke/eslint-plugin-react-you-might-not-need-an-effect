@@ -59,6 +59,7 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
       errors: [
         {
           messageId: "avoidAdjustingStateWhenAPropChanges",
+          data: { state: "selection", props: '"items"' },
         },
       ],
     },
@@ -77,6 +78,7 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
       errors: [
         {
           messageId: "avoidAdjustingStateWhenAPropChanges",
+          data: { state: "selection", props: '"items"' },
         },
       ],
     },
@@ -95,6 +97,7 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
       errors: [
         {
           messageId: "avoidAdjustingStateWhenAPropChanges",
+          data: { state: "selection", props: '"items"' },
         },
       ],
     },
@@ -114,6 +117,25 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
       errors: [
         {
           messageId: "avoidAdjustingStateWhenAPropChanges",
+          data: { state: "error", props: '"result"' },
+        },
+      ],
+    },
+    {
+      name: "Set state to literal when two props change",
+      code: js`
+        function List({ items, user }) {
+          const [selection, setSelection] = useState();
+
+          useEffect(() => {
+            setSelection(null);
+          }, [items, user]);
+        }
+      `,
+      errors: [
+        {
+          messageId: "avoidAdjustingStateWhenAPropChanges",
+          data: { state: "selection", props: '"items" and "user"' },
         },
       ],
     },

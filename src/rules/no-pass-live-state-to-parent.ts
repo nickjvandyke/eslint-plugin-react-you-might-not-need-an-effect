@@ -5,6 +5,7 @@ import {
   isSynchronous,
 } from "../util/ast.ts";
 import {
+  getComponentName,
   getEffectFn,
   getEffectFnRefs,
   isPropCall,
@@ -24,9 +25,9 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidPassingLiveStateToParentInComponent:
-        "Avoid passing live state to parents in an effect. Instead, lift the state to the parent and pass it down to the child as a prop.",
+        'Avoid passing live state to parents in an effect. Instead, lift "{{state}}" to the parent and pass it down to {{name}} as a prop.',
       avoidPassingLiveStateToParentInHook:
-        "Avoid passing live state to parents in an effect. Instead, return the state from the hook.",
+        'Avoid passing live state to parents in an effect. Instead, return "{{state}}" from {{name}}.',
     },
   },
   create: (context: Rule.RuleContext) => ({
@@ -45,22 +46,36 @@ const rule: Rule.RuleModule = {
         .forEach((ref: Scope.Reference) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
-          const isStateInArgs = getArgsUpstreamRefs(context, ref).some(
-            (ref: Scope.Reference) => isState(ref),
+
+          const stateRefs = getArgsUpstreamRefs(context, ref).filter(
+            (r: Scope.Reference) => isState(r),
           );
 
-          if (isStateInArgs) {
-            const containingNode = findEnclosingReactNode(context, node);
-            const isInCustomHook =
-              containingNode && isCustomHook(containingNode);
+          if (stateRefs.length === 0) return;
 
-            context.report({
-              node: callExpr,
-              messageId: isInCustomHook
-                ? "avoidPassingLiveStateToParentInHook"
-                : "avoidPassingLiveStateToParentInComponent",
-            });
-          }
+          const containingNode = findEnclosingReactNode(context, node);
+          const isInCustomHook = containingNode && isCustomHook(containingNode);
+
+          context.report({
+            node: callExpr,
+            messageId: isInCustomHook
+              ? "avoidPassingLiveStateToParentInHook"
+              : "avoidPassingLiveStateToParentInComponent",
+            data: {
+              state: stateRefs
+                .map((r) => r.identifier.name)
+                .map((n) => `"${n}"`)
+                .join(" and "),
+              name: (() => {
+                const n = getComponentName(containingNode);
+                return n
+                  ? `"${n}"`
+                  : isInCustomHook
+                    ? "this custom hook"
+                    : "this component";
+              })(),
+            },
+          });
         });
     },
   }),

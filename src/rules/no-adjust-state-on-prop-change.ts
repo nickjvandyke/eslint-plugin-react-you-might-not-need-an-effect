@@ -9,6 +9,7 @@ import {
   getEffectDepsRefs,
   getEffectFn,
   getEffectFnRefs,
+  getStateName,
   isProp,
   isStateCall,
   isUseEffect,
@@ -24,7 +25,7 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidAdjustingStateWhenAPropChanges:
-        "Avoid adjusting state when a prop changes. Instead, adjust the state directly during render, or refactor your state to avoid this need entirely.",
+        'Avoid adjusting state when a prop changes. Instead, adjust "{{state}}" directly during render when {{props}} changes, or refactor your state to avoid this need entirely.',
     },
   },
   create: (context: Rule.RuleContext) => ({
@@ -34,9 +35,11 @@ const rule: Rule.RuleModule = {
       const depsRefs = getEffectDepsRefs(context, node);
       if (!effectFnRefs || !depsRefs) return;
 
-      const isSomeDepsProps = depsRefs
+      const depsPropRefs = depsRefs
         .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
-        .some((ref: Scope.Reference) => isProp(context, ref));
+        .filter((ref: Scope.Reference) => isProp(context, ref));
+
+      if (depsPropRefs.length === 0) return;
 
       const effectFn = getEffectFn(context, node);
       if (!effectFn) return;
@@ -54,12 +57,22 @@ const rule: Rule.RuleModule = {
             (ref: Scope.Reference) => isProp(context, ref),
           );
 
-          if (isSomeDepsProps && !isSomeArgsProps) {
-            context.report({
-              node: callExpr,
-              messageId: "avoidAdjustingStateWhenAPropChanges",
-            });
-          }
+          if (isSomeArgsProps) return;
+
+          const stateName = getStateName(context, ref);
+          if (!stateName) return;
+
+          context.report({
+            node: callExpr,
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: {
+              state: stateName,
+              props: depsPropRefs
+                .map((ref) => ref.identifier.name)
+                .map((n) => `"${n}"`)
+                .join(" and "),
+            },
+          });
         });
     },
   }),

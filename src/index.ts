@@ -22,8 +22,8 @@ const plugin = {
     "no-reset-all-state-on-prop-change": noResetAllStateOnPropChange,
     "no-pass-live-state-to-parent": noPassLiveStateToParent,
     "no-pass-data-to-parent": noPassDataToParent,
-    "no-initialize-state": noInitializeState,
     "no-external-store-subscription": noExternalStoreSubscription,
+    "no-initialize-state": noInitializeState,
   },
   // Later `Object.assign`ed because it needs to self-reference `plugin`
   configs: {},

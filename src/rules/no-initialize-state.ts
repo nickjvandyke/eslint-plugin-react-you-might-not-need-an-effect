@@ -20,7 +20,7 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidInitializingState:
-        'Avoid initializing state in an effect. Instead, initialize "{{state}}"\'s `useState()` with "{{arguments}}". For SSR hydration, prefer `useSyncExternalStore()`.',
+        'Avoid initializing state in an effect. Instead, initialize "{{state}}"\'s "useState()" with "{{arguments}}". For SSR hydration, prefer "useSyncExternalStore".',
     },
   },
   create: (context: Rule.RuleContext) => ({
