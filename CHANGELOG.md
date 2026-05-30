@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.11.0...v0.11.1) (2026-05-30)
+
+
+### Features
+
+* add more context to messages for clarity and actionability ([efad9aa](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/efad9aac787c4f906dd4c4445e15baeb77cf9e32))
+
 ## [0.11.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.10.4...v0.11.0) (2026-05-29)
 
 
