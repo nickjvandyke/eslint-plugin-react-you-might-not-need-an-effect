@@ -8,11 +8,13 @@ import noDerivedState from "./rules/no-derived-state.ts";
 import noPassDataToParent from "./rules/no-pass-data-to-parent.ts";
 import noExternalStoreSubscription from "./rules/no-external-store-subscription.ts";
 import globals from "globals";
+import pkg from "../package.json" with { type: "json" };
 import type { ESLint, Linter } from "eslint";
 
 const plugin = {
   meta: {
     name: "react-you-might-not-need-an-effect",
+    version: pkg.version,
   },
   rules: {
     "no-derived-state": noDerivedState,
