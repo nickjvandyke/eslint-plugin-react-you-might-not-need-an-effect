@@ -2,6 +2,9 @@
 
 ## [1.0.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.11.1...v1.0.0) (2026-05-31)
 
+This semantic v1.0.0 release signifies my confidence in the plugin's stability and reliability after many iterations.
+
+Thank you to everyone that contributed real-world issues along the way!
 
 ### Miscellaneous Chores
 
