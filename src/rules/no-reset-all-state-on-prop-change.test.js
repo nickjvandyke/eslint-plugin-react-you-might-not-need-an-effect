@@ -1,11 +1,17 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-reset-all-state-on-prop-change.ts";
 
-new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
-  valid: [
-    {
-      name: "Set state when a prop changes, but not to its default value",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-reset-all-state-on-prop-change",
+  rule,
+  {
+    valid: [
+      {
+        name: "Set state when a prop changes, but not to its default value",
+        code: js`
         function List({ items }) {
           const [selection, setSelection] = useState();
 
@@ -14,10 +20,10 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [items]);
         }
       `,
-    },
-    {
-      name: "Reset some state when a prop changes",
-      code: js`
+      },
+      {
+        name: "Reset some state when a prop changes",
+        code: js`
         function ProfilePage({ userId }) {
           const [user, setUser] = useState(null);
           const [comment, setComment] = useState('type something');
@@ -29,11 +35,11 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [userId]);
         }
       `,
-    },
-    {
-      // Because undefined !== null
-      name: "Undefined state initializer compared to state setter with literal null",
-      code: js`
+      },
+      {
+        // Because undefined !== null
+        name: "Undefined state initializer compared to state setter with literal null",
+        code: js`
         function List({ items }) {
           const [selectedItem, setSelectedItem] = useState();
 
@@ -42,13 +48,13 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [items]);
         }
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/31
-      // Verifies that the rule doesn't crash when it can't find the containing component to count `useState`s.
-      // This *is* a rule-break, but detecting the lowercased function name would probably introduce more false positives than it'd save in false negatives.
-      name: "Reset all state when a prop changes inside lowercased function definition",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/31
+        // Verifies that the rule doesn't crash when it can't find the containing component to count `useState`s.
+        // This *is* a rule-break, but detecting the lowercased function name would probably introduce more false positives than it'd save in false negatives.
+        name: "Reset all state when a prop changes inside lowercased function definition",
+        code: js`
         function buildComponent() {
           const [comment, setComment] = useState('type something');
 
@@ -59,10 +65,10 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           return <div>hi</div>;
         }
       `,
-    },
-    {
-      name: "Reset all state when a prop changes in a custom hook",
-      code: js`
+      },
+      {
+        name: "Reset all state when a prop changes in a custom hook",
+        code: js`
         function useCustomHook({ userId }) {
           const [user, setUser] = useState(null);
           const [comment, setComment] = useState('type something');
@@ -73,10 +79,10 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [userId]);
         }
       `,
-    },
-    {
-      name: "Reset all state to derived initial state when a prop changes",
-      code: js`
+      },
+      {
+        name: "Reset all state to derived initial state when a prop changes",
+        code: js`
         function ProfilePage({ userId }) {
           const initialState = 'meow meow'
           const [comment, setComment] = useState(initialState);
@@ -87,11 +93,11 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [userId]);
         }
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
-      name: "Set state differently in callback to state-like hook",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
+        name: "Set state differently in callback to state-like hook",
+        code: js`
         const Foo = () => {
           const [_0, setState] = useState(false);
           const [_1, startTransition] = useTransition();
@@ -105,11 +111,11 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           return null;
         };
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
-      name: "Set state differently in callback to state-like hook",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/55
+        name: "Set state differently in callback to state-like hook",
+        code: js`
         const Foo = () => {
           const [_0, setState] = React.useState(false);
           const [_1, startTransition] = React.useTransition();
@@ -123,12 +129,12 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           return null;
         };
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "Reset all state when a prop changes",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "Reset all state when a prop changes",
+        code: js`
         function ProfilePage({ userId }) {
           const [user, setUser] = useState(null);
           const [comment, setComment] = useState('type something');
@@ -139,16 +145,16 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [userId]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-          data: { prop: "userId" },
-        },
-      ],
-    },
-    {
-      name: "Reset all state when a prop changes in memoized component",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
+        name: "Reset all state when a prop changes in memoized component",
+        code: js`
         const ProfilePage = memo(({ userId }) => {
           const [user, setUser] = useState(null);
           const [comment, setComment] = useState('type something');
@@ -159,16 +165,16 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [userId]);
         })
       `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-          data: { prop: "userId" },
-        },
-      ],
-    },
-    {
-      name: "Reset all state to shared var when a prop changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
+        name: "Reset all state to shared var when a prop changes",
+        code: js`
         function ProfilePage({ userId }) {
           const initialState = 'meow meow'
           const [user, setUser] = useState(null);
@@ -180,16 +186,16 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [userId]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-          data: { prop: "userId" },
-        },
-      ],
-    },
-    {
-      name: "Reset all state when a prop member changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
+        name: "Reset all state when a prop member changes",
+        code: js`
         function ProfilePage({ user }) {
           const [comment, setComment] = useState('type something');
 
@@ -198,17 +204,17 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [user.id]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-          // TODO: Ideally would be "user.id"
-          data: { prop: "user" },
-        },
-      ],
-    },
-    {
-      name: "Reset all state when one of two props change",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            // TODO: Ideally would be "user.id"
+            data: { prop: "user" },
+          },
+        ],
+      },
+      {
+        name: "Reset all state when one of two props change",
+        code: js`
         function ProfilePage({ userId, friends }) {
           const [comment, setComment] = useState('type something');
 
@@ -217,17 +223,17 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [userId, friends]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-          data: { prop: "userId" },
-        },
-      ],
-    },
-    {
-      // These are equivalent because state initializes to `undefined` when it has no argument
-      name: "Undefined state initializer compared to state setter with literal undefined",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
+        // These are equivalent because state initializes to `undefined` when it has no argument
+        name: "Undefined state initializer compared to state setter with literal undefined",
+        code: js`
         function List({ items }) {
           const [selectedItem, setSelectedItem] = useState();
 
@@ -236,15 +242,15 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           }, [items]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-        },
-      ],
-    },
-    {
-      name: "Reset all state to function call result when a prop changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+          },
+        ],
+      },
+      {
+        name: "Reset all state to function call result when a prop changes",
+        code: js`
         function ProfilePage({ userId }) {
           const [comment, setComment] = useState(getInitialComment());
 
@@ -257,12 +263,13 @@ new MyRuleTester().run("no-reset-all-state-on-prop-change", rule, {
           return 'type something';
         }
       `,
-      errors: [
-        {
-          messageId: "avoidResettingAllStateWhenAPropChanges",
-          data: { prop: "userId" },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+    ],
+  },
+);

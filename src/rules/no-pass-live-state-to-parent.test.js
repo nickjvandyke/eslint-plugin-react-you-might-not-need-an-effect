@@ -1,21 +1,27 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-pass-live-state-to-parent.ts";
 
-new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
-  valid: [
-    {
-      name: "Pass literal value to prop callback",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-pass-live-state-to-parent",
+  rule,
+  {
+    valid: [
+      {
+        name: "Pass literal value to prop callback",
+        code: js`
         const Child = ({ onTextChanged }) => {
           useEffect(() => {
             onTextChanged("Hello World");
           }, [onTextChanged]);
         }
       `,
-    },
-    {
-      name: "Pass live external state",
-      code: js`
+      },
+      {
+        name: "Pass live external state",
+        code: js`
         const Child = ({ onFetched }) => {
           const data = useSomeAPI();
 
@@ -24,22 +30,22 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [onFetched, data]);
         }
       `,
-    },
-    {
-      // No idea why someone would do this, but maybe there's a less contrived pattern.
-      // Plus the rule's message and linked docs only mention state - obviously you can't "lift" a prop.
-      name: "Pass prop to parent",
-      code: js`
+      },
+      {
+        // No idea why someone would do this, but maybe there's a less contrived pattern.
+        // Plus the rule's message and linked docs only mention state - obviously you can't "lift" a prop.
+        name: "Pass prop to parent",
+        code: js`
         const Child = ({ text, onTextChanged }) => {
           useEffect(() => {
             onTextChanged(text);
           }, [text, onTextChanged]);
         }
       `,
-    },
-    {
-      name: "No-arg prop callback",
-      code: js`
+      },
+      {
+        name: "No-arg prop callback",
+        code: js`
         function Form({ onClose }) {
           const [name, setName] = useState();
           const [isOpen, setIsOpen] = useState(true);
@@ -55,21 +61,21 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           )
         }
       `,
-    },
-    {
-      // This might be an anti-pattern in the first place...
-      name: "Prop getter",
-      code: js`
+      },
+      {
+        // This might be an anti-pattern in the first place...
+        name: "Prop getter",
+        code: js`
         function Child({ getData }) {
           useEffect(() => {
             console.log(getData());
           }, [getData]);
         }
       `,
-    },
-    {
-      name: "Pass internal state to HOC prop",
-      code: js`
+      },
+      {
+        name: "Pass internal state to HOC prop",
+        code: js`
         import { withRouter } from 'react-router-dom';
 
         const MyComponent = withRouter(({ history }) => {
@@ -80,10 +86,10 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [option]);
         });
       `,
-    },
-    {
-      name: "Pass internal state to weird HOC prop",
-      code: js`
+      },
+      {
+        name: "Pass internal state to weird HOC prop",
+        code: js`
         const MyComponent = inject('ourStore')(observer(({ ourStore }) => {
           const [option, setOption] = useState();
 
@@ -92,10 +98,10 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [option]);
         }));
       `,
-    },
-    {
-      name: "Pass internal state to separately-wrapped HOC prop",
-      code: js`
+      },
+      {
+        name: "Pass internal state to separately-wrapped HOC prop",
+        code: js`
         import { withRouter } from 'react-router-dom';
 
         const MyComponent = ({ history }) => {
@@ -108,11 +114,11 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
 
         const wrapped = withRouter(MyComponent);
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/46
-      name: "Pass internal state to weirdly-separately-wrapped HOC prop",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/46
+        name: "Pass internal state to weirdly-separately-wrapped HOC prop",
+        code: js`
         import { withRouter } from 'react-router-dom';
 
         const MyComponent = ({ history }) => {
@@ -126,10 +132,10 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
         const EnhancedComponent = inject('ourStore')(observer(MyComponent))
         export default EnhancedComponent
       `,
-    },
-    {
-      name: "Pass external state to HOC prop",
-      code: js`
+      },
+      {
+        name: "Pass external state to HOC prop",
+        code: js`
         import { withRouter } from 'react-router-dom';
 
         const MyComponent = withRouter(({ history }) => {
@@ -142,10 +148,10 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [data]);
         });
       `,
-    },
-    {
-      name: "Pass ref to parent",
-      code: js`
+      },
+      {
+        name: "Pass ref to parent",
+        code: js`
         const Child = ({ onRef }) => {
           const ref = useRef();
 
@@ -156,12 +162,12 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           return <div ref={ref}>Child</div>;
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "Pass live internal state",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "Pass live internal state",
+        code: js`
         const Child = ({ onTextChanged }) => {
           const [text, setText] = useState();
 
@@ -177,16 +183,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           );
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"text"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass live internal state, no deps argument",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"text"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state, no deps argument",
+        code: js`
         const Child = ({ onTextChanged }) => {
           const [text, setText] = useState();
 
@@ -202,16 +208,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           );
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"text"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass live internal state, empty deps",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"text"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state, empty deps",
+        code: js`
         const Child = ({ onTextChanged }) => {
           const [text, setText] = useState();
 
@@ -227,16 +233,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           );
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"text"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass live derived internal state in custom hook",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"text"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live derived internal state in custom hook",
+        code: js`
         const useCustomHook = ({ onTextChanged }) => {
           const [text, setText] = useState();
 
@@ -245,16 +251,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [onTextChanged, text]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInHook",
-          data: { state: '"text"', name: '"useCustomHook"' },
-        },
-      ],
-    },
-    {
-      name: "Pass live internal state AND external state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInHook",
+            data: { state: '"text"', name: '"useCustomHook"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state AND external state",
+        code: js`
         const Child = ({ onTextChanged }) => {
           const [text, setText] = useState();
           const data = useSomeAPI();
@@ -271,16 +277,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           );
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"text"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass live derived internal state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"text"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live derived internal state",
+        code: js`
         const Child = ({ onTextChanged }) => {
           const [text, setText] = useState();
 
@@ -297,16 +303,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           );
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"text"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass live internal state via derived prop",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"text"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state via derived prop",
+        code: js`
         const Child = ({ onFetched }) => {
           const [data, setData] = useState();
           const onFetchedWrapper = (v) => onFetched(v);
@@ -316,16 +322,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [onFetched, data]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"data"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass live internal state via later-destructured prop",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"data"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state via later-destructured prop",
+        code: js`
         const Child = (props) => {
           const [data, setData] = useState();
           const { onFetched } = props;
@@ -335,16 +341,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [onFetched, data]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"data"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass final internal state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"data"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass final internal state",
+        code: js`
         function Form({ onSubmit }) {
           const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
@@ -367,16 +373,16 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"dataToSubmit"', name: '"Form"' },
-        },
-      ],
-    },
-    {
-      name: "Pass multiple live internal state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"dataToSubmit"', name: '"Form"' },
+          },
+        ],
+      },
+      {
+        name: "Pass multiple live internal state",
+        code: js`
         const Child = ({ onChanged }) => {
           const [text, setText] = useState();
           const [count, setCount] = useState(0);
@@ -386,12 +392,13 @@ new MyRuleTester().run("no-pass-live-state-to-parent", rule, {
           }, [onChanged, text, count]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingLiveStateToParentInComponent",
-          data: { state: '"text" and "count"', name: '"Child"' },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"text" and "count"', name: '"Child"' },
+          },
+        ],
+      },
+    ],
+  },
+);

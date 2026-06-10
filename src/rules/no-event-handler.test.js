@@ -1,11 +1,17 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-event-handler.ts";
 
-new MyRuleTester().run("no-event-handler", rule, {
-  valid: [
-    {
-      name: "Sychronizing with external system",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-event-handler",
+  rule,
+  {
+    valid: [
+      {
+        name: "Sychronizing with external system",
+        code: js`
         function Search() {
           const [query, setQuery] = useState();
           const [results, setResults] = useState();
@@ -33,11 +39,11 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/70
-      name: "Respond to prop passed to fn",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/70
+        name: "Respond to prop passed to fn",
+        code: js`
         import { useEffect } from 'react'
 
         // Captures an optional URL search param and persists it to localStorage + cookie.
@@ -49,12 +55,12 @@ new MyRuleTester().run("no-event-handler", rule, {
           }, [refCode])
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "Using props to handle an event and call an external function",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "Using props to handle an event and call an external function",
+        code: js`
         function Form({ dataToSubmit }) {
           useEffect(() => {
             if (dataToSubmit) {
@@ -63,16 +69,16 @@ new MyRuleTester().run("no-event-handler", rule, {
           }, [dataToSubmit]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPropHandler",
-          data: { name: "dataToSubmit" },
-        },
-      ],
-    },
-    {
-      name: "Using state to handle an event and call an external function",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPropHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+      {
+        name: "Using state to handle an event and call an external function",
+        code: js`
         function Form() {
           const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
@@ -95,16 +101,16 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-        },
-      ],
-    },
-    {
-      name: "Using state to handle an event, no deps argument",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+      {
+        name: "Using state to handle an event, no deps argument",
+        code: js`
         function Form() {
           const [dataToSubmit, setDataToSubmit] = useState();
 
@@ -119,16 +125,16 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-        },
-      ],
-    },
-    {
-      name: "Using state to handle an event, empty deps",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+      {
+        name: "Using state to handle an event, empty deps",
+        code: js`
         function Form() {
           const [dataToSubmit, setDataToSubmit] = useState();
 
@@ -143,16 +149,16 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-        },
-      ],
-    },
-    {
-      name: "Using state to handle an event and call a prop",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+      {
+        name: "Using state to handle an event and call a prop",
+        code: js`
         function Form({ submitData }) {
           const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
@@ -175,16 +181,16 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-        },
-      ],
-    },
-    {
-      name: "Early return in if test",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+      {
+        name: "Early return in if test",
+        code: js`
         function Form() {
           const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
@@ -207,16 +213,16 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-        },
-      ],
-    },
-    {
-      name: "Member access and double test in condition",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+      {
+        name: "Member access and double test in condition",
+        code: js`
         function Form() {
           const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
@@ -239,24 +245,24 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-          line: 7,
-          column: 17,
-        },
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-          line: 7,
-          column: 38,
-        },
-      ],
-    },
-    {
-      name: "Derived prop in multiple if tests",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+            line: 7,
+            column: 17,
+          },
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+            line: 7,
+            column: 38,
+          },
+        ],
+      },
+      {
+        name: "Derived prop in multiple if tests",
+        code: js`
         import { useEffect } from "react";
 
         function Form({ value }) {
@@ -268,22 +274,22 @@ new MyRuleTester().run("no-event-handler", rule, {
           }, [derived]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPropHandler",
-          data: { name: "derived" },
-          line: 8,
-        },
-        {
-          messageId: "avoidPropHandler",
-          data: { name: "derived" },
-          line: 9,
-        },
-      ],
-    },
-    {
-      name: "If test includes non-state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPropHandler",
+            data: { name: "derived" },
+            line: 8,
+          },
+          {
+            messageId: "avoidPropHandler",
+            data: { name: "derived" },
+            line: 9,
+          },
+        ],
+      },
+      {
+        name: "If test includes non-state",
+        code: js`
         function Form() {
           const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
@@ -306,12 +312,13 @@ new MyRuleTester().run("no-event-handler", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidEventHandler",
-          data: { name: "dataToSubmit" },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidEventHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+    ],
+  },
+);

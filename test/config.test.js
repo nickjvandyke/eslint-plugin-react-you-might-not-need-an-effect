@@ -1,6 +1,6 @@
 import { ESLint } from "eslint";
 import { LegacyESLint } from "eslint/use-at-your-own-risk";
-import { js } from "./rule-tester.js";
+const js = String.raw;
 import assert from "assert";
 import plugin from "../src/index.ts";
 

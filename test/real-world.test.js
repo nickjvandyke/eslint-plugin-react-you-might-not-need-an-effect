@@ -1,6 +1,6 @@
 import { ESLint } from "eslint";
 import plugin from "../src/index.ts";
-import { js } from "./rule-tester.js";
+const js = String.raw;
 import assert from "assert";
 
 // Sanity check that runs the recommended config

@@ -1,11 +1,17 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-derived-state.ts";
 
-new MyRuleTester().run("no-derived-state", rule, {
-  valid: [
-    {
-      name: "Compute in render from internal state",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-derived-state",
+  rule,
+  {
+    valid: [
+      {
+        name: "Compute in render from internal state",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Taylor');
           const [lastName, setLastName] = useState('Swift');
@@ -13,18 +19,18 @@ new MyRuleTester().run("no-derived-state", rule, {
           const fullName = firstName + ' ' + lastName;
         }
       `,
-    },
-    {
-      name: "Compute in render from props",
-      code: js`
+      },
+      {
+        name: "Compute in render from props",
+        code: js`
         function Form({ firstName, lastName }) {
           const fullName = firstName + ' ' + lastName;
         }
       `,
-    },
-    {
-      name: "Set to literal on external state change",
-      code: js`
+      },
+      {
+        name: "Set to literal on external state change",
+        code: js`
         function Feed() {
           const { data: posts } = useQuery('/posts');
           const [scrollPosition, setScrollPosition] = useState(0);
@@ -34,10 +40,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [posts]);
         }
       `,
-    },
-    {
-      name: "Set to derived literal on external state change",
-      code: js`
+      },
+      {
+        name: "Set to derived literal on external state change",
+        code: js`
         function Feed() {
           const { data: posts } = useQuery('/posts');
           const [scrollPosition, setScrollPosition] = useState(0);
@@ -48,10 +54,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [posts]);
         }
       `,
-    },
-    {
-      name: "Set to external state, with multiple setter calls",
-      code: js`
+      },
+      {
+        name: "Set to external state, with multiple setter calls",
+        code: js`
         function Feed() {
           const { data: posts } = useQuery('/posts');
           const [selectedPost, setSelectedPost] = useState();
@@ -71,10 +77,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           )
         }
       `,
-    },
-    {
-      name: "Fetch external state on mount",
-      code: js`
+      },
+      {
+        name: "Fetch external state on mount",
+        code: js`
         function Todos() {
           const [todos, setTodos] = useState([]);
 
@@ -85,10 +91,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "Sync external state",
-      code: js`
+      },
+      {
+        name: "Sync external state",
+        code: js`
         function Search() {
           const [query, setQuery] = useState();
           const [results, setResults] = useState();
@@ -116,13 +122,13 @@ new MyRuleTester().run("no-derived-state", rule, {
           )
         }
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
-      // While it *could* be an anti-pattern or unnecessary, effects *are* meant to synchronize systems.
-      // So we guess that a "subscription effect" is usually valid, or may be more readable.
-      name: "Synchronize internal state",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
+        // While it *could* be an anti-pattern or unnecessary, effects *are* meant to synchronize systems.
+        // So we guess that a "subscription effect" is usually valid, or may be more readable.
+        name: "Synchronize internal state",
+        code: js`
         function Component() {
           const [name, setName] = useState();
           const [model] = useState(
@@ -135,10 +141,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [model, name]);
         }
       `,
-    },
-    {
-      name: "Subscribe to external state",
-      code: js`
+      },
+      {
+        name: "Subscribe to external state",
+        code: js`
         import { subscribeToStatus } from 'library';
 
         function Status({ topic }) {
@@ -155,10 +161,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           return <div>{status}</div>;
         }
       `,
-    },
-    {
-      name: "From derived external state with multiple calls to setter",
-      code: js`
+      },
+      {
+        name: "From derived external state with multiple calls to setter",
+        code: js`
         function Form() {
           const name = useQuery('/name');
           const [fullName, setFullName] = useState('');
@@ -178,10 +184,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           )
         }
       `,
-    },
-    {
-      name: "From props via unpure derived setter",
-      code: js`
+      },
+      {
+        name: "From props via unpure derived setter",
+        code: js`
         function DoubleCounter({ count }) {
           const [doubleCount, setDoubleCount] = useState(0);
 
@@ -195,10 +201,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [count]);
         }
       `,
-    },
-    {
-      name: "Via unpure promise global function",
-      code: js`
+      },
+      {
+        name: "Via unpure promise global function",
+        code: js`
         function Counter({ count }) {
           const [multipliedCount, setMultipliedCount] = useState();
 
@@ -214,18 +220,18 @@ new MyRuleTester().run("no-derived-state", rule, {
           )
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "multipliedCount" },
-        },
-      ],
-    },
-    // TODO: Maybe move some of these to/from `syntax.test.js`
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
-      name: "Defined-then-called async external global function",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "multipliedCount" },
+          },
+        ],
+      },
+      // TODO: Maybe move some of these to/from `syntax.test.js`
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
+        name: "Defined-then-called async external global function",
+        code: js`
         function Component() {
           const api = useFetchWrapper();
           const [state, setState] = useState();
@@ -240,12 +246,12 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, []);
         }
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
-      // For "always in sync" detection
-      name: "Defined-then-called async function from API in deps",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
+        // For "always in sync" detection
+        name: "Defined-then-called async function from API in deps",
+        code: js`
         function Component() {
           const api = useFetchWrapper();
           const [state, setState] = useState();
@@ -260,10 +266,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [api]);
         }
       `,
-    },
-    {
-      name: "From external data retrieved in async IIFE with API in deps",
-      code: js`
+      },
+      {
+        name: "From external data retrieved in async IIFE with API in deps",
+        code: js`
         function Component() {
           const api = useFetchWrapper();
           const [state, setState] = useState();
@@ -276,11 +282,11 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [api]);
         }
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/16
-      name: "From external data retrieved in overly-complicated async IIFE",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/16
+        name: "From external data retrieved in overly-complicated async IIFE",
+        code: js`
         import { useEffect, useState } from 'react';
 
         export const App = () => {
@@ -312,10 +318,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           );
         };
       `,
-    },
-    {
-      name: "Named function passed to event callback",
-      code: js`
+      },
+      {
+        name: "Named function passed to event callback",
+        code: js`
         function Component() {
           const [count, setCount] = useState(0);
           const [doubleCount, setDoubleCount] = useState(0);
@@ -330,10 +336,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [count]);
         }
       `,
-    },
-    {
-      name: "Pass internal args to external local function",
-      code: js`
+      },
+      {
+        name: "Pass internal args to external local function",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -348,10 +354,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-    },
-    {
-      name: "Mutate internal state",
-      code: js`
+      },
+      {
+        name: "Mutate internal state",
+        code: js`
         function DoubleList() {
           const [list, setList] = useState([]);
           const [doubleList, setDoubleList] = useState([]);
@@ -361,10 +367,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [list]);
         }
       `,
-    },
-    {
-      name: "Synchronous setter in anonymous function passed to constructor",
-      code: js`
+      },
+      {
+        name: "Synchronous setter in anonymous function passed to constructor",
+        code: js`
           function useHasOverflow({ contentRef, maxHeight }) {
             const [hasOverflow, setHasOverflow] = useState(false);
 
@@ -382,10 +388,10 @@ new MyRuleTester().run("no-derived-state", rule, {
             return hasOverflow;
           }
         `,
-    },
-    {
-      name: "Synchronous setter in anonymous function passed to call expression",
-      code: js`
+      },
+      {
+        name: "Synchronous setter in anonymous function passed to call expression",
+        code: js`
           function useHasOverflow({ contentRef, maxHeight }) {
             const [hasOverflow, setHasOverflow] = useState(false);
 
@@ -401,10 +407,10 @@ new MyRuleTester().run("no-derived-state", rule, {
             return hasOverflow;
           }
         `,
-    },
-    {
-      name: "Synchronous setter in named function passed to constructor",
-      code: js`
+      },
+      {
+        name: "Synchronous setter in named function passed to constructor",
+        code: js`
           function useHasOverflow({ contentRef, maxHeight }) {
             const [hasOverflow, setHasOverflow] = useState(false);
 
@@ -421,10 +427,10 @@ new MyRuleTester().run("no-derived-state", rule, {
             return hasOverflow;
           }
         `,
-    },
-    {
-      name: "Synchronous setter in named function passed to call expression",
-      code: js`
+      },
+      {
+        name: "Synchronous setter in named function passed to call expression",
+        code: js`
           function useHasOverflow({ contentRef, maxHeight }) {
             const [hasOverflow, setHasOverflow] = useState(false);
 
@@ -441,11 +447,11 @@ new MyRuleTester().run("no-derived-state", rule, {
             return hasOverflow;
           }
         `,
-    },
-    // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
-    {
-      name: "From internal state via pure global function",
-      code: js`
+      },
+      // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
+      {
+        name: "From internal state via pure global function",
+        code: js`
         function Counter({ count }) {
           const [countJson, setCountJson] = useState();
 
@@ -454,10 +460,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [count]);
         }
       `,
-    },
-    {
-      name: "From internal state via local unpure function",
-      code: js`
+      },
+      {
+        name: "From internal state via local unpure function",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -473,10 +479,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-    },
-    {
-      name: "Set to result of pure local ArrowFunctionExpression",
-      code: js`
+      },
+      {
+        name: "Set to result of pure local ArrowFunctionExpression",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -492,10 +498,10 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName, computeName]);
         }
       `,
-    },
-    {
-      name: "Set to result of internal useCallback; repeat references to a useState variable",
-      code: js`
+      },
+      {
+        name: "Set to result of internal useCallback; repeat references to a useState variable",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -508,12 +514,12 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [computeName]);
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "From internal state",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "From internal state",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Taylor');
           const [lastName, setLastName] = useState('Swift');
@@ -522,16 +528,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From derived internal state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "From derived internal state",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Taylor');
           const [lastName, setLastName] = useState('Swift');
@@ -543,16 +549,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From derived internal state outside effect",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "From derived internal state outside effect",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Taylor');
           const [lastName, setLastName] = useState('Swift');
@@ -564,16 +570,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [name]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From internal state and external state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "From internal state and external state",
+        code: js`
         import { usePrefix } from 'library';
 
         function Component() {
@@ -587,16 +593,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [prefix, name])
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "prefixedName" },
-        },
-      ],
-    },
-    {
-      name: "From props",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "prefixedName" },
+          },
+        ],
+      },
+      {
+        name: "From props",
+        code: js`
         function Form({ firstName, lastName }) {
           const [fullName, setFullName] = useState('');
 
@@ -605,16 +611,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From intermediate prop",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "From intermediate prop",
+        code: js`
         function Form({ firstName, lastName }) {
           const [fullName, setFullName] = useState('');
           const prefixedName = 'Dr. ' + firstName;
@@ -624,16 +630,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [prefixedName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From props via method",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "From props via method",
+        code: js`
         function DoubleList({ list }) {
           const [doubleList, setDoubleList] = useState([]);
 
@@ -642,16 +648,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [list]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "doubleList" },
-        },
-      ],
-    },
-    {
-      name: "From internal state via method",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "doubleList" },
+          },
+        ],
+      },
+      {
+        name: "From internal state via method",
+        code: js`
         function DoubleList() {
           const [list, setList] = useState([]);
           const [doubleList, setDoubleList] = useState([]);
@@ -661,17 +667,17 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [list]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "doubleList" },
-        },
-      ],
-    },
-    {
-      // Verifies that we don't check for upstream state and props in isolation
-      name: "From props and internal state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "doubleList" },
+          },
+        ],
+      },
+      {
+        // Verifies that we don't check for upstream state and props in isolation
+        name: "From props and internal state",
+        code: js`
         function Form({ title }) {
           const [name, setName] = useState('Dwayne');
           const [fullName, setFullName] = useState('');
@@ -681,16 +687,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [title, name]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From props and internal state via intermediate variable",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "From props and internal state via intermediate variable",
+        code: js`
         function Form({ title }) {
           const [name, setName] = useState('Dwayne');
           const [fullName, setFullName] = useState('');
@@ -701,16 +707,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [title, name]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "From internal plus external state with single setter call",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "From internal plus external state with single setter call",
+        code: js`
         function Form() {
           const prefix = useQuery('/prefix');
           const [name, setName] = useState();
@@ -721,16 +727,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [prefix, name]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "prefixedName" },
-        },
-      ],
-    },
-    {
-      name: "From props via callback setter",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "prefixedName" },
+          },
+        ],
+      },
+      {
+        name: "From props via callback setter",
+        code: js`
         import { useState, useEffect } from 'react';
 
         function CountAccumulator({ count }) {
@@ -741,16 +747,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [count]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "total" },
-        },
-      ],
-    },
-    {
-      name: "From props via pure derived setter",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "total" },
+          },
+        ],
+      },
+      {
+        name: "From props via pure derived setter",
+        code: js`
         function DoubleCounter({ count }) {
           const [doubleCount, setDoubleCount] = useState(0);
 
@@ -761,16 +767,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [count]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "doubleCount" },
-        },
-      ],
-    },
-    {
-      name: "Partially update complex state from props",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "doubleCount" },
+          },
+        ],
+      },
+      {
+        name: "Partially update complex state from props",
+        code: js`
         function Form({ firstName, lastName }) {
           const [formData, setFormData] = useState({
             title: 'Dr.',
@@ -785,16 +791,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName, formData]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "formData" },
-        },
-      ],
-    },
-    {
-      name: "Partially update complex state from props via callback setter",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "formData" },
+          },
+        ],
+      },
+      {
+        name: "Partially update complex state from props via callback setter",
+        code: js`
         function Form({ firstName, lastName }) {
           const [formData, setFormData] = useState({
             title: 'Dr.',
@@ -809,16 +815,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "formData" },
-        },
-      ],
-    },
-    {
-      name: "Partially update complex state from props via derived setter",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "formData" },
+          },
+        ],
+      },
+      {
+        name: "Partially update complex state from props via derived setter",
+        code: js`
         function Form({ firstName, lastName }) {
           const [formData, setFormData] = useState({
             title: 'Dr.',
@@ -835,16 +841,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName, formData]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "formData" },
-        },
-      ],
-    },
-    {
-      name: "Derived state in larger, otherwise legit effect",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "formData" },
+          },
+        ],
+      },
+      {
+        name: "Derived state in larger, otherwise legit effect",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Taylor');
           const [lastName, setLastName] = useState('Swift');
@@ -857,18 +863,18 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      // It's not technically a pure function since it closes over state,
-      // but it's pure relative to the React component.
-      name: "Set to result of semi-pure local ArrowFunctionExpression",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        // It's not technically a pure function since it closes over state,
+        // but it's pure relative to the React component.
+        name: "Set to result of semi-pure local ArrowFunctionExpression",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -881,16 +887,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "Set to result of semi-pure local FunctionDeclaration",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Set to result of semi-pure local FunctionDeclaration",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -905,16 +911,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "Set to result of semi-pure function defined outside effect",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Set to result of semi-pure function defined outside effect",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -927,16 +933,16 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [computeName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      name: "Via no-arg intermediate setter",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Via no-arg intermediate setter",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -951,17 +957,17 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-    {
-      // Actually a false positive - just tracking this behavior.
-      name: "Pass state to derived setter which ignores args",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        // Actually a false positive - just tracking this behavior.
+        name: "Pass state to derived setter which ignores args",
+        code: js`
         function Form() {
           const [firstName, setFirstName] = useState('Dwayne');
           const [lastName, setLastName] = useState('The Rock');
@@ -976,12 +982,13 @@ new MyRuleTester().run("no-derived-state", rule, {
           }, [firstName, lastName]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidDerivedState",
-          data: { state: "fullName" },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+    ],
+  },
+);

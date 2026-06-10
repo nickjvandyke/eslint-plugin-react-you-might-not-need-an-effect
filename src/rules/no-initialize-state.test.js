@@ -1,11 +1,17 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-initialize-state.ts";
 
-new MyRuleTester().run("no-initialize-state", rule, {
-  valid: [
-    {
-      name: "To external data via Promise",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-initialize-state",
+  rule,
+  {
+    valid: [
+      {
+        name: "To external data via Promise",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
 
@@ -16,10 +22,10 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "To external data via async IIFE",
-      code: js`
+      },
+      {
+        name: "To external data via async IIFE",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
 
@@ -32,12 +38,12 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         }
       `,
-    },
-    {
-      // Don't know why someone would use a synchronous IIFE here,
-      // hence we don't make the effort to flag it, but just documenting this behavior.
-      name: "To literal inside synchronous IIFE",
-      code: js`
+      },
+      {
+        // Don't know why someone would use a synchronous IIFE here,
+        // hence we don't make the effort to flag it, but just documenting this behavior.
+        name: "To literal inside synchronous IIFE",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
 
@@ -48,10 +54,10 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "To literal inside IIFE inside callback",
-      code: js`
+      },
+      {
+        name: "To literal inside IIFE inside callback",
+        code: js`
         import { useEffect, useState } from 'react';
 
         export const MyComponent = () => {
@@ -66,10 +72,10 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         };
       `,
-    },
-    {
-      name: "To literal inside callback inside IIFE",
-      code: js`
+      },
+      {
+        name: "To literal inside callback inside IIFE",
+        code: js`
         import { useEffect, useState } from 'react';
 
         export const MyComponent = () => {
@@ -84,11 +90,11 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         };
       `,
-    },
-    {
-      // We ignore this because `react-hooks/exhaustive-deps` will flag the unnecessary dependency
-      name: "Setter with other dependency",
-      code: js`
+      },
+      {
+        // We ignore this because `react-hooks/exhaustive-deps` will flag the unnecessary dependency
+        name: "Setter with other dependency",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
           const [other, setOther] = useState();
@@ -98,12 +104,12 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, [other]);
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "To literal",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "To literal",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
 
@@ -114,16 +120,16 @@ new MyRuleTester().run("no-initialize-state", rule, {
           return <div>{state}</div>;
         }
       `,
-      errors: [
-        {
-          messageId: "avoidInitializingState",
-          data: { state: "state", arguments: '"Hello"' },
-        },
-      ],
-    },
-    {
-      name: "To internal data",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: '"Hello"' },
+          },
+        ],
+      },
+      {
+        name: "To internal data",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
           const [otherState, setOtherState] = useState('Meow');
@@ -133,16 +139,16 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidInitializingState",
-          data: { state: "state", arguments: "otherState" },
-        },
-      ],
-    },
-    {
-      name: "In an otherwise valid effect",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: "otherState" },
+          },
+        ],
+      },
+      {
+        name: "In an otherwise valid effect",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
 
@@ -152,16 +158,16 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidInitializingState",
-          data: { state: "state", arguments: "'Hello World'" },
-        },
-      ],
-    },
-    {
-      name: "To undefined",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: "'Hello World'" },
+          },
+        ],
+      },
+      {
+        name: "To undefined",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState('Meow');
 
@@ -170,16 +176,16 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidInitializingState",
-          data: { state: "state", arguments: "undefined" },
-        },
-      ],
-    },
-    {
-      name: "To equivalent derived literals",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: "undefined" },
+          },
+        ],
+      },
+      {
+        name: "To equivalent derived literals",
+        code: js`
         function MyComponent() {
           const upstream = 'Meow';
           const [state, setState] = useState(upstream);
@@ -190,16 +196,16 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidInitializingState",
-          data: { state: "state", arguments: "upstreamTwo" },
-        },
-      ],
-    },
-    {
-      name: "Only setter in deps",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: "upstreamTwo" },
+          },
+        ],
+      },
+      {
+        name: "Only setter in deps",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
 
@@ -208,12 +214,13 @@ new MyRuleTester().run("no-initialize-state", rule, {
           }, [setState]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidInitializingState",
-          data: { state: "state", arguments: '"Hello"' },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: '"Hello"' },
+          },
+        ],
+      },
+    ],
+  },
+);

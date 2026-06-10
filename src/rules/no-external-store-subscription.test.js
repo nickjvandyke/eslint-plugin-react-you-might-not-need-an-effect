@@ -1,30 +1,36 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-external-store-subscription.ts";
 
-new MyRuleTester().run("no-external-store-subscription", rule, {
-  valid: [
-    {
-      name: "No useEffect",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-external-store-subscription",
+  rule,
+  {
+    valid: [
+      {
+        name: "No useEffect",
+        code: js`
         function C() {
           const [count, setCount] = useState(0);
           return <div>{count}</div>;
         }
       `,
-    },
-    {
-      name: "useEffect without cleanup, no state setter",
-      code: js`
+      },
+      {
+        name: "useEffect without cleanup, no state setter",
+        code: js`
         function C() {
           useEffect(() => {
             console.log('hello');
           }, []);
         }
       `,
-    },
-    {
-      name: "useEffect without cleanup, with state setter",
-      code: js`
+      },
+      {
+        name: "useEffect without cleanup, with state setter",
+        code: js`
         function C() {
           const [count, setCount] = useState(0);
           useEffect(() => {
@@ -32,10 +38,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "useEffect with cleanup but no synchronous state setter (setter only in callback)",
-      code: js`
+      },
+      {
+        name: "useEffect with cleanup but no synchronous state setter (setter only in callback)",
+        code: js`
         function C() {
           const [value, setValue] = useState(0);
           useEffect(() => {
@@ -46,10 +52,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "useEffect with cleanup and sync setter, but setter not referenced in cleanup",
-      code: js`
+      },
+      {
+        name: "useEffect with cleanup and sync setter, but setter not referenced in cleanup",
+        code: js`
         function C() {
           const [count, setCount] = useState(0);
           useEffect(() => {
@@ -59,10 +65,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "Fetching data with cleanup (ignore pattern)",
-      code: js`
+      },
+      {
+        name: "Fetching data with cleanup (ignore pattern)",
+        code: js`
         function C({ query }) {
           const [results, setResults] = useState([]);
           useEffect(() => {
@@ -74,10 +80,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, [query]);
         }
       `,
-    },
-    {
-      name: "ResizeObserver pattern (setter only in callback)",
-      code: js`
+      },
+      {
+        name: "ResizeObserver pattern (setter only in callback)",
+        code: js`
         function C({ ref }) {
           const [size, setSize] = useState();
           useEffect(() => {
@@ -89,10 +95,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, [ref]);
         }
       `,
-    },
-    {
-      name: "Store subscribe returns unsubscribe, no sync setter in body",
-      code: js`
+      },
+      {
+        name: "Store subscribe returns unsubscribe, no sync setter in body",
+        code: js`
         function useStoreValue(store) {
           const [value, setValue] = useState(store.get());
           useEffect(() => {
@@ -102,10 +108,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return value;
         }
       `,
-    },
-    {
-      name: "Empty deps with unrelated cleanup (timer id, not setter)",
-      code: js`
+      },
+      {
+        name: "Empty deps with unrelated cleanup (timer id, not setter)",
+        code: js`
         function C() {
           const [count, setCount] = useState(0);
           useEffect(() => {
@@ -114,10 +120,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "State setter called synchronously, cleanup references something else entirely",
-      code: js`
+      },
+      {
+        name: "State setter called synchronously, cleanup references something else entirely",
+        code: js`
         function C() {
           const [x, setX] = useState(0);
           useEffect(() => {
@@ -127,10 +133,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "Multiple setters, none connected to cleanup",
-      code: js`
+      },
+      {
+        name: "Multiple setters, none connected to cleanup",
+        code: js`
         function C() {
           const [a, setA] = useState(0);
           const [b, setB] = useState(0);
@@ -142,10 +148,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "Cleanup references a callback that doesn't touch the setter",
-      code: js`
+      },
+      {
+        name: "Cleanup references a callback that doesn't touch the setter",
+        code: js`
         function C() {
           const [isOnline, setIsOnline] = useState(true);
           useEffect(() => {
@@ -156,10 +162,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "Synchronous setter via .then (async, not sync)",
-      code: js`
+      },
+      {
+        name: "Synchronous setter via .then (async, not sync)",
+        code: js`
         function C() {
           const [data, setData] = useState(null);
           useEffect(() => {
@@ -168,10 +174,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "Synchronous IIFE wrapping setter, cleanup not connected",
-      code: js`
+      },
+      {
+        name: "Synchronous IIFE wrapping setter, cleanup not connected",
+        code: js`
         function C() {
           const [x, setX] = useState(0);
           useEffect(() => {
@@ -180,10 +186,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "void expression wrapping synchronous setter, cleanup not connected",
-      code: js`
+      },
+      {
+        name: "void expression wrapping synchronous setter, cleanup not connected",
+        code: js`
         function C() {
           const [x, setX] = useState(0);
           useEffect(() => {
@@ -192,10 +198,10 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-    {
-      name: "Body setter and cleanup reference different setters of same component",
-      code: js`
+      },
+      {
+        name: "Body setter and cleanup reference different setters of same component",
+        code: js`
         function C() {
           const [a, setA] = useState(0);
           const [b, setB] = useState(0);
@@ -207,12 +213,12 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "Canonical useOnlineStatus pattern from docs",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "Canonical useOnlineStatus pattern from docs",
+        code: js`
         function useOnlineStatus() {
           const [isOnline, setIsOnline] = useState(true);
           useEffect(() => {
@@ -230,16 +236,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return isOnline;
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "isOnline" },
-        },
-      ],
-    },
-    {
-      name: "Inline arrow cleanup with same closure chain",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "isOnline" },
+          },
+        ],
+      },
+      {
+        name: "Inline arrow cleanup with same closure chain",
+        code: js`
         function useOnlineStatus() {
           const [isOnline, setIsOnline] = useState(true);
           useEffect(() => {
@@ -251,16 +257,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return isOnline;
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "isOnline" },
-        },
-      ],
-    },
-    {
-      name: "Setter referenced directly in cleanup",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "isOnline" },
+          },
+        ],
+      },
+      {
+        name: "Setter referenced directly in cleanup",
+        code: js`
         function C() {
           const [isOnline, setIsOnline] = useState(true);
           useEffect(() => {
@@ -269,16 +275,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "isOnline" },
-        },
-      ],
-    },
-    {
-      name: "Handler referenced in cleanup calls the setter",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "isOnline" },
+          },
+        ],
+      },
+      {
+        name: "Handler referenced in cleanup calls the setter",
+        code: js`
         function useStoreValue(store) {
           const [value, setValue] = useState(0);
           useEffect(() => {
@@ -290,16 +296,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return value;
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "value" },
-        },
-      ],
-    },
-    {
-      name: "Multiple setters, one matching cleanup",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "value" },
+          },
+        ],
+      },
+      {
+        name: "Multiple setters, one matching cleanup",
+        code: js`
         function C() {
           const [x, setX] = useState(0);
           const [y, setY] = useState(0);
@@ -317,14 +323,14 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [
-        { messageId: "avoidExternalStoreSubscription", data: { state: "x" } },
-        { messageId: "avoidExternalStoreSubscription", data: { state: "y" } },
-      ],
-    },
-    {
-      name: "Split handler and synchronous setter, handler in cleanup",
-      code: js`
+        errors: [
+          { messageId: "avoidExternalStoreSubscription", data: { state: "x" } },
+          { messageId: "avoidExternalStoreSubscription", data: { state: "y" } },
+        ],
+      },
+      {
+        name: "Split handler and synchronous setter, handler in cleanup",
+        code: js`
         function C() {
           const [value, setValue] = useState(0);
           useEffect(() => {
@@ -335,16 +341,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "value" },
-        },
-      ],
-    },
-    {
-      name: "Intermediate synchronous function call pattern",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "value" },
+          },
+        ],
+      },
+      {
+        name: "Intermediate synchronous function call pattern",
+        code: js`
         function useStoreValue(store) {
           const [value, setValue] = useState(0);
           useEffect(() => {
@@ -356,16 +362,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           return value;
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "value" },
-        },
-      ],
-    },
-    {
-      name: "Multiple sync setters, cleanup references one via arrow body",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "value" },
+          },
+        ],
+      },
+      {
+        name: "Multiple sync setters, cleanup references one via arrow body",
+        code: js`
         function C() {
           const [x, setX] = useState(0);
           const [y, setY] = useState(0);
@@ -378,13 +384,13 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [
-        { messageId: "avoidExternalStoreSubscription", data: { state: "x" } },
-      ],
-    },
-    {
-      name: "Setter via callback setter (setX(c => ...)) both in body and cleanup",
-      code: js`
+        errors: [
+          { messageId: "avoidExternalStoreSubscription", data: { state: "x" } },
+        ],
+      },
+      {
+        name: "Setter via callback setter (setX(c => ...)) both in body and cleanup",
+        code: js`
         function C() {
           const [count, setCount] = useState(0);
           useEffect(() => {
@@ -393,16 +399,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "count" },
-        },
-      ],
-    },
-    {
-      name: "Body aliases setter directly, cleanup uses original name",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "count" },
+          },
+        ],
+      },
+      {
+        name: "Body aliases setter directly, cleanup uses original name",
+        code: js`
         function C() {
           const [count, setCount] = useState(0);
           useEffect(() => {
@@ -412,16 +418,16 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "count" },
-        },
-      ],
-    },
-    {
-      name: "Body wraps setter in arrow function, cleanup uses original name",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "count" },
+          },
+        ],
+      },
+      {
+        name: "Body wraps setter in arrow function, cleanup uses original name",
+        code: js`
         function C() {
           const [count, setCount] = useState(0);
           useEffect(() => {
@@ -431,12 +437,13 @@ new MyRuleTester().run("no-external-store-subscription", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidExternalStoreSubscription",
-          data: { state: "count" },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidExternalStoreSubscription",
+            data: { state: "count" },
+          },
+        ],
+      },
+    ],
+  },
+);

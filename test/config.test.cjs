@@ -1,6 +1,6 @@
 const { ESLint } = require("eslint");
 const { LegacyESLint } = require("eslint/use-at-your-own-risk");
-const { js } = require("./rule-tester.js");
+const js = String.raw;
 const assert = require("assert");
 // WARNING: Must `yarn build` before this test!
 // eslint-disable-next-line n/no-missing-require

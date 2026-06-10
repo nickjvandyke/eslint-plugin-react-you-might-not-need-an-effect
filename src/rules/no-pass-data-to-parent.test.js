@@ -1,21 +1,27 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-pass-data-to-parent.ts";
 
-new MyRuleTester().run("no-pass-data-to-parent", rule, {
-  valid: [
-    {
-      name: "Pass literal value",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-pass-data-to-parent",
+  rule,
+  {
+    valid: [
+      {
+        name: "Pass literal value",
+        code: js`
         const Child = ({ onTextChanged }) => {
           useEffect(() => {
             onTextChanged("Hello World");
           }, [onTextChanged]);
         }
       `,
-    },
-    {
-      name: "Pass derived literal value",
-      code: js`
+      },
+      {
+        name: "Pass derived literal value",
+        code: js`
         const Child = ({ onTextChanged }) => {
           const hello = "Hello";
           const world = "World";
@@ -25,10 +31,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onTextChanged]);
         }
       `,
-    },
-    {
-      name: "Pass internal state",
-      code: js`
+      },
+      {
+        name: "Pass internal state",
+        code: js`
         const Child = ({ onTextChanged }) => {
           const [text, setText] = useState();
 
@@ -45,10 +51,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           );
         }
       `,
-    },
-    {
-      name: "Pass prop",
-      code: js`
+      },
+      {
+        name: "Pass prop",
+        code: js`
         const Child = ({ text, onTextChanged }) => {
           useEffect(() => {
             onTextChanged(text);
@@ -63,10 +69,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           );
         }
       `,
-    },
-    {
-      name: "No-arg prop callback",
-      code: js`
+      },
+      {
+        name: "No-arg prop callback",
+        code: js`
         function Form({ onClose }) {
           const [name, setName] = useState();
           const [isOpen, setIsOpen] = useState(true);
@@ -82,21 +88,21 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           )
         }
       `,
-    },
-    {
-      // This might be an anti-pattern in the first place...
-      name: "Prop getter",
-      code: js`
+      },
+      {
+        // This might be an anti-pattern in the first place...
+        name: "Prop getter",
+        code: js`
         function Child({ getData }) {
           useEffect(() => {
             console.log(getData());
           }, [getData]);
         }
       `,
-    },
-    {
-      name: "Pass internal state to HOC prop",
-      code: js`
+      },
+      {
+        name: "Pass internal state to HOC prop",
+        code: js`
         import { withRouter } from 'react-router-dom';
 
         const MyComponent = withRouter(({ history }) => {
@@ -107,10 +113,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [option]);
         });
       `,
-    },
-    {
-      name: "Pass external state to HOC prop",
-      code: js`
+      },
+      {
+        name: "Pass external state to HOC prop",
+        code: js`
         import { withRouter } from 'react-router-dom';
 
         const MyComponent = withRouter(({ history }) => {
@@ -123,10 +129,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [data]);
         });
       `,
-    },
-    {
-      name: "Pass ref to parent",
-      code: js`
+      },
+      {
+        name: "Pass ref to parent",
+        code: js`
         const Child = ({ onRef }) => {
           const ref = useRef();
 
@@ -135,12 +141,12 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onRef, ref.current]);
         }
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
-      // Alternate solutions exist, but this is arguably the most readable.
-      name: "Pass cleanup function that depends on ref",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
+        // Alternate solutions exist, but this is arguably the most readable.
+        name: "Pass cleanup function that depends on ref",
+        code: js`
         import { dropTargetForElements } from "@atlaskit/pragmatic-drag-and-drop/element/adapter";
 
         function DeleteDropTarget({ onDelete }) {
@@ -165,11 +171,11 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           return <div ref={ref}>Drop an item here to delete</div>;
         };
       `,
-    },
-    {
-      // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/43
-      name: "Effect inside custom hook returns MemberExpression cleanup",
-      code: js`
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/43
+        name: "Effect inside custom hook returns MemberExpression cleanup",
+        code: js`
         function useActorLogger(actorRef) {
           useEffect(() => {
             return actorRef.system.inspect((next) => {
@@ -180,10 +186,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [actorRef]);
         }
       `,
-    },
-    {
-      name: "Register callback on own ref to pass data to parent",
-      code: js`
+      },
+      {
+        name: "Register callback on own ref to pass data to parent",
+        code: js`
         const Child = ({ onClicked }) => {
           const ref = useRef();
 
@@ -194,10 +200,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onClicked, ref]);
         }
       `,
-    },
-    {
-      name: "Register external callback on ref prop",
-      code: js`
+      },
+      {
+        name: "Register external callback on ref prop",
+        code: js`
         const Child = ({ ref }) => {
           useEffect(() => {
             ref.current.addEventListener('click', (event) => {
@@ -206,10 +212,10 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [ref]);
         }
       `,
-    },
-    {
-      name: "Pass external state that's retrieved in effect via .then",
-      code: js`
+      },
+      {
+        name: "Pass external state that's retrieved in effect via .then",
+        code: js`
         const Child = ({ onFetched }) => {
           useEffect(() => {
             fetchData()
@@ -217,17 +223,17 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, []);
         }
       `,
-      // TODO: Difficult because `getUpstreamRefs` ignores parameter-declared variables,
-      // and the above test case relies on that behavior.
-      // errors: [
-      //   {
-      //     messageId: "avoidPassingDataToParentInComponent",
-      //   },
-      // ],
-    },
-    {
-      name: "Pass external state that's retrieved in effect via async/await",
-      code: js`
+        // TODO: Difficult because `getUpstreamRefs` ignores parameter-declared variables,
+        // and the above test case relies on that behavior.
+        // errors: [
+        //   {
+        //     messageId: "avoidPassingDataToParentInComponent",
+        //   },
+        // ],
+      },
+      {
+        name: "Pass external state that's retrieved in effect via async/await",
+        code: js`
         const Child = ({ onFetched }) => {
           useEffect(() => {
             (async () => {
@@ -237,17 +243,17 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, []);
         }
       `,
-      // TODO:
-      // errors: [
-      //   {
-      //     messageId: "avoidPassingDataToParentInComponent",
-      //   },
-      // ],
-    },
-    {
-      // TODO: This could be done (possibly conditionally) in the parent because it doesn't depend on anything in the child?
-      name: "Pass window event data to parent",
-      code: js`
+        // TODO:
+        // errors: [
+        //   {
+        //     messageId: "avoidPassingDataToParentInComponent",
+        //   },
+        // ],
+      },
+      {
+        // TODO: This could be done (possibly conditionally) in the parent because it doesn't depend on anything in the child?
+        name: "Pass window event data to parent",
+        code: js`
         const Child = ({ onResized }) => {
           useEffect(() => {
             window.addEventListener('resize', (event) => {
@@ -260,12 +266,12 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onResized]);
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "Pass external state",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "Pass external state",
+        code: js`
         const Child = ({ onFetched }) => {
           const data = useSomeAPI();
 
@@ -274,16 +280,16 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onFetched, data]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingDataToParentInComponent",
-          data: { data: '"useSomeAPI"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass external state, no deps argument",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInComponent",
+            data: { data: '"useSomeAPI"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass external state, no deps argument",
+        code: js`
         const Child = ({ onFetched }) => {
           const data = useSomeAPI();
 
@@ -292,16 +298,16 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           });
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingDataToParentInComponent",
-          data: { data: '"useSomeAPI"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass external state, empty deps",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInComponent",
+            data: { data: '"useSomeAPI"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass external state, empty deps",
+        code: js`
         const Child = ({ onFetched }) => {
           const data = useSomeAPI();
 
@@ -310,16 +316,16 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, []);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingDataToParentInComponent",
-          data: { data: '"useSomeAPI"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass external state in custom hook",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInComponent",
+            data: { data: '"useSomeAPI"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass external state in custom hook",
+        code: js`
         const useCustomHook = ({ onFetched }) => {
           const data = useSomeAPI();
 
@@ -328,16 +334,16 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onFetched, data]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingDataToParentInHook",
-          data: { data: '"useSomeAPI"', name: '"useCustomHook"' },
-        },
-      ],
-    },
-    {
-      name: "Pass derived external state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInHook",
+            data: { data: '"useSomeAPI"', name: '"useCustomHook"' },
+          },
+        ],
+      },
+      {
+        name: "Pass derived external state",
+        code: js`
         const Child = ({ onFetched }) => {
           const data = useSomeAPI();
           const firstElement = data[0];
@@ -347,16 +353,16 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onFetched, firstElement]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingDataToParentInComponent",
-          data: { data: '"useSomeAPI"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass multiple external state",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInComponent",
+            data: { data: '"useSomeAPI"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass multiple external state",
+        code: js`
         const Child = ({ onResult }) => {
           const data = useSomeAPI();
           const meta = useOtherAPI();
@@ -366,16 +372,16 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onResult, data, meta]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingDataToParentInComponent",
-          data: { data: '"useSomeAPI" and "useOtherAPI"', name: '"Child"' },
-        },
-      ],
-    },
-    {
-      name: "Pass external data and internal state (only data in message)",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInComponent",
+            data: { data: '"useSomeAPI" and "useOtherAPI"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass external data and internal state (only data in message)",
+        code: js`
         const Child = ({ onChanged }) => {
           const [count, setCount] = useState(0);
           const data = useSomeAPI();
@@ -385,12 +391,13 @@ new MyRuleTester().run("no-pass-data-to-parent", rule, {
           }, [onChanged, data, count]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidPassingDataToParentInComponent",
-          data: { data: '"useSomeAPI"', name: '"Child"' },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInComponent",
+            data: { data: '"useSomeAPI"', name: '"Child"' },
+          },
+        ],
+      },
+    ],
+  },
+);

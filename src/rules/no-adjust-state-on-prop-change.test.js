@@ -1,11 +1,17 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-adjust-state-on-prop-change.ts";
 
-new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
-  valid: [
-    {
-      name: "Adjusting state directly during render",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-adjust-state-on-prop-change",
+  rule,
+  {
+    valid: [
+      {
+        name: "Adjusting state directly during render",
+        code: js`
         function List({ items }) {
           const [isReverse, setIsReverse] = useState(false);
           const [selection, setSelection] = useState(null);
@@ -17,10 +23,10 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }
         }
       `,
-    },
-    {
-      name: "Set state to literal when internal state changes",
-      code: js`
+      },
+      {
+        name: "Set state to literal when internal state changes",
+        code: js`
         function Counter() {
           const [count, setCount] = useState(0);
           const [otherState, setOtherState] = useState();
@@ -30,10 +36,10 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }, [count]);
         }
       `,
-    },
-    {
-      name: "Set state to a value derived from props",
-      code: js`
+      },
+      {
+        name: "Set state to a value derived from props",
+        code: js`
         function Counter({ count }) {
           const [doubleCount, setDoubleCount] = useState(0);
 
@@ -42,12 +48,12 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }, [count]);
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "Set state to literal when prop changes",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "Set state to literal when prop changes",
+        code: js`
         function List({ items }) {
           const [selection, setSelection] = useState();
 
@@ -56,16 +62,16 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }, [items]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidAdjustingStateWhenAPropChanges",
-          data: { state: "selection", props: '"items"' },
-        },
-      ],
-    },
-    {
-      name: "Set state to internal state when prop changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: { state: "selection", props: '"items"' },
+          },
+        ],
+      },
+      {
+        name: "Set state to internal state when prop changes",
+        code: js`
         function List({ items }) {
           const [selection, setSelection] = useState();
           const [internalData, setInternalData] = useState();
@@ -75,16 +81,16 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }, [items, internalData]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidAdjustingStateWhenAPropChanges",
-          data: { state: "selection", props: '"items"' },
-        },
-      ],
-    },
-    {
-      name: "Set state to external state when prop changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: { state: "selection", props: '"items"' },
+          },
+        ],
+      },
+      {
+        name: "Set state to external state when prop changes",
+        code: js`
         function List({ items }) {
           const [selection, setSelection] = useState();
           const { data: externalData } = useDataSource();
@@ -94,16 +100,16 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }, [items]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidAdjustingStateWhenAPropChanges",
-          data: { state: "selection", props: '"items"' },
-        },
-      ],
-    },
-    {
-      name: "Conditionally set state to literal when prop changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: { state: "selection", props: '"items"' },
+          },
+        ],
+      },
+      {
+        name: "Conditionally set state to literal when prop changes",
+        code: js`
         function Form({ result }) {
           const [error, setError] = useState();
 
@@ -114,16 +120,16 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }, [result]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidAdjustingStateWhenAPropChanges",
-          data: { state: "error", props: '"result"' },
-        },
-      ],
-    },
-    {
-      name: "Set state to literal when two props change",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: { state: "error", props: '"result"' },
+          },
+        ],
+      },
+      {
+        name: "Set state to literal when two props change",
+        code: js`
         function List({ items, user }) {
           const [selection, setSelection] = useState();
 
@@ -132,12 +138,13 @@ new MyRuleTester().run("no-adjust-state-on-prop-change", rule, {
           }, [items, user]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidAdjustingStateWhenAPropChanges",
-          data: { state: "selection", props: '"items" and "user"' },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: { state: "selection", props: '"items" and "user"' },
+          },
+        ],
+      },
+    ],
+  },
+);

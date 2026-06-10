@@ -1,11 +1,17 @@
-import { MyRuleTester, js } from "../../test/rule-tester.js";
+import { RuleTester } from "eslint";
+import plugin from "../../src/index.ts";
+const js = String.raw;
+
 import rule from "./no-chain-state-updates.ts";
 
-new MyRuleTester().run("no-chain-state-updates", rule, {
-  valid: [
-    {
-      name: "Set state to literal when props change",
-      code: js`
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "no-chain-state-updates",
+  rule,
+  {
+    valid: [
+      {
+        name: "Set state to literal when props change",
+        code: js`
         function List({ items }) {
           const [selection, setSelection] = useState();
 
@@ -14,10 +20,10 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [items]);
         }
       `,
-    },
-    {
-      name: "Set state to derived internal state when internal state changes",
-      code: js`
+      },
+      {
+        name: "Set state to derived internal state when internal state changes",
+        code: js`
         function Counter() {
           const [count, setCount] = useState(0);
           const [doubleCount, setDoubleCount] = useState(0);
@@ -27,10 +33,10 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [count]);
         }
       `,
-    },
-    {
-      name: "Set state to literal when external state changes",
-      code: js`
+      },
+      {
+        name: "Set state to literal when external state changes",
+        code: js`
         function Feed() {
           const { data: posts } = useQuery('/posts');
           const [scrollPosition, setScrollPosition] = useState(0);
@@ -40,10 +46,10 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [posts]);
         }
       `,
-    },
-    {
-      name: "Synchronize internal state with literal",
-      code: js`
+      },
+      {
+        name: "Synchronize internal state with literal",
+        code: js`
         function Component() {
           const [isMounted, setIsMounted] = useState(false);
 
@@ -53,10 +59,10 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [setIsMounted]);
         }
       `,
-    },
-    {
-      name: "Set state to internal plus external state",
-      code: js`
+      },
+      {
+        name: "Set state to internal plus external state",
+        code: js`
         function Game() {
           const [round, setRound] = useState(1);
           const [isGameOver, setIsGameOver] = useState(false);
@@ -67,11 +73,11 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [round, players]);
         }
       `,
-    },
-    {
-      // Because we don't trace the args passed to `JSON.stringify` (hard to generalize)
-      name: "JSON.stringifying internal state in deps",
-      code: js`
+      },
+      {
+        // Because we don't trace the args passed to `JSON.stringify` (hard to generalize)
+        name: "JSON.stringifying internal state in deps",
+        code: js`
         function Feed() {
           const [posts, setPosts] = useState([]);
           const [scrollPosition, setScrollPosition] = useState(0);
@@ -81,12 +87,12 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [JSON.stringify(posts)]);
         }
       `,
-    },
-  ],
-  invalid: [
-    {
-      name: "Set state to literal when internal state changes",
-      code: js`
+      },
+    ],
+    invalid: [
+      {
+        name: "Set state to literal when internal state changes",
+        code: js`
         function Game() {
           const [round, setRound] = useState(1);
           const [isGameOver, setIsGameOver] = useState(false);
@@ -98,16 +104,16 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [round]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidChainingStateUpdates",
-          data: { state: "isGameOver" },
-        },
-      ],
-    },
-    {
-      name: "Set state to derived literal when internal state changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidChainingStateUpdates",
+            data: { state: "isGameOver" },
+          },
+        ],
+      },
+      {
+        name: "Set state to derived literal when internal state changes",
+        code: js`
         function Game() {
           const [round, setRound] = useState(1);
           const [isGameOver, setIsGameOver] = useState(false);
@@ -120,16 +126,16 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [round]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidChainingStateUpdates",
-          data: { state: "isGameOver" },
-        },
-      ],
-    },
-    {
-      name: "Set state to literal when internal or external state changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidChainingStateUpdates",
+            data: { state: "isGameOver" },
+          },
+        ],
+      },
+      {
+        name: "Set state to literal when internal or external state changes",
+        code: js`
         function Game() {
           const [round, setRound] = useState(1);
           const [isGameOver, setIsGameOver] = useState(false);
@@ -142,16 +148,16 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [round, players]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidChainingStateUpdates",
-          data: { state: "isGameOver" },
-        },
-      ],
-    },
-    {
-      name: "Set state to external state when internal state changes",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidChainingStateUpdates",
+            data: { state: "isGameOver" },
+          },
+        ],
+      },
+      {
+        name: "Set state to external state when internal state changes",
+        code: js`
         function Game() {
           const [round, setRound] = useState(1);
           const [isGameOver, setIsGameOver] = useState(false);
@@ -164,16 +170,16 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [round, players]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidChainingStateUpdates",
-          data: { state: "isGameOver" },
-        },
-      ],
-    },
-    {
-      name: "In an otherwise valid effect",
-      code: js`
+        errors: [
+          {
+            messageId: "avoidChainingStateUpdates",
+            data: { state: "isGameOver" },
+          },
+        ],
+      },
+      {
+        name: "In an otherwise valid effect",
+        code: js`
         function MyComponent() {
           const [state, setState] = useState();
           const [otherState, setOtherState] = useState('Meow');
@@ -184,12 +190,13 @@ new MyRuleTester().run("no-chain-state-updates", rule, {
           }, [otherState]);
         }
       `,
-      errors: [
-        {
-          messageId: "avoidChainingStateUpdates",
-          data: { state: "state" },
-        },
-      ],
-    },
-  ],
-});
+        errors: [
+          {
+            messageId: "avoidChainingStateUpdates",
+            data: { state: "state" },
+          },
+        ],
+      },
+    ],
+  },
+);
