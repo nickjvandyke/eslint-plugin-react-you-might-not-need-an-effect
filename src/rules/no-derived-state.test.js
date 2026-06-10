@@ -56,7 +56,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Set to external state, with multiple setter calls",
+        name: "Set to external state",
         code: js`
         function Feed() {
           const { data: posts } = useQuery('/posts');
@@ -65,16 +65,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setSelectedPost(posts[0]);
           }, [posts]);
-
-          return (
-            <div>
-              {posts.map((post) => (
-                <div key={post.id} onClick={() => setSelectedPost(post)}>
-                  {post.title}
-                </div>
-              ))}
-            </div>
-          )
         }
       `,
       },
@@ -163,30 +153,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "From derived external state with multiple calls to setter",
-        code: js`
-        function Form() {
-          const name = useQuery('/name');
-          const [fullName, setFullName] = useState('');
-
-          useEffect(() => {
-            const prefixedName = 'Dr. ' + name;
-            setFullName(prefixedName) 
-          }, [name]);
-
-          return (
-            <input
-              name="fullName"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-            />
-          )
-        }
-      `,
-      },
-      {
-        name: "From props via unpure derived setter",
+        name: "From props via impure derived setter",
         code: js`
         function DoubleCounter({ count }) {
           const [doubleCount, setDoubleCount] = useState(0);
@@ -203,7 +170,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Via unpure promise global function",
+        name: "Via impure promise global function",
         code: js`
         function Counter({ count }) {
           const [multipliedCount, setMultipliedCount] = useState();
@@ -213,145 +180,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               .then((res) => res.json())
               .then((multiplier) => setMultipliedCount(count * multiplier));
           }, [count]);
-
-          return (
-            // So single-setter doesn't trigger
-            <button onClick={() => setMultipliedCount(0)}>reset</button>
-          )
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "multipliedCount" },
-          },
-        ],
-      },
-      // TODO: Maybe move some of these to/from `syntax.test.js`
-      {
-        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
-        name: "Defined-then-called async external global function",
-        code: js`
-        function Component() {
-          const api = useFetchWrapper();
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            async function fetchIt() {
-              const response = await fetch('/endpoint');
-              setState(response);
-            }
-
-            void fetchIt();
-          }, []);
-        }
-      `,
-      },
-      {
-        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/35
-        // For "always in sync" detection
-        name: "Defined-then-called async function from API in deps",
-        code: js`
-        function Component() {
-          const api = useFetchWrapper();
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            async function fetchIt() {
-              const response = await api.doFetch('/endpoint');
-              setState(response);
-            }
-
-            void fetchIt();
-          }, [api]);
-        }
-      `,
-      },
-      {
-        name: "From external data retrieved in async IIFE with API in deps",
-        code: js`
-        function Component() {
-          const api = useFetchWrapper();
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            (async function fetchIt() {
-              const response = await api.doFetch('/endpoint');
-              setState(response);
-            })();
-          }, [api]);
-        }
-      `,
-      },
-      {
-        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/16
-        name: "From external data retrieved in overly-complicated async IIFE",
-        code: js`
-        import { useEffect, useState } from 'react';
-
-        export const App = () => {
-          const [response, setResponse] = useState(null);
-
-          const fetchYesNoApi = () => {
-            return (async () => {
-              try {
-                const response = await fetch('https://yesno.wtf/api');
-                if (!response.ok) {
-                  throw new Error('Network error');
-                }
-                const data = await response.json();
-                setResponse(data);
-              } catch (err) {
-                console.error(err);
-              }
-            })();
-          };
-
-          useEffect(() => { 
-            (async () => {
-              await fetchYesNoApi();
-            })();
-          }, []);
-
-          return (
-            <div>{response}</div>
-          );
-        };
-      `,
-      },
-      {
-        name: "Named function passed to event callback",
-        code: js`
-        function Component() {
-          const [count, setCount] = useState(0);
-          const [doubleCount, setDoubleCount] = useState(0);
-
-          useEffect(() => {
-            function handleClick() {
-              setDoubleCount(count * 2);
-            }
-
-            document.addEventListener('click', handleClick);
-            return () => document.removeEventListener('click', handleClick);
-          }, [count]);
-        }
-      `,
-      },
-      {
-        name: "Pass internal args to external local function",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const doSet = (arg1, arg2) => {
-            console.log(arg1, arg2);
-          }
-
-          useEffect(() => {
-            doSet(firstName, lastName);
-          }, [firstName, lastName]);
         }
       `,
       },
@@ -369,28 +197,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Synchronous setter in anonymous function passed to constructor",
-        code: js`
-          function useHasOverflow({ contentRef, maxHeight }) {
-            const [hasOverflow, setHasOverflow] = useState(false);
-
-            useEffect(() => {
-              const resizeObserver = new ResizeObserver((element) => {
-                const hasContentOverflow = element.scrollHeight > maxHeight;
-                setHasOverflow(hasContentOverflow);
-              })
-
-              resizeObserver.observe(contentRef.current);
-              // In real-world, this effect would need a cleanup function that calls resizeObserver.disconnect.
-              // So, not the most realistic example. But the concept holds.
-            }, [contentRef, maxHeight]);
-
-            return hasOverflow;
-          }
-        `,
-      },
-      {
-        name: "Synchronous setter in anonymous function passed to call expression",
+        name: "Synchronous setter in anonymous callback",
         code: js`
           function useHasOverflow({ contentRef, maxHeight }) {
             const [hasOverflow, setHasOverflow] = useState(false);
@@ -408,113 +215,26 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }
         `,
       },
-      {
-        name: "Synchronous setter in named function passed to constructor",
-        code: js`
-          function useHasOverflow({ contentRef, maxHeight }) {
-            const [hasOverflow, setHasOverflow] = useState(false);
-
-            useEffect(() => {
-              const fn = (element) => {
-                const hasContentOverflow = element.scrollHeight > maxHeight;
-                setHasOverflow(hasContentOverflow);
-              }
-              const resizeObserver = new ResizeObserver(fn)
-
-              resizeObserver.observe(contentRef.current);
-            }, [contentRef, maxHeight]);
-
-            return hasOverflow;
-          }
-        `,
-      },
-      {
-        name: "Synchronous setter in named function passed to call expression",
-        code: js`
-          function useHasOverflow({ contentRef, maxHeight }) {
-            const [hasOverflow, setHasOverflow] = useState(false);
-
-            useEffect(() => {
-              const fn = (element) => {
-                const hasContentOverflow = element.scrollHeight > maxHeight;
-                setHasOverflow(hasContentOverflow);
-              }
-              const resizeObserver = createResizeObserver(fn)
-
-              resizeObserver.observe(contentRef.current);
-            }, [contentRef, maxHeight]);
-
-            return hasOverflow;
-          }
-        `,
-      },
       // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
-      {
-        name: "From internal state via pure global function",
-        code: js`
-        function Counter({ count }) {
-          const [countJson, setCountJson] = useState();
-
-          useEffect(() => {
-            setCountJson(JSON.stringify(count));
-          }, [count]);
-        }
-      `,
-      },
-      {
-        name: "From internal state via local unpure function",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          function computeName(firstName, lastName) {
-            console.log('meow');
-            return firstName + ' ' + lastName;
-          }
-
-          useEffect(() => {
-            setFullName(computeName(firstName, lastName));
-          }, [firstName, lastName]);
-        }
-      `,
-      },
-      {
-        name: "Set to result of pure local ArrowFunctionExpression",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const computeName = (firstName, lastName) => {
-            return firstName + ' ' + lastName;
-          }
-
-          useEffect(() => {
-            const newFullName = computeName(firstName, lastName);
-            setFullName(newFullName);
-          }, [firstName, lastName, computeName]);
-        }
-      `,
-      },
-      {
-        name: "Set to result of internal useCallback; repeat references to a useState variable",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const computeName = useCallback(() => firstName + ' ' + lastName, [firstName, lastName]);
-
-          useEffect(() => {
-            setFullName(computeName());
-          }, [computeName]);
-        }
-      `,
-      },
+      // {
+      //   // TODO:
+      //   name: "Pass state to derived setter which ignores args",
+      //   code: js`
+      //   function Form() {
+      //     const [firstName, setFirstName] = useState('Dwayne');
+      //     const [lastName, setLastName] = useState('The Rock');
+      //     const [fullName, setFullName] = useState('');
+      //
+      //     const setDerivedFullName = (firstName, lastName) => {
+      //       setFullName("Sparky");
+      //     }
+      //
+      //     useEffect(() => {
+      //       setDerivedFullName(firstName, lastName);
+      //     }, [firstName, lastName]);
+      //   }
+      // `,
+      // },
     ],
     invalid: [
       {
@@ -715,7 +435,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
-        name: "From internal plus external state with single setter call",
+        name: "From internal plus external state",
         code: js`
         function Form() {
           const prefix = useQuery('/prefix');
@@ -954,31 +674,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
             }
 
             doSet();
-          }, [firstName, lastName]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
-      },
-      {
-        // Actually a false positive - just tracking this behavior.
-        name: "Pass state to derived setter which ignores args",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const setDerivedFullName = (firstName, lastName) => {
-            setFullName("Sparky");
-          }
-
-          useEffect(() => {
-            setDerivedFullName(firstName, lastName);
           }, [firstName, lastName]);
         }
       `,

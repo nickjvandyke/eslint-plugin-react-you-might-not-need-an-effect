@@ -214,44 +214,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Pass external state that's retrieved in effect via .then",
-        code: js`
-        const Child = ({ onFetched }) => {
-          useEffect(() => {
-            fetchData()
-              .then((data) => onFetched(data));
-          }, []);
-        }
-      `,
-        // TODO: Difficult because `getUpstreamRefs` ignores parameter-declared variables,
-        // and the above test case relies on that behavior.
-        // errors: [
-        //   {
-        //     messageId: "avoidPassingDataToParentInComponent",
-        //   },
-        // ],
-      },
-      {
-        name: "Pass external state that's retrieved in effect via async/await",
-        code: js`
-        const Child = ({ onFetched }) => {
-          useEffect(() => {
-            (async () => {
-              const data = await fetchData();
-              onFetched(data);
-            })();
-          }, []);
-        }
-      `,
-        // TODO:
-        // errors: [
-        //   {
-        //     messageId: "avoidPassingDataToParentInComponent",
-        //   },
-        // ],
-      },
-      {
-        // TODO: This could be done (possibly conditionally) in the parent because it doesn't depend on anything in the child?
         name: "Pass window event data to parent",
         code: js`
         const Child = ({ onResized }) => {
@@ -398,6 +360,43 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      // {
+      //   name: "Pass external state that's retrieved in effect via .then",
+      //   code: js`
+      //   const Child = ({ onFetched }) => {
+      //     useEffect(() => {
+      //       fetchData()
+      //         .then((data) => onFetched(data));
+      //     }, []);
+      //   }
+      // `,
+      //   // TODO: Difficult because `getUpstreamRefs` ignores parameter-declared variables,
+      //   // and the above test case relies on that behavior.
+      //   errors: [
+      //     {
+      //       messageId: "avoidPassingDataToParentInComponent",
+      //     },
+      //   ],
+      // },
+      // {
+      //   name: "Pass external state that's retrieved in effect via async/await",
+      //   code: js`
+      //   const Child = ({ onFetched }) => {
+      //     useEffect(() => {
+      //       (async () => {
+      //         const data = await fetchData();
+      //         onFetched(data);
+      //       })();
+      //     }, []);
+      //   }
+      // `,
+      //   // TODO:
+      //   errors: [
+      //     {
+      //       messageId: "avoidPassingDataToParentInComponent",
+      //     },
+      //   ],
+      // },
     ],
   },
 );

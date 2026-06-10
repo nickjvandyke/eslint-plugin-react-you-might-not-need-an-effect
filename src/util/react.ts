@@ -331,7 +331,7 @@ export const getEffectCleanup = (
 
 // Returns the component or custom hook that contains the `useEffect` node.
 //
-// WARNING: Per the `isFunctionalComponent` etc. internals, this will return undefined for some non-idiomatic component definitions.
+// Per the `isFunctionalComponent` etc. internals, this will return undefined for some non-idiomatic component definitions.
 // e.g. `function buildComponent(arg1, arg2) { return <div />; }`
 // Not sure we can account for that without introducing false positives, and those are rare and arguably bad practice.
 export const findEnclosingReactNode = (

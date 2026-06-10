@@ -10,7 +10,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
   {
     valid: [
       {
-        name: "Sychronizing with external system",
+        name: "Synchronizing with external system",
         code: js`
         function Search() {
           const [query, setQuery] = useState();
