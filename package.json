@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-react-you-might-not-need-an-effect",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "ESLint plugin to catch unnecessary React effects for simpler, faster, safer code.",
   "keywords": [
     "eslint",

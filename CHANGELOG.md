@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.0...v1.0.1) (2026-06-15)
+
+
+### Bug Fixes
+
+* add `homepage` and `bugs.url` to package.json ([a5395f8](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/a5395f81966b075773babd322bd157af65fbf0d5))
+* update `package.json#description` ([02d3f3f](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/02d3f3fd6a9bc4f5472562e8f5d1d7b87be01f81))
+
 ## [1.0.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v0.11.1...v1.0.0) (2026-05-31)
 
 This semantic v1.0.0 release signifies my confidence in the plugin's stability and reliability after many iterations.
