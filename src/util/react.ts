@@ -109,7 +109,7 @@ export const isUseRef = (node: Rule.Node): boolean => {
 // Does not include `useLayoutEffect`.
 // When used correctly, it interacts with the DOM = external system = (probably) valid effect.
 // When used incorrectly, it's probably too difficult to accurately analyze anyway.
-export const isUseEffect = (node: Rule.Node): boolean =>
+const isUseEffect = (node: Rule.Node): boolean =>
   node.type === "CallExpression" &&
   ((node.callee.type === "Identifier" && node.callee.name === "useEffect") ||
     (node.callee.type === "MemberExpression" &&
@@ -118,16 +118,7 @@ export const isUseEffect = (node: Rule.Node): boolean =>
       node.callee.property.type === "Identifier" &&
       node.callee.property.name === "useEffect"));
 
-export const isUseCallback = (node: Rule.Node): boolean =>
-  node.type === "CallExpression" &&
-  ((node.callee.type === "Identifier" && node.callee.name === "useCallback") ||
-    (node.callee.type === "MemberExpression" &&
-      node.callee.object.type === "Identifier" &&
-      node.callee.object.name === "React" &&
-      node.callee.property.type === "Identifier" &&
-      node.callee.property.name === "useCallback"));
-
-export const getEffectFn = (
+const getEffectFn = (
   context: Rule.RuleContext,
   node: Rule.Node,
 ): Rule.Node | undefined => {
@@ -151,26 +142,58 @@ export const getEffectFn = (
   return undefined;
 };
 
-export const getEffectFnRefs = (
-  context: Rule.RuleContext,
+const getEffectDeps = (
   node: Rule.Node,
-): Scope.Reference[] | undefined => {
-  const effectFn = getEffectFn(context, node);
-  return effectFn ? getDownstreamRefs(context, effectFn) : undefined;
-};
-
-export function getEffectDepsRefs(
-  context: Rule.RuleContext,
-  node: Rule.Node,
-): Scope.Reference[] | undefined {
+): (Rule.Node & { type: "ArrayExpression" }) | undefined => {
   if (node.type !== "CallExpression") return undefined;
   const depsArr = node.arguments[1];
   if (depsArr?.type !== "ArrayExpression") {
     return undefined;
   }
 
-  return getDownstreamRefs(context, depsArr as Rule.Node);
-}
+  return depsArr as Rule.Node & { type: "ArrayExpression" };
+};
+
+const getEffectCleanup = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): (Rule.Node & { type: "ReturnStatement" }) | undefined => {
+  const effectFn = getEffectFn(context, node);
+  if (!effectFn) return undefined;
+  if (
+    (effectFn.type !== "ArrowFunctionExpression" &&
+      effectFn.type !== "FunctionExpression") ||
+    effectFn.body.type !== "BlockStatement"
+  ) {
+    return undefined;
+  }
+
+  return (
+    effectFn.body.body
+      .concat()
+      .reverse()
+      // Check `.argument` so we don't consider bare `return`s
+      .find((stmt) => stmt.type === "ReturnStatement" && stmt.argument) as
+      | (Rule.Node & { type: "ReturnStatement" })
+      | undefined
+  );
+};
+
+export const getEffect = (context: Rule.RuleContext, node: Rule.Node) => {
+  if (!isUseEffect(node)) return undefined;
+
+  const fn = getEffectFn(context, node);
+  if (!fn) return undefined;
+
+  const deps = getEffectDeps(node);
+
+  return {
+    fn,
+    fnRefs: getDownstreamRefs(context, fn),
+    depsRefs: deps ? getDownstreamRefs(context, deps) : undefined,
+    cleanup: getEffectCleanup(context, node),
+  };
+};
 
 export const isState = (ref: Scope.Reference): boolean =>
   ref.resolved?.defs.some(
@@ -305,28 +328,6 @@ export const getUseStateDecl = (
     result = result.parent;
   }
   return result as (Rule.Node & { type: "VariableDeclarator" }) | undefined;
-};
-
-export const getEffectCleanup = (
-  context: Rule.RuleContext,
-  node: Rule.Node,
-): (Rule.Node & { type: "ReturnStatement" }) | undefined => {
-  const effectFn = getEffectFn(context, node);
-  if (!effectFn) return undefined;
-  if (
-    (effectFn.type !== "ArrowFunctionExpression" &&
-      effectFn.type !== "FunctionExpression") ||
-    effectFn.body.type !== "BlockStatement"
-  ) {
-    return undefined;
-  }
-
-  return effectFn.body.body
-    .concat()
-    .reverse()
-    .find((stmt) => stmt.type === "ReturnStatement" && stmt.argument) as
-    | (Rule.Node & { type: "ReturnStatement" })
-    | undefined;
 };
 
 // Returns the component or custom hook that contains the `useEffect` node.

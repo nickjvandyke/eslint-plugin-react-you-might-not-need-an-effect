@@ -6,14 +6,7 @@ import {
   findDownstreamNodes,
   isSynchronous,
 } from "../util/ast.ts";
-import {
-  getEffectFnRefs,
-  getEffectFn,
-  getEffectCleanup,
-  getStateName,
-  isStateCall,
-  isUseEffect,
-} from "../util/react.ts";
+import { getStateName, isStateCall, getEffect } from "../util/react.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -30,22 +23,16 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node)) return;
+      const effect = getEffect(context, node);
+      if (!effect || !effect.cleanup) return;
 
-      const cleanupReturnStmt = getEffectCleanup(context, node);
-      if (!cleanupReturnStmt?.argument) return;
-
-      const effectFnRefs = getEffectFnRefs(context, node);
-      const effectFn = getEffectFn(context, node);
-      if (!effectFnRefs || !effectFn) return;
-
-      const bodySetters = effectFnRefs
-        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effectFn))
+      const bodySetters = effect.fnRefs
+        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
         .filter((ref) => isStateCall(context, ref));
-
       if (bodySetters.length === 0) return;
 
-      const cleanupArg = cleanupReturnStmt.argument as Rule.Node;
+      const cleanupArg = effect.cleanup.argument as Rule.Node | undefined;
+      if (!cleanupArg) return;
       const cleanupRefs = getDownstreamRefs(context, cleanupArg);
 
       // Manual descend because `descend` skips arguments.

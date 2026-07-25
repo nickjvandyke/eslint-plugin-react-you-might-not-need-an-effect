@@ -684,6 +684,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      {
+        name: "Bare return is not treated as a cleanup function",
+        code: js`
+        function Form({ firstName, lastName }) {
+          const [fullName, setFullName] = useState('');
+
+          useEffect(() => {
+            setFullName(firstName + ' ' + lastName);
+            return;
+          }, [firstName, lastName]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
     ],
   },
 );

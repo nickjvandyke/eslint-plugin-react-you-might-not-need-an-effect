@@ -5,15 +5,7 @@ import {
   getUpstreamRefs,
   isSynchronous,
 } from "../util/ast.ts";
-import {
-  getEffectDepsRefs,
-  getEffectFn,
-  getEffectFnRefs,
-  getStateName,
-  isProp,
-  isStateCall,
-  isUseEffect,
-} from "../util/react.ts";
+import { getStateName, isProp, isStateCall, getEffect } from "../util/react.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -30,22 +22,17 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node)) return;
-      const effectFnRefs = getEffectFnRefs(context, node);
-      const depsRefs = getEffectDepsRefs(context, node);
-      if (!effectFnRefs || !depsRefs) return;
+      const effect = getEffect(context, node);
+      if (!effect || !effect.depsRefs) return;
 
-      const depsPropRefs = depsRefs
+      const depsPropRefs = effect.depsRefs
         .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
         .filter((ref: Scope.Reference) => isProp(context, ref));
-
       if (depsPropRefs.length === 0) return;
 
-      const effectFn = getEffectFn(context, node);
-      if (!effectFn) return;
-      effectFnRefs
+      effect.fnRefs
         .filter((ref: Scope.Reference) =>
-          isSynchronous(ref.identifier as Rule.Node, effectFn),
+          isSynchronous(ref.identifier as Rule.Node, effect.fn),
         )
         .filter((ref: Scope.Reference) => isStateCall(context, ref))
         .forEach((ref: Scope.Reference) => {
@@ -56,7 +43,6 @@ const rule: Rule.RuleModule = {
           const isSomeArgsProps = getArgsUpstreamRefs(context, ref).some(
             (ref: Scope.Reference) => isProp(context, ref),
           );
-
           if (isSomeArgsProps) return;
 
           const stateName = getStateName(context, ref);

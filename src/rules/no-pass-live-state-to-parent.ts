@@ -6,13 +6,11 @@ import {
 } from "../util/ast.ts";
 import {
   getComponentName,
-  getEffectFn,
-  getEffectFnRefs,
   isPropCall,
   isState,
-  isUseEffect,
   isCustomHook,
   findEnclosingReactNode,
+  getEffect,
 } from "../util/react.ts";
 
 const rule: Rule.RuleModule = {
@@ -32,15 +30,12 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node)) return;
-      const effectFnRefs = getEffectFnRefs(context, node);
-      if (!effectFnRefs) return;
+      const effect = getEffect(context, node);
+      if (!effect) return;
 
-      const effectFn = getEffectFn(context, node);
-      if (!effectFn) return;
-      effectFnRefs
+      effect.fnRefs
         .filter((ref: Scope.Reference) =>
-          isSynchronous(ref.identifier as Rule.Node, effectFn),
+          isSynchronous(ref.identifier as Rule.Node, effect.fn),
         )
         .filter((ref: Scope.Reference) => isPropCall(context, ref))
         .forEach((ref: Scope.Reference) => {
@@ -50,7 +45,6 @@ const rule: Rule.RuleModule = {
           const stateRefs = getArgsUpstreamRefs(context, ref).filter(
             (r: Scope.Reference) => isState(r),
           );
-
           if (stateRefs.length === 0) return;
 
           const containingNode = findEnclosingReactNode(context, node);

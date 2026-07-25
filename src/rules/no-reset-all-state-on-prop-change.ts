@@ -5,15 +5,13 @@ import {
   getUpstreamRefs,
 } from "../util/ast.ts";
 import {
-  getEffectFnRefs,
-  getEffectDepsRefs,
   isStateCall,
   isProp,
   getUseStateDecl,
   isCustomHook,
   isState,
-  isUseEffect,
   findEnclosingReactNode,
+  getEffect,
 } from "../util/react.ts";
 
 const rule: Rule.RuleModule = {
@@ -32,18 +30,16 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node)) return;
-      const effectFnRefs = getEffectFnRefs(context, node);
-      const depsRefs = getEffectDepsRefs(context, node);
-      if (!effectFnRefs || !depsRefs) return;
+      const effect = getEffect(context, node);
+      if (!effect || !effect.depsRefs) return;
       // Skip custom hooks because they can't receive `key` like components can.
       const containingNode = findEnclosingReactNode(context, node);
       if (containingNode && isCustomHook(containingNode)) return;
 
       const propUsedToResetAllState = findPropUsedToResetAllState(
         context,
-        effectFnRefs,
-        depsRefs,
+        effect.fnRefs,
+        effect.depsRefs,
         node,
       );
 

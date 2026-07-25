@@ -5,15 +5,11 @@ import {
   isSynchronous,
 } from "../util/ast.ts";
 import {
-  getEffectFnRefs,
-  getEffectDepsRefs,
   isStateCall,
   getStateName,
   isProp,
-  getEffectCleanup,
   isState,
-  isUseEffect,
-  getEffectFn,
+  getEffect,
 } from "../util/react.ts";
 
 const rule: Rule.RuleModule = {
@@ -31,16 +27,12 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node) || getEffectCleanup(context, node)) return;
-      const effectFnRefs = getEffectFnRefs(context, node);
-      const depsRefs = getEffectDepsRefs(context, node);
-      if (!effectFnRefs || !depsRefs) return;
+      const effect = getEffect(context, node);
+      if (!effect || effect.cleanup) return;
 
-      const effectFn = getEffectFn(context, node);
-      if (!effectFn) return;
-      effectFnRefs
+      effect.fnRefs
         .filter((ref: Scope.Reference) =>
-          isSynchronous(ref.identifier as Rule.Node, effectFn),
+          isSynchronous(ref.identifier as Rule.Node, effect.fn),
         )
         .filter((ref: Scope.Reference) => isStateCall(context, ref))
         .forEach((ref: Scope.Reference) => {

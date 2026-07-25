@@ -1,13 +1,10 @@
 import type { Rule, Scope } from "eslint";
 import { getCallExpr, isSynchronous } from "../util/ast.ts";
 import {
-  getEffectDepsRefs,
-  getEffectFn,
-  getEffectFnRefs,
   getStateName,
   isStateSetter,
   isStateCall,
-  isUseEffect,
+  getEffect,
 } from "../util/react.ts";
 
 const rule: Rule.RuleModule = {
@@ -25,21 +22,17 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node)) return;
-      const effectFnRefs = getEffectFnRefs(context, node);
-      const depsRefs = getEffectDepsRefs(context, node);
-      if (!effectFnRefs || !depsRefs) return;
+      const effect = getEffect(context, node);
+      if (!effect || !effect.depsRefs) return;
 
       const isEffectRunOnlyOnMount =
-        depsRefs.filter((ref: Scope.Reference) => !isStateSetter(ref))
+        effect.depsRefs.filter((ref: Scope.Reference) => !isStateSetter(ref))
           .length === 0;
       if (!isEffectRunOnlyOnMount) return;
 
-      const effectFn = getEffectFn(context, node);
-      if (!effectFn) return;
-      effectFnRefs
+      effect.fnRefs
         .filter((ref: Scope.Reference) =>
-          isSynchronous(ref.identifier as Rule.Node, effectFn),
+          isSynchronous(ref.identifier as Rule.Node, effect.fn),
         )
         .filter((ref: Scope.Reference) => isStateCall(context, ref))
         .forEach((ref: Scope.Reference) => {

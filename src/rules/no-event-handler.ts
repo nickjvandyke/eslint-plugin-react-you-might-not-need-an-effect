@@ -4,14 +4,7 @@ import {
   getDownstreamRefs,
   getUpstreamRefs,
 } from "../util/ast.ts";
-import {
-  getEffectFn,
-  getEffectFnRefs,
-  getEffectCleanup,
-  isProp,
-  isState,
-  isUseEffect,
-} from "../util/react.ts";
+import { isProp, isState, getEffect } from "../util/react.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -30,17 +23,13 @@ const rule: Rule.RuleModule = {
   },
   create: (context: Rule.RuleContext) => ({
     CallExpression: (node: Rule.Node) => {
-      if (!isUseEffect(node) || getEffectCleanup(context, node)) return;
-      const effectFnRefs = getEffectFnRefs(context, node);
-      if (!effectFnRefs) return;
+      const effect = getEffect(context, node);
+      if (!effect || effect.cleanup) return;
 
       // TODO: Can we also flag this when the deps are internal, and the body calls internal stuff?
       // That'd overlap with other rules though... maybe just useRefs?
 
-      const effectFn = getEffectFn(context, node);
-      if (!effectFn) return;
-
-      findDownstreamNodes(context, effectFn, "IfStatement")
+      findDownstreamNodes(context, effect.fn, "IfStatement")
         .filter(
           (
             ifNode,
