@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.1...v1.0.2) (2026-08-20)
+
+
+### Miscellaneous Chores
+
+* trigger release ([3bbeb2c](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/3bbeb2caadf93f326e6cef6da0a6e968c8e40180))
+
 ## [1.0.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.0...v1.0.1) (2026-06-15)
 
 
