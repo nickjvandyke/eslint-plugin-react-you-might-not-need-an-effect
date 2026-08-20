@@ -125,7 +125,7 @@ Enforce these other rules in your codebase for more accurate analysis:
 
 See the [tests](./src/rules) for extensive (in)valid examples for each rule.
 
-### [`no-derived-state`](https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)
+### [no-derived-state](https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)
 
 Disallow storing derived state in an effect:
 
@@ -142,7 +142,7 @@ function Form() {
 }
 ```
 
-### [`no-chain-state-updates`](https://react.dev/learn/you-might-not-need-an-effect#chains-of-computations)
+### [no-chain-state-updates](https://react.dev/learn/you-might-not-need-an-effect#chains-of-computations)
 
 Disallow chaining state updates in an effect:
 
@@ -160,7 +160,7 @@ function Game() {
 }
 ```
 
-### [`no-event-handler`](https://react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers)
+### [no-event-handler](https://react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers)
 
 Disallow using state and an effect as an event handler:
 
@@ -190,7 +190,7 @@ function ProductPage({ product, addToCart }) {
 }
 ```
 
-### [`no-adjust-state-on-prop-change`](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
+### [no-adjust-state-on-prop-change](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
 
 Disallow adjusting state in an effect when a prop changes:
 
@@ -206,7 +206,7 @@ function List({ items }) {
 }
 ```
 
-### [`no-reset-all-state-on-prop-change`](https://react.dev/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes)
+### [no-reset-all-state-on-prop-change](https://react.dev/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes)
 
 Disallow resetting all state in an effect when a prop changes:
 
@@ -221,7 +221,7 @@ function List({ items }) {
 }
 ```
 
-### [`no-pass-live-state-to-parent`](https://react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes)
+### [no-pass-live-state-to-parent](https://react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes)
 
 Disallow passing live state to parents in an effect from a component:
 
@@ -249,7 +249,7 @@ const useCustomHook = ({ onTextChanged }) => {
 };
 ```
 
-### [`no-pass-data-to-parent`](https://react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent)
+### [no-pass-data-to-parent](https://react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent)
 
 Disallow passing data to parents in an effect from a component:
 
@@ -277,7 +277,7 @@ const useCustomHook = ({ onFetched }) => {
 };
 ```
 
-### [`no-external-store-subscription`](https://react.dev/learn/you-might-not-need-an-effect#subscribing-to-an-external-store)
+### [no-external-store-subscription](https://react.dev/learn/you-might-not-need-an-effect#subscribing-to-an-external-store)
 
 Disallow subscribing to an external store in an effect:
 
@@ -302,7 +302,7 @@ function useOnlineStatus() {
 }
 ```
 
-### `no-initialize-state`
+### no-initialize-state
 
 Disallow initializing state in an effect:
 
