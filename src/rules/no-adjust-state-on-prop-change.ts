@@ -1,4 +1,4 @@
-import type { Rule, Scope } from "eslint";
+import type { Rule } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
@@ -20,28 +20,26 @@ const rule: Rule.RuleModule = {
         'Avoid adjusting state when a prop changes. Instead, adjust "{{state}}" directly during render when {{props}} changes, or refactor your state to avoid this need entirely.',
     },
   },
-  create: (context: Rule.RuleContext) => ({
-    CallExpression: (node: Rule.Node) => {
+  create: (context) => ({
+    CallExpression: (node) => {
       const effect = getEffect(context, node);
       if (!effect || !effect.depsRefs) return;
 
       const depsPropRefs = effect.depsRefs
-        .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
-        .filter((ref: Scope.Reference) => isProp(context, ref));
+        .flatMap((ref) => getUpstreamRefs(context, ref))
+        .filter((ref) => isProp(context, ref));
       if (depsPropRefs.length === 0) return;
 
       effect.fnRefs
-        .filter((ref: Scope.Reference) =>
-          isSynchronous(ref.identifier as Rule.Node, effect.fn),
-        )
-        .filter((ref: Scope.Reference) => isStateCall(context, ref))
-        .forEach((ref: Scope.Reference) => {
+        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
+        .filter((ref) => isStateCall(context, ref))
+        .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
 
           // Avoid overlap with no-derived-state
           const isSomeArgsProps = getArgsUpstreamRefs(context, ref).some(
-            (ref: Scope.Reference) => isProp(context, ref),
+            (ref) => isProp(context, ref),
           );
           if (isSomeArgsProps) return;
 

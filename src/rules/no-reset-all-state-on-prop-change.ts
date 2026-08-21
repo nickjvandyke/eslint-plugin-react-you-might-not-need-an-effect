@@ -28,8 +28,8 @@ const rule: Rule.RuleModule = {
         'Avoid resetting all state when a prop changes. Instead, if "{{prop}}" is a key, pass it as "key" so React will reset the component\'s state.',
     },
   },
-  create: (context: Rule.RuleContext) => ({
-    CallExpression: (node: Rule.Node) => {
+  create: (context) => ({
+    CallExpression: (node) => {
       const effect = getEffect(context, node);
       if (!effect || !effect.depsRefs) return;
       // Skip custom hooks because they can't receive `key` like components can.
@@ -60,22 +60,20 @@ const findPropUsedToResetAllState = (
   depsRefs: Scope.Reference[],
   useEffectNode: Rule.Node,
 ): Scope.Reference | undefined => {
-  const stateSetterRefs = effectFnRefs.filter((ref: Scope.Reference) =>
+  const stateSetterRefs = effectFnRefs.filter((ref) =>
     isStateCall(context, ref),
   );
 
   const isAllStateReset =
     stateSetterRefs.length > 0 &&
-    stateSetterRefs.every((ref: Scope.Reference) =>
-      isSetStateToInitialValue(context, ref),
-    ) &&
+    stateSetterRefs.every((ref) => isSetStateToInitialValue(context, ref)) &&
     stateSetterRefs.length ===
       countUseStates(context, findEnclosingReactNode(context, useEffectNode));
 
   return isAllStateReset
     ? depsRefs
-        .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
-        .find((ref: Scope.Reference) => isProp(context, ref))
+        .flatMap((ref) => getUpstreamRefs(context, ref))
+        .find((ref) => isProp(context, ref))
     : undefined;
 };
 
@@ -146,9 +144,8 @@ const countUseStates = (
     componentNode = componentNode.init.arguments[0] as Rule.Node;
   }
 
-  return getDownstreamRefs(context, componentNode).filter(
-    (ref: Scope.Reference) => isState(ref),
-  ).length;
+  return getDownstreamRefs(context, componentNode).filter((ref) => isState(ref))
+    .length;
 };
 
 export default rule;

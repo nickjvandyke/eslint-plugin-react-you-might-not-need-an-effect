@@ -21,8 +21,8 @@ const rule: Rule.RuleModule = {
         'Avoid using an effect to subscribe to an external store. Instead, use "useSyncExternalStore" to manage "{{state}}".',
     },
   },
-  create: (context: Rule.RuleContext) => ({
-    CallExpression: (node: Rule.Node) => {
+  create: (context) => ({
+    CallExpression: (node) => {
       const effect = getEffect(context, node);
       if (!effect || !effect.cleanup) return;
 

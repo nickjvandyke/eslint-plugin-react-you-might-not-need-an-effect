@@ -1,4 +1,4 @@
-import type { Rule, Scope } from "eslint";
+import type { Rule } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
@@ -25,17 +25,15 @@ const rule: Rule.RuleModule = {
         'Avoid storing derived state. Instead, compute "{{state}}" directly during render.',
     },
   },
-  create: (context: Rule.RuleContext) => ({
-    CallExpression: (node: Rule.Node) => {
+  create: (context) => ({
+    CallExpression: (node) => {
       const effect = getEffect(context, node);
       if (!effect || effect.cleanup) return;
 
       effect.fnRefs
-        .filter((ref: Scope.Reference) =>
-          isSynchronous(ref.identifier as Rule.Node, effect.fn),
-        )
-        .filter((ref: Scope.Reference) => isStateCall(context, ref))
-        .forEach((ref: Scope.Reference) => {
+        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
+        .filter((ref) => isStateCall(context, ref))
+        .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
           const stateName = getStateName(context, ref);
@@ -43,7 +41,7 @@ const rule: Rule.RuleModule = {
 
           const argsUpstreamRefs = getArgsUpstreamRefs(context, ref);
           const isSomeArgsInternal = argsUpstreamRefs.some(
-            (ref: Scope.Reference) => isState(ref) || isProp(context, ref),
+            (ref) => isState(ref) || isProp(context, ref),
           );
 
           if (isSomeArgsInternal) {

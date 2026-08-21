@@ -1,4 +1,4 @@
-import type { Rule, Scope } from "eslint";
+import type { Rule } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
@@ -25,27 +25,25 @@ const rule: Rule.RuleModule = {
         'Avoid chaining state changes. When possible, update "{{state}}" along with other relevant state simultaneously.',
     },
   },
-  create: (context: Rule.RuleContext) => ({
-    CallExpression: (node: Rule.Node) => {
+  create: (context) => ({
+    CallExpression: (node) => {
       const effect = getEffect(context, node);
       if (!effect || effect.cleanup || !effect.depsRefs) return;
 
       const isSomeDepsState = effect.depsRefs
-        .flatMap((ref: Scope.Reference) => getUpstreamRefs(context, ref))
-        .some((ref: Scope.Reference) => isState(ref));
+        .flatMap((ref) => getUpstreamRefs(context, ref))
+        .some((ref) => isState(ref));
 
       effect.fnRefs
-        .filter((ref: Scope.Reference) =>
-          isSynchronous(ref.identifier as Rule.Node, effect.fn),
-        )
-        .filter((ref: Scope.Reference) => isStateCall(context, ref))
-        .forEach((ref: Scope.Reference) => {
+        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
+        .filter((ref) => isStateCall(context, ref))
+        .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
 
           // Avoid overlap with no-derived-state
           const isSomeArgsState = getArgsUpstreamRefs(context, ref).some(
-            (ref: Scope.Reference) => isState(ref),
+            (ref) => isState(ref),
           );
 
           if (isSomeDepsState && !isSomeArgsState) {

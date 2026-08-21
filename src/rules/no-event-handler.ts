@@ -1,4 +1,4 @@
-import type { Rule, Scope } from "eslint";
+import type { Rule } from "eslint";
 import {
   findDownstreamNodes,
   getDownstreamRefs,
@@ -21,8 +21,8 @@ const rule: Rule.RuleModule = {
         'Avoid using props and effects as an event handler. Instead, move the code that uses "{{name}}" to the parent component.',
     },
   },
-  create: (context: Rule.RuleContext) => ({
-    CallExpression: (node: Rule.Node) => {
+  create: (context) => ({
+    CallExpression: (node) => {
       const effect = getEffect(context, node);
       if (!effect || effect.cleanup) return;
 
@@ -40,24 +40,20 @@ const rule: Rule.RuleModule = {
           } => ifNode.type === "IfStatement" && !ifNode.alternate,
         )
         .map((ifNode) => ifNode.test)
-        .flatMap((ifTestNode: Rule.Node) =>
-          getDownstreamRefs(context, ifTestNode),
-        )
-        .forEach((ifTestRef: Scope.Reference) => {
+        .flatMap((ifTestNode) => getDownstreamRefs(context, ifTestNode))
+        .forEach((ifTestRef) => {
           const upstreamRefs = getUpstreamRefs(context, ifTestRef);
 
           const name = ifTestRef.identifier.name;
 
-          if (upstreamRefs.some((ref: Scope.Reference) => isState(ref))) {
+          if (upstreamRefs.some((ref) => isState(ref))) {
             context.report({
               node: ifTestRef.identifier,
               messageId: "avoidEventHandler",
               data: { name },
             });
           }
-          if (
-            upstreamRefs.some((ref: Scope.Reference) => isProp(context, ref))
-          ) {
+          if (upstreamRefs.some((ref) => isProp(context, ref))) {
             context.report({
               node: ifTestRef.identifier,
               messageId: "avoidPropHandler",
