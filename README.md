@@ -6,7 +6,7 @@
 [ESLint](https://eslint.org/) (and [Oxlint](#oxlint)) plugin to catch [unnecessary `useEffect`s](https://react.dev/learn/you-might-not-need-an-effect) to make your React code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn its mental model, and might surprise even experienced developers!
 
 - **Actionable fixes:** Reports specific anti-patterns, with suggestions and links.
-- **Deep analysis:** Analyzes state, props, refs, and their upstream sources.
+- **Deep analysis:** Analyzes state, props, refs, and their upstream sources and context.
 - **Dependency-aware:** Considers _when_ an effect runs to determine if its logic is actually redundant.
 - **Edge-case obsessed:** Focuses on unusual syntax and heuristics to keep the signal-to-noise ratio high.
 
