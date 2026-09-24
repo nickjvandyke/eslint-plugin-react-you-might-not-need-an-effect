@@ -319,12 +319,14 @@ function Component() {
 
 ## 💬 Feedback
 
-The ways to (mis)use an effect in real-world code are practically endless! This plugin is not exhaustive, but aims to be. If you encounter unexpected behavior or see opportunities for improvement, please open an issue or pull request. Your feedback helps improve the plugin for everyone!
+The ways to (mis)use an effect in real-world code are practically endless! This plugin is not exhaustive, but tries to be. If you encounter unexpected behavior or see opportunities for improvement, please open an issue or pull request. Your feedback helps improve the plugin for everyone!
 
 ## 📖 Learn More
 
-- https://react.dev/reference/react/useEffect
-- https://react.dev/learn/you-might-not-need-an-effect
-- https://react.dev/learn/synchronizing-with-effects
-- https://react.dev/learn/separating-events-from-effects
-- https://react.dev/learn/lifecycle-of-reactive-effects
+Deep-dives from the official React documentation:
+
+- [useEffect](https://react.dev/reference/react/useEffect)
+- [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
+- [Synchronizing with Effects](https://react.dev/learn/synchronizing-with-effects)
+- [Separating Events from Effects](https://react.dev/learn/separating-events-from-effects)
+- [Lifecycle of Reactive Effects](https://react.dev/learn/lifecycle-of-reactive-effects)
