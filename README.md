@@ -302,7 +302,7 @@ function useOnlineStatus() {
 }
 ```
 
-### no-initialize-state
+### [no-initialize-state](https://tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store)
 
 Disallow initializing state in an effect:
 
