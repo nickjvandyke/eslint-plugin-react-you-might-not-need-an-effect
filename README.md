@@ -3,14 +3,28 @@
 [![NPM version](https://img.shields.io/npm/v/eslint-plugin-react-you-might-not-need-an-effect?color=3BB143)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect?activeTab=versions)
 [![NPM Downloads](https://img.shields.io/npm/dm/eslint-plugin-react-you-might-not-need-an-effect?color=000080)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect)
 
-[ESLint](https://eslint.org/) (and [Oxlint](#oxlint)) plugin to catch [unnecessary `useEffect`s](https://react.dev/learn/you-might-not-need-an-effect) to make your React code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn its mental model, and might surprise even experienced developers!
+[ESLint](https://eslint.org/) (and [Oxlint](#oxlint)) plugin to catch [unnecessary `useEffect`s](https://react.dev/learn/you-might-not-need-an-effect) to make your React code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn React's mental model. Even experienced developers will likely learn something new!
 
-- **Actionable fixes:** Reports specific anti-patterns, with suggestions and links.
+```js
+function Form() {
+  const [firstName, setFirstName] = useState("Nick");
+  const [lastName, setLastName] = useState("van Dyke");
+
+  const [fullName, setFullName] = useState("");
+  useEffect(() => {
+    // ❌ Avoid storing derived state. Instead, compute "fullName" directly during render.
+    // 📖 react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state
+    setFullName(firstName + " " + lastName);
+  }, [firstName, lastName]);
+}
+```
+
+- **Actionable guidance:** Reports each anti-pattern with a specific suggested alternative and a docs link.
 - **Deep analysis:** Analyzes state, props, refs, and their upstream sources and context.
 - **Dependency-aware:** Considers _when_ an effect runs to determine if its logic is actually redundant.
 - **Edge-case obsessed:** Focuses on unusual syntax and heuristics to keep the signal-to-noise ratio high.
 
-> React's [`eslint-plugin-react-hooks/set-state-in-effect`](https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect) rule flags synchronous `setState` calls inside effects, helping prevent unnecessary re-renders. However, unnecessary _effects_ go far beyond this, as I'm sure we've all seen (or written 😅).
+> React's [`eslint-plugin-react-hooks/set-state-in-effect`](https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect) rule flags synchronous `setState` calls inside effects, helping prevent unnecessary re-renders. However, unnecessary _effects_ go far beyond this.
 
 ## 📦 Installation
 
@@ -131,8 +145,8 @@ Disallow storing derived state in an effect:
 
 ```js
 function Form() {
-  const [firstName, setFirstName] = useState("Taylor");
-  const [lastName, setLastName] = useState("Swift");
+  const [firstName, setFirstName] = useState("Nick");
+  const [lastName, setLastName] = useState("van Dyke");
 
   const [fullName, setFullName] = useState("");
   useEffect(() => {

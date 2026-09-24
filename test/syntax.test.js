@@ -325,8 +325,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Derived state, without imports",
         code: js`
         function Form() {
-          const [firstName, setFirstName] = useState('Taylor');
-          const [lastName, setLastName] = useState('Swift');
+          const [firstName, setFirstName] = useState('Nick');
+          const [lastName, setLastName] = useState('van Dyke');
 
           const [fullName, setFullName] = useState('');
           useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
@@ -358,8 +358,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       //     import { useState as stateUser, useEffect } from 'react';
       //
       //     function Form() {
-      //       const [firstName, setFirstName] = stateUser('Taylor');
-      //       const [lastName, setLastName] = stateUser('Swift');
+      //       const [firstName, setFirstName] = stateUser('Nick');
+      //       const [lastName, setLastName] = stateUser('van Dyke');
       //
       //       const [fullName, setFullName] = stateUser('');
       //       useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);

@@ -13,8 +13,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Compute in render from internal state",
         code: js`
         function Form() {
-          const [firstName, setFirstName] = useState('Taylor');
-          const [lastName, setLastName] = useState('Swift');
+          const [firstName, setFirstName] = useState('Nick');
+          const [lastName, setLastName] = useState('van Dyke');
 
           const fullName = firstName + ' ' + lastName;
         }
@@ -241,8 +241,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "From internal state",
         code: js`
         function Form() {
-          const [firstName, setFirstName] = useState('Taylor');
-          const [lastName, setLastName] = useState('Swift');
+          const [firstName, setFirstName] = useState('Nick');
+          const [lastName, setLastName] = useState('van Dyke');
 
           const [fullName, setFullName] = useState('');
           useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
@@ -259,8 +259,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "From derived internal state",
         code: js`
         function Form() {
-          const [firstName, setFirstName] = useState('Taylor');
-          const [lastName, setLastName] = useState('Swift');
+          const [firstName, setFirstName] = useState('Nick');
+          const [lastName, setLastName] = useState('van Dyke');
           const [fullName, setFullName] = useState('');
 
           useEffect(() => {
@@ -280,8 +280,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "From derived internal state outside effect",
         code: js`
         function Form() {
-          const [firstName, setFirstName] = useState('Taylor');
-          const [lastName, setLastName] = useState('Swift');
+          const [firstName, setFirstName] = useState('Nick');
+          const [lastName, setLastName] = useState('van Dyke');
           const [fullName, setFullName] = useState('');
           const name = firstName + ' ' + lastName;
 
@@ -572,8 +572,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Derived state in larger, otherwise legit effect",
         code: js`
         function Form() {
-          const [firstName, setFirstName] = useState('Taylor');
-          const [lastName, setLastName] = useState('Swift');
+          const [firstName, setFirstName] = useState('Nick');
+          const [lastName, setLastName] = useState('van Dyke');
           const [fullName, setFullName] = useState('');
 
           useEffect(() => {
