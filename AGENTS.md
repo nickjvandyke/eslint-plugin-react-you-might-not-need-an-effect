@@ -22,7 +22,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - **9 rules** in `src/rules/`, each a separate `.ts` file with a co-located `.test.js` file.
 - **Utilities**: `src/util/ast.ts` (AST traversal/ref analysis), `src/util/react.ts` (React-specific helpers like `isUseEffect`, `isState`, `isProp`, etc.).
 - **Test pattern**: Each `.test.js` imports `RuleTester` from `eslint` + `plugin` from `../src/index.ts`, and defines `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`.
-- **Other tests**: `test/syntax.test.js` (syntax variants), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js` / `test/config.test.cjs`.
+- **Other tests**: `test/syntax.test.js` (syntax variants), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`.
 
 ## Key conventions
 

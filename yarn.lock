@@ -701,15 +701,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"attw@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "attw@npm:1.0.0"
-  bin:
-    attw: cli.js
-  checksum: 10c0/1922006a93b770954729a533103721c6e5efeab348e2ce4c3dc33e71b60f2414698fb6e54916a1c5a0d86b0c5dedc4130d41dc5401dc99c85744aaa755f4a789
-  languageName: node
-  linkType: hard
-
 "balanced-match@npm:^1.0.0":
   version: 1.0.2
   resolution: "balanced-match@npm:1.0.2"
@@ -1006,7 +997,6 @@ __metadata:
     "@arethetypeswrong/core": "npm:^0.18.2"
     "@eslint/js": "npm:^9.28.0"
     "@typescript/native-preview": "npm:^7.0.0-dev.20260511.1"
-    attw: "npm:^1.0.0"
     eslint: "npm:^9.20.1"
     eslint-plugin-eslint-plugin: "npm:^6.4.0"
     eslint-plugin-n: "npm:^17.17.0"
