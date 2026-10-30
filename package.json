@@ -6,7 +6,10 @@
     "eslint",
     "eslintplugin",
     "eslint-plugin",
-    "react"
+    "react",
+    "react-hooks",
+    "hooks",
+    "useeffect"
   ],
   "homepage": "https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect",
   "bugs": {
