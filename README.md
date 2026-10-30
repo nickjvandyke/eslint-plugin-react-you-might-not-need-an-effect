@@ -47,7 +47,6 @@ yarn add -D eslint-plugin-react-you-might-not-need-an-effect
 ```javascript
 // eslint.config.js
 import reactYouMightNotNeedAnEffect from "eslint-plugin-react-you-might-not-need-an-effect";
-import globals from "globals";
 
 export default [
   // Enable every rule as a warning
@@ -63,9 +62,6 @@ export default [
       "reactYouMightNotNeedAnEffect/no-derived-state": "warn",
     },
     languageOptions: {
-      globals: {
-        ...globals.browser,
-      },
       parserOptions: {
         ecmaFeatures: {
           jsx: true,

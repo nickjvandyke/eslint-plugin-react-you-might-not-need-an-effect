@@ -7,7 +7,6 @@ import noChainStateUpdates from "./rules/no-chain-state-updates.ts";
 import noDerivedState from "./rules/no-derived-state.ts";
 import noPassDataToParent from "./rules/no-pass-data-to-parent.ts";
 import noExternalStoreSubscription from "./rules/no-external-store-subscription.ts";
-import globals from "globals";
 import pkg from "../package.json" with { type: "json" };
 import type { ESLint, Linter } from "eslint";
 
@@ -41,10 +40,6 @@ const rules = (severity: "error" | "warn") =>
   );
 
 const languageOptions = {
-  globals: {
-    // Required to resolve global references to their upstream global variables
-    ...globals.browser,
-  },
   parserOptions: {
     ecmaFeatures: {
       jsx: true,

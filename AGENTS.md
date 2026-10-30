@@ -34,7 +34,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - Test files in `src/rules/` import rule source with `.ts` extension (ESM).
 - **Formatting**: single Prettier config — trailing commas everywhere.
 - `.gitignore` keeps `dist`, `node_modules`, `.yarn/*` (except patches/plugins/releases/sdks/versions).
-- The plugin requires `globals` and its consumers need browser globals for full accuracy.
+- The plugin has no runtime dependencies. Unresolved global references behave like external globals, so browser globals are not required for analysis.
 - Suggested companion rules for users: `react-hooks/exhaustive-deps` and `typescript-eslint/no-floating-promises`.
 
 ## Architecture notes

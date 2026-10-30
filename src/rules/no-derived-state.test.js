@@ -69,6 +69,19 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        // The plugin config does not define browser globals, so `window` is unresolved.
+        name: "Set to unresolved global (external state)",
+        code: js`
+        function WindowSize() {
+          const [width, setWidth] = useState(0);
+
+          useEffect(() => {
+            setWidth(window.innerWidth);
+          }, [window.innerWidth]);
+        }
+      `,
+      },
+      {
         name: "Fetch external state on mount",
         code: js`
         function Todos() {

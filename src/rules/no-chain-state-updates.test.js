@@ -75,6 +75,19 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        // The plugin config does not define browser globals, so `navigator` is unresolved.
+        name: "Set to unresolved global when it changes",
+        code: js`
+        function OnlineStatus() {
+          const [online, setOnline] = useState(true);
+
+          useEffect(() => {
+            setOnline(navigator.onLine);
+          }, [navigator.onLine]);
+        }
+      `,
+      },
+      {
         // Because we don't trace the args passed to `JSON.stringify` (hard to generalize)
         name: "JSON.stringifying internal state in deps",
         code: js`
