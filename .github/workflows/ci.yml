@@ -1,4 +1,4 @@
-name: build-test
+name: CI
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: read
 
 jobs:
-  build-test:
+  verify:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -31,7 +31,7 @@ jobs:
       - name: Lint
         run: yarn lint
 
-      - name: Format
+      - name: Check formatting
         run: yarn format:check
 
       - name: Build
