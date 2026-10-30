@@ -151,6 +151,7 @@ function Form() {
   const [fullName, setFullName] = useState("");
   useEffect(() => {
     // ❌ Avoid storing derived state. Instead, compute "fullName" directly during render.
+    // 📖 react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state
     setFullName(firstName + " " + lastName);
   }, [firstName, lastName]);
 }
@@ -168,6 +169,7 @@ function Game() {
   useEffect(() => {
     if (round > 10) {
       // ❌ Avoid chaining state changes. When possible, update "isGameOver" along with other relevant state simultaneously.
+      // 📖 react.dev/learn/you-might-not-need-an-effect#chains-of-computations
       setIsGameOver(true);
     }
   }, [round]);
@@ -185,6 +187,7 @@ function Form() {
   useEffect(() => {
     if (dataToSubmit) {
       // ❌ Avoid using state and effects as an event handler. Instead, call the code that uses "dataToSubmit" directly when the event occurs.
+      // 📖 react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers
       submitData(dataToSubmit);
     }
   }, [dataToSubmit]);
@@ -198,6 +201,7 @@ function ProductPage({ product, addToCart }) {
   useEffect(() => {
     if (product.isInCart) {
       // ❌ Avoid using props and effects as an event handler. Instead, move the code that uses "product" to the parent component.
+      // 📖 react.dev/learn/you-might-not-need-an-effect#sharing-logic-between-event-handlers
       showNotification(`Added ${product.name} to the shopping cart!`);
     }
   }, [product]);
@@ -215,6 +219,7 @@ function List({ items }) {
 
   useEffect(() => {
     // ❌ Avoid adjusting state when a prop changes. Instead, adjust "selection" directly during render when "items" changes, or refactor your state to avoid this need entirely.
+    // 📖 react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
     setSelection(null);
   }, [items]);
 }
@@ -230,6 +235,7 @@ function List({ items }) {
 
   useEffect(() => {
     // ❌ Avoid resetting all state when a prop changes. If "items" is a key, pass it as "key" instead so React will reset the component.
+    // 📖 react.dev/learn/you-might-not-need-an-effect#resetting-all-state-when-a-prop-changes
     setSelection(null);
   }, [items]);
 }
@@ -245,6 +251,7 @@ function Child({ onTextChanged }) {
 
   useEffect(() => {
     // ❌ Avoid passing live state to parents in an effect. Instead, lift "text" to the parent and pass it down to "Child" as a prop.
+    // 📖 react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes
     onTextChanged(text);
   }, [onTextChanged, text]);
 }
@@ -258,6 +265,7 @@ const useCustomHook = ({ onTextChanged }) => {
 
   useEffect(() => {
     // ❌ Avoid passing live state to parents in an effect. Instead, return "text" from "useCustomHook".
+    // 📖 react.dev/learn/you-might-not-need-an-effect#notifying-parent-components-about-state-changes
     onTextChanged(text);
   }, [onTextChanged, text]);
 };
@@ -273,6 +281,7 @@ function Child({ onDataFetched }) {
 
   useEffect(() => {
     // ❌ Avoid passing data to parents in an effect. Instead, fetch "useQuery" in the parent and pass it down to "Child" as a prop.
+    // 📖 react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent
     onDataFetched(data);
   }, [data, onDataFetched]);
 }
@@ -286,6 +295,7 @@ const useCustomHook = ({ onFetched }) => {
 
   useEffect(() => {
     // ❌ Avoid passing data to parents in an effect. Instead, return "useSomeAPI" from "useCustomHook".
+    // 📖 react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent
     onFetched(data);
   }, [onFetched, data]);
 };
@@ -309,6 +319,7 @@ function useOnlineStatus() {
     window.addEventListener("offline", updateState);
     return () => {
       // ❌ Avoid using an effect to subscribe to an external store. Instead, use "useSyncExternalStore" to manage "isOnline".
+      // 📖 react.dev/learn/you-might-not-need-an-effect#subscribing-to-an-external-store
       window.removeEventListener("online", updateState);
       window.removeEventListener("offline", updateState);
     };
@@ -326,6 +337,7 @@ function Component() {
 
   useEffect(() => {
     // ❌ Avoid initializing state in an effect. Instead, initialize "state"'s "useState()" with "Hello World". For SSR hydration, prefer "useSyncExternalStore".
+    // 📖 tkdodo.eu/blog/avoiding-hydration-mismatches-with-use-sync-external-store
     setState("Hello World");
   }, []);
 }
