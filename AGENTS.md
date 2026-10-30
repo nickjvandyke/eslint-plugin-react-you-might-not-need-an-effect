@@ -2,14 +2,14 @@
 
 ## Commands
 
-| Command             | What it runs                                                      |
-| ------------------- | ----------------------------------------------------------------- |
-| `yarn build`        | `tsdown` — bundles `src/index.ts` → `dist/` (ESM + CJS + `.d.ts`) |
-| `yarn typecheck`    | `tsgo` (not `tsc`)                                                |
-| `yarn lint`         | `eslint` (flat config, `eslint.config.js`)                        |
-| `yarn test`         | `node --import ./test/setup.js --test ./src ./test`               |
-| `yarn format`       | `prettier --write .`                                              |
-| `yarn format:check` | `prettier --check .`                                              |
+| Command             | What it runs                                                                  |
+| ------------------- | ----------------------------------------------------------------------------- |
+| `yarn build`        | `tsdown` — bundles `src/index.ts` → `dist/` (ESM + CJS + `.d.ts`)             |
+| `yarn typecheck`    | `tsgo` (not `tsc`)                                                            |
+| `yarn lint`         | `eslint` (flat config, `eslint.config.js`)                                    |
+| `yarn test`         | `node --import ./test/setup.js --test "src/**/*.test.js" "test/**/*.test.js"` |
+| `yarn format`       | `prettier --write .`                                                          |
+| `yarn format:check` | `prettier --check .`                                                          |
 
 Pre-commit: `simple-git-hooks` → `lint-staged` → `prettier --write` on all staged files.
 
