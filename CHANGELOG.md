@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.2...v1.0.3) (2026-10-30)
+
+
+### Bug Fixes
+
+* stop defining/recommending browser globals for consumers ([b3ed592](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/b3ed592ef14c7c039451d2a68069b39bf446264b))
+
 ## [1.0.2](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.1...v1.0.2) (2026-08-20)
 
 
