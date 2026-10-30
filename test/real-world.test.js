@@ -2,6 +2,7 @@ import { ESLint } from "eslint";
 import plugin from "../src/index.ts";
 const js = String.raw;
 import assert from "assert";
+import { describe, it } from "node:test";
 
 // Sanity check that runs the recommended config
 // on common + valid real-world code, as opposed to contrived test cases.

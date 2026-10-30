@@ -2,3 +2,4 @@
 CHANGELOG.md
 dist
 .yarn
+yarn.lock

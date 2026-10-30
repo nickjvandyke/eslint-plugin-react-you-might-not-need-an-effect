@@ -18,11 +18,14 @@ export default [
     },
   },
   {
+    // Tests use `node:test` and native TypeScript type stripping,
+    // which need Node >= 22.18. The published package still supports older Node.
     files: ["test/**"],
-    languageOptions: {
-      globals: {
-        ...globals.mocha,
-      },
+    rules: {
+      "n/no-unsupported-features/node-builtins": [
+        "error",
+        { version: ">=22.18.0" },
+      ],
     },
   },
 ];

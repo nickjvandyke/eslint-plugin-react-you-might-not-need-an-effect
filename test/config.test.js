@@ -2,6 +2,7 @@ import { ESLint } from "eslint";
 import { LegacyESLint } from "eslint/use-at-your-own-risk";
 const js = String.raw;
 import assert from "assert";
+import { describe, it } from "node:test";
 import plugin from "../src/index.ts";
 
 describe("config", () => {

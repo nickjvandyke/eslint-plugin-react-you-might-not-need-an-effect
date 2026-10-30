@@ -7,7 +7,7 @@
 | `yarn build`        | `tsdown` — bundles `src/index.ts` → `dist/` (ESM + CJS + `.d.ts`) |
 | `yarn typecheck`    | `tsgo` (not `tsc`)                                                |
 | `yarn lint`         | `eslint` (flat config, `eslint.config.js`)                        |
-| `yarn test`         | `mocha --recursive ./src ./test`                                  |
+| `yarn test`         | `node --import ./test/setup.js --test ./src ./test`               |
 | `yarn format`       | `prettier --write .`                                              |
 | `yarn format:check` | `prettier --check .`                                              |
 
@@ -27,7 +27,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 ## Key conventions
 
 - ESLint **flat config only** in this repo (`eslint.config.js`). Uses `@eslint/js` recommended + `eslint-plugin-eslint-plugin` + `eslint-plugin-n`.
-- Node >= 14, but the build/bundling targets Node 16+.
+- Tests need Node >= 22.18 (they import `.ts` files directly, which needs native type stripping). The published package keeps `engines.node` at `>=14`.
 - `useLayoutEffect` is intentionally excluded from all rules (considered a valid DOM-interaction effect).
 - `React.*` namespace calls (`React.useEffect`, `React.useState`) are supported alongside direct imports.
 - Renamed imports (`useState as stateUser`) are a known limitation (the test case is commented out in `test/syntax.test.js`).

@@ -40,7 +40,7 @@
     "build": "tsdown",
     "typecheck": "tsgo",
     "lint": "eslint",
-    "test": "mocha --recursive ./src ./test",
+    "test": "node --import ./test/setup.js --test ./src ./test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -56,7 +56,6 @@
     "eslint-plugin-eslint-plugin": "^6.4.0",
     "eslint-plugin-n": "^17.17.0",
     "lint-staged": "^16.1.0",
-    "mocha": "11.1.0",
     "prettier": "^3.5.3",
     "publint": "^0.3.20",
     "simple-git-hooks": "^2.13.0",
