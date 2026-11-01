@@ -143,6 +143,20 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        name: "Pass ref to parent, with renamed useRef import",
+        code: js`
+        import { useRef as useReference, useEffect } from 'react';
+
+        const Child = ({ onRef }) => {
+          const ref = useReference();
+
+          useEffect(() => {
+            onRef(ref.current);
+          }, [onRef, ref.current]);
+        }
+      `,
+      },
+      {
         // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
         // Alternate solutions exist, but this is arguably the most readable.
         name: "Pass cleanup function that depends on ref",

@@ -57,9 +57,9 @@ const rule: Rule.RuleModule = {
               (ref) =>
                 // TODO: Ideally would use isState and isRef, not the hooks.
                 // But because it goes to leaves. Must be some other way?
-                !isUseState(ref.identifier as Rule.Node) &&
+                !isUseState(context, ref.identifier as Rule.Node) &&
                 !isProp(context, ref) &&
-                !isUseRef(ref.identifier as Rule.Node) &&
+                !isUseRef(context, ref.identifier as Rule.Node) &&
                 !isRefCurrent(ref) &&
                 !isConstant(ref),
             );

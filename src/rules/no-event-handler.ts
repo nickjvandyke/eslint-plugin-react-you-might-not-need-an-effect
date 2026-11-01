@@ -46,7 +46,7 @@ const rule: Rule.RuleModule = {
 
           const name = ifTestRef.identifier.name;
 
-          if (upstreamRefs.some((ref) => isState(ref))) {
+          if (upstreamRefs.some((ref) => isState(context, ref))) {
             context.report({
               node: ifTestRef.identifier,
               messageId: "avoidEventHandler",

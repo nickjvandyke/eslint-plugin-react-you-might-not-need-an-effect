@@ -144,8 +144,9 @@ const countUseStates = (
     componentNode = componentNode.init.arguments[0] as Rule.Node;
   }
 
-  return getDownstreamRefs(context, componentNode).filter((ref) => isState(ref))
-    .length;
+  return getDownstreamRefs(context, componentNode).filter((ref) =>
+    isState(context, ref),
+  ).length;
 };
 
 export default rule;

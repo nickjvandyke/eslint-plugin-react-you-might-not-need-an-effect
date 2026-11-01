@@ -41,7 +41,7 @@ const rule: Rule.RuleModule = {
           if (!callExpr) return;
 
           const stateRefs = getArgsUpstreamRefs(context, ref).filter((r) =>
-            isState(r),
+            isState(context, r),
           );
           if (stateRefs.length === 0) return;
 

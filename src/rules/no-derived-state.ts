@@ -41,7 +41,7 @@ const rule: Rule.RuleModule = {
 
           const argsUpstreamRefs = getArgsUpstreamRefs(context, ref);
           const isSomeArgsInternal = argsUpstreamRefs.some(
-            (ref) => isState(ref) || isProp(context, ref),
+            (ref) => isState(context, ref) || isProp(context, ref),
           );
 
           if (isSomeArgsInternal) {

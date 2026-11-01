@@ -26,7 +26,8 @@ const rule: Rule.RuleModule = {
       if (!effect || !effect.depsRefs) return;
 
       const isEffectRunOnlyOnMount =
-        effect.depsRefs.filter((ref) => !isStateSetter(ref)).length === 0;
+        effect.depsRefs.filter((ref) => !isStateSetter(context, ref)).length ===
+        0;
       if (!isEffectRunOnlyOnMount) return;
 
       effect.fnRefs

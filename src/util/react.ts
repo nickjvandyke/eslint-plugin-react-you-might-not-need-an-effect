@@ -73,50 +73,125 @@ export const isCustomHook = (node: Rule.Node): boolean => {
   );
 };
 
-export const isUseState = (node: Rule.Node): boolean => {
-  if (node.type === "Identifier" && node.name === "useState") return true;
-  if (
-    node.type === "MemberExpression" &&
-    node.object.type === "Identifier" &&
-    node.object.name === "React" &&
-    node.property.type === "Identifier" &&
-    node.property.name === "useState"
-  )
-    return true;
-  // Support passing `ref.identifier` directly for convenience
-  const parent = node.parent;
-  return (
-    parent.type === "MemberExpression" &&
-    parent.object.type === "Identifier" &&
-    parent.object.name === "React" &&
-    parent.property.type === "Identifier" &&
-    parent.property.name === "useState"
+// React-compatible packages that expose the same hook API.
+// Kept intentionally small: renamed imports from other packages still fall
+// back to name matching.
+const REACT_MODULES = new Set([
+  "react",
+  "preact/hooks",
+  "preact/compat",
+  "@wordpress/element",
+]);
+
+// Resolves an identifier to the name it was imported from a React-compatible
+// package. Returns `default` or `namespace` for default and namespace imports.
+// Returns `undefined` when the identifier is not such an import.
+const getReactImport = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): string | undefined => {
+  if (node.type !== "Identifier") return undefined;
+
+  const def = getRef(context, node)?.resolved?.defs.find(
+    (def) => def.type === "ImportBinding",
   );
+  if (!def) return undefined;
+
+  const source = def.parent.source.value;
+  if (typeof source !== "string" || !REACT_MODULES.has(source)) {
+    return undefined;
+  }
+
+  if (def.node.type === "ImportSpecifier") {
+    return def.node.imported.type === "Identifier"
+      ? def.node.imported.name
+      : String(def.node.imported.value);
+  }
+
+  return def.node.type === "ImportDefaultSpecifier" ? "default" : "namespace";
 };
 
-export const isUseRef = (node: Rule.Node): boolean => {
-  if (node.type === "Identifier" && node.name === "useRef") return true;
-  const parent = node.parent;
-  return (
-    parent.type === "MemberExpression" &&
-    parent.object.type === "Identifier" &&
-    parent.object.name === "React" &&
-    parent.property.type === "Identifier" &&
-    parent.property.name === "useRef"
-  );
+const isReactNamespace = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): boolean => {
+  if (node.type !== "Identifier") return false;
+
+  // Fast path, also covers globals, UMD builds, and auto-imported `React`.
+  if (node.name === "React") return true;
+
+  const imported = getReactImport(context, node);
+  return imported === "default" || imported === "namespace";
 };
+
+// Detects React hook calls, including renamed imports:
+// - `useState`
+// - `import { useState as stateUser } from "react"`
+// - `React.useState`
+// - `import * as R from "react"` + `R.useState`
+// - `import R from "react"` + `R.useState`
+const isReactHook = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+  hookName: string,
+): boolean => {
+  if (node.type === "Identifier") {
+    const parent = node.parent;
+
+    // A non-computed property name is not a reference on its own.
+    // e.g. `useState` in `React.useState`
+    if (
+      parent.type === "MemberExpression" &&
+      parent.property === node &&
+      !parent.computed
+    ) {
+      return false;
+    }
+
+    // Support passing `ref.identifier` directly for convenience.
+    // e.g. `React` from `React.useState`
+    if (
+      parent.type === "MemberExpression" &&
+      parent.object === node &&
+      !parent.computed &&
+      parent.property.type === "Identifier" &&
+      parent.property.name === hookName
+    ) {
+      return isReactNamespace(context, node);
+    }
+
+    // Fast path, also covers globals, UMD builds, and auto-imported hooks.
+    if (node.name === hookName) return true;
+
+    return getReactImport(context, node) === hookName;
+  }
+
+  if (node.type === "MemberExpression") {
+    return (
+      !node.computed &&
+      node.property.type === "Identifier" &&
+      node.property.name === hookName &&
+      isReactNamespace(context, node.object as Rule.Node)
+    );
+  }
+
+  return false;
+};
+
+export const isUseState = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): boolean => isReactHook(context, node, "useState");
+
+export const isUseRef = (context: Rule.RuleContext, node: Rule.Node): boolean =>
+  isReactHook(context, node, "useRef");
 
 // Does not include `useLayoutEffect`.
 // When used correctly, it interacts with the DOM = external system = (probably) valid effect.
 // When used incorrectly, it's probably too difficult to accurately analyze anyway.
-const isUseEffect = (node: Rule.Node): boolean =>
+const isUseEffect = (context: Rule.RuleContext, node: Rule.Node): boolean =>
   node.type === "CallExpression" &&
-  ((node.callee.type === "Identifier" && node.callee.name === "useEffect") ||
-    (node.callee.type === "MemberExpression" &&
-      node.callee.object.type === "Identifier" &&
-      node.callee.object.name === "React" &&
-      node.callee.property.type === "Identifier" &&
-      node.callee.property.name === "useEffect"));
+  isReactHook(context, node.callee as Rule.Node, "useEffect");
 
 const getEffectFn = (
   context: Rule.RuleContext,
@@ -180,7 +255,7 @@ const getEffectCleanup = (
 };
 
 export const getEffect = (context: Rule.RuleContext, node: Rule.Node) => {
-  if (!isUseEffect(node)) return undefined;
+  if (!isUseEffect(context, node)) return undefined;
 
   const fn = getEffectFn(context, node);
   if (!fn) return undefined;
@@ -195,12 +270,15 @@ export const getEffect = (context: Rule.RuleContext, node: Rule.Node) => {
   };
 };
 
-export const isState = (ref: Scope.Reference): boolean =>
+export const isState = (
+  context: Rule.RuleContext,
+  ref: Scope.Reference,
+): boolean =>
   ref.resolved?.defs.some(
     (def) =>
       def.node.type === "VariableDeclarator" &&
       def.node.init?.type === "CallExpression" &&
-      isUseState(def.node.init.callee) &&
+      isUseState(context, def.node.init.callee as Rule.Node) &&
       def.node.id.type === "ArrayPattern" &&
       (def.node.id.elements.length === 1 ||
         def.node.id.elements.length === 2) &&
@@ -208,12 +286,15 @@ export const isState = (ref: Scope.Reference): boolean =>
       def.node.id.elements[0].name === ref.identifier.name,
   ) ?? false;
 
-export const isStateSetter = (ref: Scope.Reference): boolean =>
+export const isStateSetter = (
+  context: Rule.RuleContext,
+  ref: Scope.Reference,
+): boolean =>
   ref.resolved?.defs.some(
     (def) =>
       def.node.type === "VariableDeclarator" &&
       def.node.init?.type === "CallExpression" &&
-      isUseState(def.node.init.callee) &&
+      isUseState(context, def.node.init.callee as Rule.Node) &&
       def.node.id.type === "ArrayPattern" &&
       def.node.id.elements.length === 2 &&
       def.node.id.elements[1]?.type === "Identifier" &&
@@ -250,18 +331,15 @@ export const isConstant = (ref: Scope.Reference): boolean =>
       def.node.init?.type === "ObjectExpression",
   );
 
-export const isRef = (ref: Scope.Reference): boolean =>
+export const isRef = (
+  context: Rule.RuleContext,
+  ref: Scope.Reference,
+): boolean =>
   ref.resolved?.defs.some(
     (def) =>
       def.node.type === "VariableDeclarator" &&
       def.node.init?.type === "CallExpression" &&
-      ((def.node.init.callee.type === "Identifier" &&
-        def.node.init.callee.name === "useRef") ||
-        (def.node.init.callee.type === "MemberExpression" &&
-          def.node.init.callee.object.type === "Identifier" &&
-          def.node.init.callee.object.name === "React" &&
-          def.node.init.callee.property.type === "Identifier" &&
-          def.node.init.callee.property.name === "useRef")),
+      isUseRef(context, def.node.init.callee as Rule.Node),
   ) ?? false;
 
 // Whether the reference's `current` property is being accessed.
@@ -282,7 +360,7 @@ export const isStateCall = (
   ref: Scope.Reference,
 ): boolean =>
   getSynchronousCallChain(context, ref).some((callChainRef) =>
-    isStateSetter(callChainRef),
+    isStateSetter(context, callChainRef),
   );
 
 export const isPropCall = (
@@ -298,7 +376,8 @@ export const isRefCall = (
   ref: Scope.Reference,
 ): boolean =>
   getSynchronousCallChain(context, ref).some(
-    (callChainRef) => isRefCurrent(callChainRef) || isRef(callChainRef),
+    (callChainRef) =>
+      isRefCurrent(callChainRef) || isRef(context, callChainRef),
   );
 
 export const getStateName = (
@@ -321,7 +400,7 @@ export const getUseStateDecl = (
   ref: Scope.Reference,
 ): (Rule.Node & { type: "VariableDeclarator" }) | undefined => {
   const node = getUpstreamRefs(context, ref).find((upRef) =>
-    isUseState(upRef.identifier as Rule.Node),
+    isUseState(context, upRef.identifier as Rule.Node),
   )?.identifier as Rule.Node | undefined;
   let result = node;
   while (result && result.type !== "VariableDeclarator") {

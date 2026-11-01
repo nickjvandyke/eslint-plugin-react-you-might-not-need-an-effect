@@ -350,28 +350,146 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
         errors: 1,
       },
-      // TODO: We check for `useState` specifically to avoid false positives on state-like hooks (two-element destructuring).
-      // Would need to go up to the import I guess.
-      // {
-      //   name: "Derived state, with renamed import",
-      //   code: js`
-      //     import { useState as stateUser, useEffect } from 'react';
-      //
-      //     function Form() {
-      //       const [firstName, setFirstName] = stateUser('Nick');
-      //       const [lastName, setLastName] = stateUser('van Dyke');
-      //
-      //       const [fullName, setFullName] = stateUser('');
-      //       useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
-      //     }
-      //   `,
-      //   errors: [
-      //     {
-      //       messageId: "avoidDerivedState",
-      //       data: { state: "undefined" },
-      //     },
-      //   ],
-      // },
+      {
+        name: "Derived state, with renamed useState import",
+        code: js`
+          import { useState as stateUser, useEffect } from 'react';
+
+          function Form() {
+            const [firstName, setFirstName] = stateUser('Nick');
+            const [lastName, setLastName] = stateUser('van Dyke');
+
+            const [fullName, setFullName] = stateUser('');
+            useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
+          }
+        `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Derived state, with renamed useEffect import",
+        code: js`
+          import { useState, useEffect as effect } from 'react';
+
+          function Form() {
+            const [firstName, setFirstName] = useState('Nick');
+            const [lastName, setLastName] = useState('van Dyke');
+
+            const [fullName, setFullName] = useState('');
+            effect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
+          }
+        `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Derived state, with renamed namespace import",
+        code: js`
+          import * as ReactAlias from 'react';
+
+          function Form() {
+            const [firstName, setFirstName] = ReactAlias.useState('Nick');
+            const [lastName, setLastName] = ReactAlias.useState('van Dyke');
+
+            const [fullName, setFullName] = ReactAlias.useState('');
+            ReactAlias.useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
+          }
+        `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Derived state, with renamed default import",
+        code: js`
+          import ReactAlias from 'react';
+
+          function Form() {
+            const [firstName, setFirstName] = ReactAlias.useState('Nick');
+            const [lastName, setLastName] = ReactAlias.useState('van Dyke');
+
+            const [fullName, setFullName] = ReactAlias.useState('');
+            ReactAlias.useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
+          }
+        `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Derived state, with renamed preact/hooks import",
+        code: js`
+          import { useState as stateUser, useEffect as effect } from 'preact/hooks';
+
+          function Form() {
+            const [firstName, setFirstName] = stateUser('Nick');
+            const [lastName, setLastName] = stateUser('van Dyke');
+
+            const [fullName, setFullName] = stateUser('');
+            effect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
+          }
+        `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Derived state, with renamed preact/compat import",
+        code: js`
+          import { useState as stateUser, useEffect as effect } from 'preact/compat';
+
+          function Form() {
+            const [firstName, setFirstName] = stateUser('Nick');
+            const [lastName, setLastName] = stateUser('van Dyke');
+
+            const [fullName, setFullName] = stateUser('');
+            effect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
+          }
+        `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
+        name: "Derived state, with renamed @wordpress/element import",
+        code: js`
+          import { useState as stateUser, useEffect as effect } from '@wordpress/element';
+
+          function Form() {
+            const [firstName, setFirstName] = stateUser('Nick');
+            const [lastName, setLastName] = stateUser('van Dyke');
+
+            const [fullName, setFullName] = stateUser('');
+            effect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
+          }
+        `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
       {
         name: "Function component",
         code: js`

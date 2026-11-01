@@ -32,7 +32,7 @@ const rule: Rule.RuleModule = {
 
       const isSomeDepsState = effect.depsRefs
         .flatMap((ref) => getUpstreamRefs(context, ref))
-        .some((ref) => isState(ref));
+        .some((ref) => isState(context, ref));
 
       effect.fnRefs
         .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
@@ -43,7 +43,7 @@ const rule: Rule.RuleModule = {
 
           // Avoid overlap with no-derived-state
           const isSomeArgsState = getArgsUpstreamRefs(context, ref).some(
-            (ref) => isState(ref),
+            (ref) => isState(context, ref),
           );
 
           if (isSomeDepsState && !isSomeArgsState) {
