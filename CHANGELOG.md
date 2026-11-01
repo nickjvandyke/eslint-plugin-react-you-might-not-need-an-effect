@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.3...v1.1.0) (2026-11-01)
+
+
+### Features
+
+* support renamed React hook imports ([a4e0f09](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/a4e0f09c8767ffced39d74ab75abc1fb261b6adb))
+
+
+### Bug Fixes
+
+* **config:** name the flat configs ([b30550d](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/b30550dabbeebdb023a7a25a603b0650daf643f9))
+* **config:** stop adding files to the lint set ([fefa3d1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/fefa3d1e8002438f05b1288224b54fa9f62dd2e6))
+* **no-pass-data-to-parent:** remove duplicated quotes from message ([2b2b42a](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/2b2b42afd1ebbb2b390ebdade3b9251e39530f9c))
+
 ## [1.0.3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.2...v1.0.3) (2026-10-30)
 
 
