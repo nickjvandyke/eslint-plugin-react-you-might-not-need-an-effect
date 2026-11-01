@@ -48,7 +48,6 @@ const languageOptions = {
 };
 
 const flat = (severity: "error" | "warn") => ({
-  files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"],
   plugins: {
     [plugin.meta.name]: plugin,
   },

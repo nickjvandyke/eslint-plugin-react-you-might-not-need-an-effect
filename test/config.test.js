@@ -2,7 +2,9 @@ import { ESLint } from "eslint";
 import { LegacyESLint } from "eslint/use-at-your-own-risk";
 const js = String.raw;
 import assert from "assert";
+import path from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 import plugin from "../src/index.ts";
 
 describe("config", () => {
@@ -78,5 +80,53 @@ describe("config", () => {
       ),
       undefined,
     );
+  });
+
+  const fixtures = fileURLToPath(new URL("./fixtures/config", import.meta.url));
+
+  const lintFixtures = async (config) => {
+    const eslint = new ESLint({
+      overrideConfigFile: true,
+      overrideConfig: config,
+    });
+    return eslint.lintFiles([fixtures]);
+  };
+
+  const ruleId = "react-you-might-not-need-an-effect/no-derived-state";
+
+  it("does not set files in the flat configs", () => {
+    assert.equal(plugin.configs.recommended.files, undefined);
+    assert.equal(plugin.configs.strict.files, undefined);
+  });
+
+  it("lints only the files that the user's config already lints", async () => {
+    const results = await lintFixtures([plugin.configs.recommended]);
+
+    assert.deepEqual(
+      results.map((result) => path.basename(result.filePath)).sort(),
+      ["a.js"],
+    );
+    assert.ok(results[0].messages.some((message) => message.ruleId === ruleId));
+  });
+
+  it("lints .jsx and .ts when the user's config adds them", async () => {
+    const results = await lintFixtures([
+      plugin.configs.recommended,
+      {
+        files: ["**/*.{jsx,ts}"],
+        ignores: ["**/*.d.ts"],
+      },
+    ]);
+
+    assert.deepEqual(
+      results.map((result) => path.basename(result.filePath)).sort(),
+      ["a.js", "a.jsx", "a.ts"],
+    );
+    results.forEach((result) => {
+      assert.ok(
+        result.messages.some((message) => message.ruleId === ruleId),
+        `${path.basename(result.filePath)} should report ${ruleId}`,
+      );
+    });
   });
 });
