@@ -29,9 +29,9 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidPassingDataToParentInComponent:
-        'Avoid passing data to parents in an effect. Instead, fetch "{{data}}" in the parent and pass it down to {{name}} as a prop.',
+        "Avoid passing data to parents in an effect. Instead, fetch {{data}} in the parent and pass it down to {{name}} as a prop.",
       avoidPassingDataToParentInHook:
-        'Avoid passing data to parents in an effect. Instead, return "{{data}}" from {{name}}.',
+        "Avoid passing data to parents in an effect. Instead, return {{data}} from {{name}}.",
     },
   },
   create: (context) => ({

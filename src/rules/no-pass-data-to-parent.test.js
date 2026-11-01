@@ -250,6 +250,24 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Message quotes each interpolated name exactly once",
+        code: js`
+        const Child = ({ onData }) => {
+          const value = useFetch();
+
+          useEffect(() => {
+            onData(value);
+          }, [onData, value]);
+        }
+      `,
+        errors: [
+          {
+            message:
+              'Avoid passing data to parents in an effect. Instead, fetch "useFetch" in the parent and pass it down to "Child" as a prop.',
+          },
+        ],
+      },
+      {
         name: "Pass external state, no deps argument",
         code: js`
         const Child = ({ onFetched }) => {
