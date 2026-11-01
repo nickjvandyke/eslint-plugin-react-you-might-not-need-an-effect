@@ -99,6 +99,17 @@ describe("config", () => {
     assert.equal(plugin.configs.strict.files, undefined);
   });
 
+  it("names the flat configs", () => {
+    assert.equal(
+      plugin.configs.recommended.name,
+      "react-you-might-not-need-an-effect/recommended",
+    );
+    assert.equal(
+      plugin.configs.strict.name,
+      "react-you-might-not-need-an-effect/strict",
+    );
+  });
+
   it("lints only the files that the user's config already lints", async () => {
     const results = await lintFixtures([plugin.configs.recommended]);
 

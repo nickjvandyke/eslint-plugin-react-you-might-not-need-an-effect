@@ -47,7 +47,8 @@ const languageOptions = {
   },
 };
 
-const flat = (severity: "error" | "warn") => ({
+const flat = (severity: "error" | "warn", name: string) => ({
+  name: `${plugin.meta.name}/${name}`,
   plugins: {
     [plugin.meta.name]: plugin,
   },
@@ -62,8 +63,8 @@ const legacy = (severity: "error" | "warn") => ({
 });
 
 Object.assign(plugin.configs, {
-  recommended: flat("warn"),
-  strict: flat("error"),
+  recommended: flat("warn", "recommended"),
+  strict: flat("error", "strict"),
   "legacy-recommended": legacy("warn"),
   "legacy-strict": legacy("error"),
 });
