@@ -41,6 +41,7 @@
     "typecheck": "tsgo",
     "lint": "eslint",
     "test": "node --import ./test/setup.js --test \"src/**/*.test.js\" \"test/**/*.test.js\"",
+    "benchmark": "node benchmark/index.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
