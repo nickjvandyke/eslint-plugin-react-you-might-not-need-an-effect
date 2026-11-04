@@ -41,6 +41,7 @@
     "typecheck": "tsgo",
     "lint": "eslint",
     "test": "node --import ./test/setup.js --test \"src/**/*.test.js\" \"test/**/*.test.js\"",
+    "test:oxlint": "node --import ./test/setup.js --test test/oxlint.test.js",
     "benchmark": "node benchmark/index.js",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
@@ -54,6 +55,7 @@
     "eslint-plugin-n": "^17.17.0",
     "globals": "^16.2.0",
     "lint-staged": "^16.1.0",
+    "oxlint": "^1.91.0",
     "prettier": "^3.5.3",
     "publint": "^0.3.20",
     "simple-git-hooks": "^2.13.0",
