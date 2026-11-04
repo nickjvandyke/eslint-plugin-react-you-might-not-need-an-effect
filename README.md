@@ -103,25 +103,25 @@ export default [
 
 Use this plugin with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html) thanks to their [JS plugin support](https://oxc.rs/docs/guide/usage/linter/js-plugins.html)!
 
-```jsonc
-// .oxlintrc.json
-{
-  "jsPlugins": ["eslint-plugin-react-you-might-not-need-an-effect"],
-  "rules": {
+```ts
+// oxlint.config.ts
+import reactYouMightNotNeedAnEffect from "eslint-plugin-react-you-might-not-need-an-effect";
+import { defineConfig } from "oxlint";
+
+export default defineConfig({
+  jsPlugins: ["eslint-plugin-react-you-might-not-need-an-effect"],
+  rules: {
+    // Enable every rule as a warning
+    ...reactYouMightNotNeedAnEffect.configs.recommended.rules,
+    // Or enable every rule as an error
+    ...reactYouMightNotNeedAnEffect.configs.strict.rules,
+    // Or enable only specific rules
     "react-you-might-not-need-an-effect/no-derived-state": "warn",
-    "react-you-might-not-need-an-effect/no-chain-state-updates": "warn",
-    "react-you-might-not-need-an-effect/no-event-handler": "warn",
-    "react-you-might-not-need-an-effect/no-adjust-state-on-prop-change": "warn",
-    "react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change": "warn",
-    "react-you-might-not-need-an-effect/no-pass-live-state-to-parent": "warn",
-    "react-you-might-not-need-an-effect/no-pass-data-to-parent": "warn",
-    "react-you-might-not-need-an-effect/no-external-store-subscription": "warn",
-    "react-you-might-not-need-an-effect/no-initialize-state": "warn",
   },
-  "env": {
-    "browser": true,
+  env: {
+    browser: true,
   },
-}
+});
 ```
 
 ### Suggested

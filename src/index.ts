@@ -70,7 +70,6 @@ Object.assign(plugin.configs, {
 });
 
 // HACK: Need to cast because of the `Object.assign`. Unsure of workaround - that's the official method...
-// TODO: Possible to type this such we can spread it in `oxlint.config.ts`?
 export default plugin as unknown as ESLint.Plugin & {
   configs: {
     recommended: Linter.Config;
