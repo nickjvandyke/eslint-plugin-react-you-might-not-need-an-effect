@@ -49,6 +49,19 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
+      {
+        name: "Set state to a value derived from context",
+        code: js`
+        function Counter() {
+          const count = useContext(CountContext);
+          const [doubleCount, setDoubleCount] = useState(0);
+
+          useEffect(() => {
+            setDoubleCount(count * 2);
+          }, [count]);
+        }
+      `,
+      },
     ],
     invalid: [
       {
@@ -142,6 +155,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           {
             messageId: "avoidAdjustingStateWhenAPropChanges",
             data: { state: "selection", props: '"items" and "user"' },
+          },
+        ],
+      },
+      {
+        name: "Set state to literal when context changes",
+        code: js`
+        function List() {
+          const { items } = useContext(ListContext);
+          const [selection, setSelection] = useState();
+
+          useEffect(() => {
+            setSelection(null);
+          }, [items]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: { state: "selection", props: '"items"' },
           },
         ],
       },

@@ -186,6 +186,13 @@ export const isUseState = (
 export const isUseRef = (context: Rule.RuleContext, node: Rule.Node): boolean =>
   isReactHook(context, node, "useRef");
 
+// `useContext` returns a value that is owned by a parent, just like a prop.
+// It changes outside the component and re-renders the component on change.
+export const isUseContext = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): boolean => isReactHook(context, node, "useContext");
+
 // Does not include `useLayoutEffect`.
 // When used correctly, it interacts with the DOM = external system = (probably) valid effect.
 // When used incorrectly, it's probably too difficult to accurately analyze anyway.
@@ -302,11 +309,21 @@ export const isStateSetter = (
   ) ?? false;
 
 // Returns false for props of HOCs (e.g. `withRouter`) because they usually have side effects.
+// Also returns true for `useContext` values, because they are owned by an ancestor
+// and change outside the component, just like props.
 export const isProp = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean =>
   ref.resolved?.defs.some((def) => {
+    if (
+      def.node.type === "VariableDeclarator" &&
+      def.node.init?.type === "CallExpression" &&
+      isUseContext(context, def.node.init.callee as Rule.Node)
+    ) {
+      return true;
+    }
+
     const declaringNode: Rule.Node =
       def.node.type === "ArrowFunctionExpression"
         ? def.node.parent.type === "CallExpression"

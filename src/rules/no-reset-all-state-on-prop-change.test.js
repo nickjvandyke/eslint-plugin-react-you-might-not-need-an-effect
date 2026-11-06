@@ -135,6 +135,27 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Reset all state when context changes",
+        code: js`
+        function ProfilePage() {
+          const { userId } = useContext(UserContext);
+          const [user, setUser] = useState(null);
+          const [comment, setComment] = useState('type something');
+
+          useEffect(() => {
+            setUser(null);
+            setComment('type something');
+          }, [userId]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
         name: "Reset all state when a prop changes in memoized component",
         code: js`
         const ProfilePage = memo(({ userId }) => {

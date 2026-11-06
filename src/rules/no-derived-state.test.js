@@ -352,6 +352,45 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        // `useContext` values are owned by an ancestor, so treat them like props.
+        name: "From context",
+        code: js`
+        function Theme() {
+          const theme = useContext(ThemeContext);
+          const [isDark, setIsDark] = useState(false);
+
+          useEffect(() => {
+            setIsDark(theme === 'dark');
+          }, [theme]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "isDark" },
+          },
+        ],
+      },
+      {
+        name: "From destructured context",
+        code: js`
+        function Theme() {
+          const { mode } = useContext(ThemeContext);
+          const [isDark, setIsDark] = useState(false);
+
+          useEffect(() => {
+            setIsDark(mode === 'dark');
+          }, [mode]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "isDark" },
+          },
+        ],
+      },
+      {
         name: "From intermediate prop",
         code: js`
         function Form({ firstName, lastName }) {

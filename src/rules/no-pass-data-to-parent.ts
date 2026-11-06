@@ -1,4 +1,4 @@
-import type { Rule } from "eslint";
+import type { Rule, Scope } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
@@ -12,6 +12,7 @@ import {
   isRefCurrent,
   isUseState,
   isUseRef,
+  isUseContext,
   isProp,
   isRefCall,
   isCustomHook,
@@ -58,6 +59,8 @@ const rule: Rule.RuleModule = {
                 // TODO: Ideally would use isState and isRef, not the hooks.
                 // But because it goes to leaves. Must be some other way?
                 !isUseState(context, ref.identifier as Rule.Node) &&
+                !isUseContext(context, ref.identifier as Rule.Node) &&
+                !isContextObject(context, ref) &&
                 !isProp(context, ref) &&
                 !isUseRef(context, ref.identifier as Rule.Node) &&
                 !isRefCurrent(ref) &&
@@ -93,6 +96,22 @@ const rule: Rule.RuleModule = {
         });
     },
   }),
+};
+
+// The context object passed to `useContext` is never data.
+// `getArgsUpstreamRefs` can reach it through the `useContext` call that
+// declares the value we actually pass to the parent.
+const isContextObject = (
+  context: Rule.RuleContext,
+  ref: Scope.Reference,
+): boolean => {
+  const identifier = ref.identifier as Rule.Node;
+  const parent = identifier.parent;
+  return (
+    parent.type === "CallExpression" &&
+    (parent.arguments as Rule.Node[]).includes(identifier) &&
+    isUseContext(context, parent.callee as Rule.Node)
+  );
 };
 
 export default rule;

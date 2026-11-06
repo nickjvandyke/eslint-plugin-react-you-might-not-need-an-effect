@@ -942,6 +942,78 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      {
+        name: "Derived state from context",
+        code: js`
+        function Theme() {
+          const theme = useContext(ThemeContext);
+          const [isDark, setIsDark] = useState(false);
+
+          useEffect(() => setIsDark(theme === 'dark'), [theme]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "isDark" },
+          },
+        ],
+      },
+      {
+        name: "Derived state from destructured context",
+        code: js`
+        function Theme() {
+          const { theme } = useContext(ThemeContext);
+          const [isDark, setIsDark] = useState(false);
+
+          useEffect(() => setIsDark(theme === 'dark'), [theme]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "isDark" },
+          },
+        ],
+      },
+      {
+        name: "Derived state from renamed useContext import",
+        code: js`
+        import { useContext as useCtx, useState, useEffect } from 'react';
+
+        function Theme() {
+          const theme = useCtx(ThemeContext);
+          const [isDark, setIsDark] = useState(false);
+
+          useEffect(() => setIsDark(theme === 'dark'), [theme]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "isDark" },
+          },
+        ],
+      },
+      {
+        name: "Derived state from namespace useContext",
+        code: js`
+        import * as React from 'react';
+
+        function Theme() {
+          const theme = React.useContext(ThemeContext);
+          const [isDark, setIsDark] = React.useState(false);
+
+          React.useEffect(() => setIsDark(theme === 'dark'), [theme]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "isDark" },
+          },
+        ],
+      },
     ],
   },
 );

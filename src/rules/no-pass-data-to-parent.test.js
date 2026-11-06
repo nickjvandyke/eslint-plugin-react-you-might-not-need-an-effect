@@ -71,6 +71,31 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        // Context values are owned by an ancestor, just like props.
+        name: "Pass context value",
+        code: js`
+        const Child = ({ onTextChanged }) => {
+          const text = useContext(TextContext);
+
+          useEffect(() => {
+            onTextChanged(text);
+          }, [onTextChanged, text]);
+        }
+      `,
+      },
+      {
+        name: "Pass destructured context value",
+        code: js`
+        const Child = ({ onTextChanged }) => {
+          const { text } = useContext(TextContext);
+
+          useEffect(() => {
+            onTextChanged(text);
+          }, [onTextChanged, text]);
+        }
+      `,
+      },
+      {
         name: "No-arg prop callback",
         code: js`
         function Form({ onClose }) {
@@ -429,6 +454,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       //     },
       //   ],
       // },
+      {
+        name: "Pass external state via context callback",
+        code: js`
+        const Child = () => {
+          const { onFetched } = useContext(ChildContext);
+          const data = useSomeAPI();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidPassingDataToParentInComponent",
+            data: { data: '"useSomeAPI"', name: '"Child"' },
+          },
+        ],
+      },
     ],
   },
 );

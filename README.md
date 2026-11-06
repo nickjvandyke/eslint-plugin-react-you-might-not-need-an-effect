@@ -20,7 +20,7 @@ function Form() {
 ```
 
 - **Actionable guidance:** Reports each anti-pattern with a specific suggested alternative and a docs link.
-- **Deep analysis:** Analyzes state, props, refs, and their upstream sources and context.
+- **Deep analysis:** Analyzes state, props, contexts, refs, and their upstream sources.
 - **Dependency-aware:** Considers _when_ an effect runs to determine if its logic is actually redundant.
 - **Edge-case obsessed:** Focuses on unusual syntax and heuristics to keep the signal-to-noise ratio high.
 

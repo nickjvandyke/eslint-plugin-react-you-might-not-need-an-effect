@@ -44,6 +44,19 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        // Context values are owned by an ancestor, just like props.
+        name: "Pass context value to parent",
+        code: js`
+        const Child = ({ onTextChanged }) => {
+          const text = useContext(TextContext);
+
+          useEffect(() => {
+            onTextChanged(text);
+          }, [text, onTextChanged]);
+        }
+      `,
+      },
+      {
         name: "No-arg prop callback",
         code: js`
         function Form({ onClose }) {
@@ -396,6 +409,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           {
             messageId: "avoidPassingLiveStateToParentInComponent",
             data: { state: '"text" and "count"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state via context callback",
+        code: js`
+        const Child = () => {
+          const { onTextChanged } = useContext(ChildContext);
+          const [text, setText] = useState();
+
+          useEffect(() => {
+            onTextChanged(text);
+          }, [onTextChanged, text]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"text"', name: '"Child"' },
           },
         ],
       },

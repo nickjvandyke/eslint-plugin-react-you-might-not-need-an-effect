@@ -77,6 +77,26 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Using context to handle an event and call an external function",
+        code: js`
+        function Form() {
+          const { dataToSubmit } = useContext(FormContext);
+
+          useEffect(() => {
+            if (dataToSubmit) {
+              submitData(dataToSubmit);
+            }
+          }, [dataToSubmit]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidPropHandler",
+            data: { name: "dataToSubmit" },
+          },
+        ],
+      },
+      {
         name: "Using state to handle an event and call an external function",
         code: js`
         function Form() {
