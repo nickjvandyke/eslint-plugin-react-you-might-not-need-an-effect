@@ -83,6 +83,28 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Set state to literal when prop changes, with cleanup",
+        code: js`
+        function List({ items }) {
+          const [selection, setSelection] = useState();
+
+          useEffect(() => {
+            setSelection(null);
+
+            return () => {
+              console.log("cleanup");
+            };
+          }, [items]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAPropChanges",
+            data: { state: "selection", props: '"items"' },
+          },
+        ],
+      },
+      {
         name: "Set state to internal state when prop changes",
         code: js`
         function List({ items }) {

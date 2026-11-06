@@ -105,6 +105,33 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
+      {
+        name: "No dependency array, async setter",
+        code: js`
+        function MyComponent() {
+          const [state, setState] = useState();
+
+          useEffect(() => {
+            fetch("https://api.example.com/data")
+              .then((response) => response.json())
+              .then((data) => setState(data));
+          });
+        }
+      `,
+      },
+      {
+        name: "Dependency array in a variable",
+        code: js`
+        function MyComponent({ other }) {
+          const [state, setState] = useState();
+          const deps = [other];
+
+          useEffect(() => {
+            setState("Hello");
+          }, deps);
+        }
+      `,
+      },
     ],
     invalid: [
       {
@@ -116,6 +143,26 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setState("Hello");
           }, []);
+
+          return <div>{state}</div>;
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: '"Hello"' },
+          },
+        ],
+      },
+      {
+        name: "To literal, no dependency array",
+        code: js`
+        function MyComponent() {
+          const [state, setState] = useState();
+
+          useEffect(() => {
+            setState("Hello");
+          });
 
           return <div>{state}</div>;
         }

@@ -28,7 +28,7 @@ const rule: Rule.RuleModule = {
   create: (context) => ({
     CallExpression: (node) => {
       const effect = getEffect(context, node);
-      if (!effect || effect.cleanup || !effect.depsRefs) return;
+      if (!effect || effect.cleanup) return;
 
       const isSomeDepsState = effect.depsRefs
         .flatMap((ref) => getUpstreamRefs(context, ref))

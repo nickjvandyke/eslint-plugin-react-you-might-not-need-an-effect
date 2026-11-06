@@ -23,7 +23,7 @@ const rule: Rule.RuleModule = {
   create: (context) => ({
     CallExpression: (node) => {
       const effect = getEffect(context, node);
-      if (!effect || !effect.depsRefs) return;
+      if (!effect) return;
 
       const isEffectRunOnlyOnMount =
         effect.depsRefs.filter((ref) => !isStateSetter(context, ref)).length ===

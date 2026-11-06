@@ -224,16 +224,9 @@ const getEffectFn = (
   return undefined;
 };
 
-const getEffectDeps = (
-  node: Rule.Node,
-): (Rule.Node & { type: "ArrayExpression" }) | undefined => {
+const getEffectDeps = (node: Rule.Node): Rule.Node | undefined => {
   if (node.type !== "CallExpression") return undefined;
-  const depsArr = node.arguments[1];
-  if (depsArr?.type !== "ArrayExpression") {
-    return undefined;
-  }
-
-  return depsArr as Rule.Node & { type: "ArrayExpression" };
+  return node.arguments[1] as Rule.Node | undefined;
 };
 
 const getEffectCleanup = (
@@ -272,7 +265,10 @@ export const getEffect = (context: Rule.RuleContext, node: Rule.Node) => {
   return {
     fn,
     fnRefs: getDownstreamRefs(context, fn),
-    depsRefs: deps ? getDownstreamRefs(context, deps) : undefined,
+    // No dependency array means the effect runs after every render.
+    // Treat that as empty so mount-only rules still apply.
+    // A dependency variable stays non-empty, so it is not treated as mount.
+    depsRefs: deps ? getDownstreamRefs(context, deps) : [],
     cleanup: getEffectCleanup(context, node),
   };
 };

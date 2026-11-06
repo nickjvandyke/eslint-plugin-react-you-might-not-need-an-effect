@@ -31,7 +31,7 @@ const rule: Rule.RuleModule = {
   create: (context) => ({
     CallExpression: (node) => {
       const effect = getEffect(context, node);
-      if (!effect || !effect.depsRefs) return;
+      if (!effect) return;
       // Skip custom hooks because they can't receive `key` like components can.
       const containingNode = findEnclosingReactNode(context, node);
       if (containingNode && isCustomHook(containingNode)) return;

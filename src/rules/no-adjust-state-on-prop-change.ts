@@ -23,7 +23,7 @@ const rule: Rule.RuleModule = {
   create: (context) => ({
     CallExpression: (node) => {
       const effect = getEffect(context, node);
-      if (!effect || !effect.depsRefs) return;
+      if (!effect) return;
 
       const depsPropRefs = effect.depsRefs
         .flatMap((ref) => getUpstreamRefs(context, ref))
