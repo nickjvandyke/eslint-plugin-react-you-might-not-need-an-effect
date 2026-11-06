@@ -23,9 +23,9 @@ const rule: Rule.RuleModule = {
     schema: [],
     messages: {
       avoidPassingLiveStateToParentInComponent:
-        'Avoid passing live state to parents in an effect. Instead, lift "{{state}}" to the parent and pass it down to {{name}} as a prop.',
+        "Avoid passing live state to parents in an effect. Instead, lift {{state}} to the parent and pass it down to {{name}} as a prop.",
       avoidPassingLiveStateToParentInHook:
-        'Avoid passing live state to parents in an effect. Instead, return "{{state}}" from {{name}}.',
+        "Avoid passing live state to parents in an effect. Instead, return {{state}} from {{name}}.",
     },
   },
   create: (context) => ({

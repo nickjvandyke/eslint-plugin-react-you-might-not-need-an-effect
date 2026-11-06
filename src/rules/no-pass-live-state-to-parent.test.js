@@ -431,6 +431,42 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      {
+        name: "Message quotes each interpolated name exactly once",
+        code: js`
+        const Child = ({ onData }) => {
+          const [value, setValue] = useState();
+
+          useEffect(() => {
+            onData(value);
+          }, [onData, value]);
+        }
+      `,
+        errors: [
+          {
+            message:
+              'Avoid passing live state to parents in an effect. Instead, lift "value" to the parent and pass it down to "Child" as a prop.',
+          },
+        ],
+      },
+      {
+        name: "Message quotes each interpolated name exactly once in custom hook",
+        code: js`
+        const useCustom = ({ onData }) => {
+          const [value, setValue] = useState();
+
+          useEffect(() => {
+            onData(value);
+          }, [onData, value]);
+        }
+      `,
+        errors: [
+          {
+            message:
+              'Avoid passing live state to parents in an effect. Instead, return "value" from "useCustom".',
+          },
+        ],
+      },
     ],
   },
 );
