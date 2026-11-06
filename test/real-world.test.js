@@ -33,6 +33,28 @@ describe("recommended rules on real-world code", () => {
         `,
       },
       {
+        name: "Layout wrapper from Mantine",
+        code: js`
+          import { useIsomorphicEffect } from '@mantine/hooks';
+          import { useRef, useState } from 'react';
+
+          function AutofocusInput({ value }) {
+            const ref = useRef();
+            const [state, setState] = useState();
+
+            useIsomorphicEffect(() => {
+              setState(value);
+            }, [value]);
+
+            useIsomorphicEffect(() => {
+              ref.current?.focus();
+            }, []);
+
+            return <input ref={ref} value={state} />;
+          }
+        `,
+      },
+      {
         name: "Managing a timer",
         code: js`
         function Timer() {

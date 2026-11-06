@@ -83,13 +83,29 @@ const REACT_MODULES = new Set([
   "@wordpress/element",
 ]);
 
-// Resolves an identifier to the name it was imported from a React-compatible
-// package. Returns `default` or `namespace` for default and namespace imports.
-// Returns `undefined` when the identifier is not such an import.
-const getReactImport = (
+// Third-party hooks with `useEffect` semantics, matched by module + export.
+// Layout, update-only, async, debounced, conditional, and interval wrappers are
+// excluded because their timing or cleanup differs.
+const EFFECT_HOOKS: Record<string, Set<string>> = {
+  "react-use": new Set([
+    "useMount",
+    "useEffectOnce",
+    "useDeepCompareEffect",
+    "useCustomCompareEffect",
+  ]),
+  ahooks: new Set(["useMount", "useDeepCompareEffect"]),
+  "@react-hookz/web": new Set(["useMountEffect", "useDeepCompareEffect"]),
+  "@mantine/hooks": new Set(["useShallowEffect"]),
+  "primereact/hooks": new Set(["useMountEffect"]),
+  "use-deep-compare-effect": new Set(["default"]),
+};
+
+// Resolves an identifier to the module it was imported from and the export name.
+// Returns `default` or `namespace` for default and namespace imports.
+const getImportBinding = (
   context: Rule.RuleContext,
   node: Rule.Node,
-): string | undefined => {
+): { source: string; imported: string } | undefined => {
   if (node.type !== "Identifier") return undefined;
 
   const def = getRef(context, node)?.resolved?.defs.find(
@@ -98,17 +114,69 @@ const getReactImport = (
   if (!def) return undefined;
 
   const source = def.parent.source.value;
-  if (typeof source !== "string" || !REACT_MODULES.has(source)) {
+  if (typeof source !== "string") return undefined;
+
+  if (def.node.type === "ImportSpecifier") {
+    return {
+      source,
+      imported:
+        def.node.imported.type === "Identifier"
+          ? def.node.imported.name
+          : String(def.node.imported.value),
+    };
+  }
+
+  return {
+    source,
+    imported:
+      def.node.type === "ImportDefaultSpecifier" ? "default" : "namespace",
+  };
+};
+
+// Resolves an identifier to the name it was imported from a React-compatible
+// package. Returns `default` or `namespace` for default and namespace imports.
+// Returns `undefined` when the identifier is not such an import.
+const getReactImport = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): string | undefined => {
+  const binding = getImportBinding(context, node);
+  if (!binding || !REACT_MODULES.has(binding.source)) {
     return undefined;
   }
 
-  if (def.node.type === "ImportSpecifier") {
-    return def.node.imported.type === "Identifier"
-      ? def.node.imported.name
-      : String(def.node.imported.value);
+  return binding.imported;
+};
+
+// Detects third-party effect wrappers by module + export:
+// - `import { useMount } from "react-use"`
+// - `import * as reactUse from "react-use"` + `reactUse.useMount`
+// - `import useDeepCompareEffect from "use-deep-compare-effect"`
+const isThirdPartyEffectHook = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): boolean => {
+  if (node.type === "Identifier") {
+    const binding = getImportBinding(context, node);
+    if (!binding) return false;
+
+    return EFFECT_HOOKS[binding.source]?.has(binding.imported) ?? false;
   }
 
-  return def.node.type === "ImportDefaultSpecifier" ? "default" : "namespace";
+  if (node.type === "MemberExpression" && !node.computed) {
+    const property = node.property;
+    if (property.type !== "Identifier") return false;
+
+    if (node.object.type === "Identifier") {
+      const binding = getImportBinding(context, node.object as Rule.Node);
+
+      if (binding?.imported === "namespace") {
+        return EFFECT_HOOKS[binding.source]?.has(property.name) ?? false;
+      }
+    }
+  }
+
+  return false;
 };
 
 const isReactNamespace = (
@@ -196,9 +264,12 @@ export const isUseContext = (
 // Does not include `useLayoutEffect`.
 // When used correctly, it interacts with the DOM = external system = (probably) valid effect.
 // When used incorrectly, it's probably too difficult to accurately analyze anyway.
+//
+// Also matches third-party wrappers with `useEffect` semantics.
 const isUseEffect = (context: Rule.RuleContext, node: Rule.Node): boolean =>
   node.type === "CallExpression" &&
-  isReactHook(context, node.callee as Rule.Node, "useEffect");
+  (isReactHook(context, node.callee as Rule.Node, "useEffect") ||
+    isThirdPartyEffectHook(context, node.callee as Rule.Node));
 
 const getEffectFn = (
   context: Rule.RuleContext,

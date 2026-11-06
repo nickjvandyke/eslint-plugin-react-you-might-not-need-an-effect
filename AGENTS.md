@@ -36,6 +36,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - `.gitignore` keeps `dist`, `node_modules`, `.yarn/*` (except patches/plugins/releases/sdks/versions).
 - The plugin has no runtime dependencies. Unresolved global references behave like external globals, so browser globals are not required for analysis.
 - Suggested companion rules for users: `react-hooks/exhaustive-deps` and `typescript-eslint/no-floating-promises`.
+- Third-party effect wrappers are matched by module + export. Only `useEffect`-equivalent wrappers are included; layout, update, async, debounced, and conditional wrappers are excluded.
 
 ## Architecture notes
 
