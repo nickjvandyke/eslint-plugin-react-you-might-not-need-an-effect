@@ -755,6 +755,24 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      {
+        name: "Default value in the state destructuring",
+        code: js`
+        function Form({ count }) {
+          const [doubleCount = 0, setDoubleCount] = useState(0);
+
+          useEffect(() => {
+            setDoubleCount(count * 2);
+          }, [count]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "doubleCount" },
+          },
+        ],
+      },
     ],
   },
 );

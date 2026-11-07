@@ -371,6 +371,19 @@ export const getEffect = (context: Rule.RuleContext, node: Rule.Node) => {
   };
 };
 
+// Reads the local name from an array pattern element, including defaults
+// like `const [count = 0, setCount] = useState()`.
+const getPatternName = (element: unknown): string | undefined => {
+  const node = element as
+    | { type: string; name?: string; left?: unknown }
+    | null
+    | undefined;
+  if (!node) return undefined;
+  if (node.type === "Identifier") return node.name;
+  if (node.type === "AssignmentPattern") return getPatternName(node.left);
+  return undefined;
+};
+
 export const isState = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -386,8 +399,7 @@ export const isState = (
       def.node.id.type === "ArrayPattern" &&
       (def.node.id.elements.length === 1 ||
         def.node.id.elements.length === 2) &&
-      def.node.id.elements[0]?.type === "Identifier" &&
-      def.node.id.elements[0].name === ref.identifier.name
+      getPatternName(def.node.id.elements[0]) === ref.identifier.name
     );
   }) ?? false;
 
@@ -405,8 +417,7 @@ export const isStateSetter = (
       isUseState(context, init.callee as Rule.Node) &&
       def.node.id.type === "ArrayPattern" &&
       def.node.id.elements.length === 2 &&
-      def.node.id.elements[1]?.type === "Identifier" &&
-      def.node.id.elements[1].name === ref.identifier.name
+      getPatternName(def.node.id.elements[1]) === ref.identifier.name
     );
   }) ?? false;
 
@@ -519,13 +530,9 @@ export const getStateName = (
 ): string | undefined => {
   const decl = getUseStateDecl(context, ref);
   if (!decl || decl.id.type !== "ArrayPattern") return undefined;
-  const elements = decl.id.elements;
-  const first = elements[0];
-  const second = elements[1];
   return (
-    (first?.type === "Identifier" ? first : undefined) ??
-    (second?.type === "Identifier" ? second : undefined)
-  )?.name;
+    getPatternName(decl.id.elements[0]) ?? getPatternName(decl.id.elements[1])
+  );
 };
 
 export const getUseStateDecl = (
