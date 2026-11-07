@@ -184,6 +184,7 @@ export const getSynchronousCallChain = (
       "ObjectExpression",
       "ArrayExpression",
       "SequenceExpression",
+      "ChainExpression",
     ];
     let node: Rule.Node = ref.identifier as Rule.Node;
     while (true) {
@@ -199,6 +200,12 @@ export const getSynchronousCallChain = (
           // `let` is rare so we choose to ignore it for simplicity.
           parent.parent.kind === "const"
         );
+      }
+      // The ref is the object of a member access, e.g. `props.onChange`.
+      // Follow only the object position so we ignore property positions.
+      if (parent.type === "MemberExpression" && parent.object === node) {
+        node = parent;
+        continue;
       }
       if (containerParents.includes(parent.type)) {
         node = parent;

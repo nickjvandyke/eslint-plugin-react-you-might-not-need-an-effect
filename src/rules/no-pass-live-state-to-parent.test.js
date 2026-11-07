@@ -413,6 +413,44 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Pass live internal state via member-access alias of a prop",
+        code: js`
+        const Child = (props) => {
+          const [data, setData] = useState();
+          const onFetched = props.onFetched;
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"data"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state via member destructuring of a prop",
+        code: js`
+        const Child = (props) => {
+          const [data, setData] = useState();
+          const { onFetched } = props.callbacks;
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"data"', name: '"Child"' },
+          },
+        ],
+      },
+      {
         name: "Pass live internal state via context callback",
         code: js`
         const Child = () => {
