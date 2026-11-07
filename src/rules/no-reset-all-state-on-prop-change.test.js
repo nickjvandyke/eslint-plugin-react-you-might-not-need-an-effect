@@ -351,6 +351,28 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      {
+        name: "Reset all state when state is read in render",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+          const [comment, setComment] = useState('type something');
+
+          useEffect(() => {
+            setUser(null);
+            setComment('type something');
+          }, [userId]);
+
+          return <div>{user}{user}{comment}</div>;
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
     ],
   },
 );

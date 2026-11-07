@@ -9,10 +9,10 @@ import {
 import {
   isStateCall,
   isStateSetter,
+  isUseState,
   isProp,
   getUseStateDecl,
   isCustomHook,
-  isState,
   findEnclosingReactNode,
   getEffect,
 } from "../util/react.ts";
@@ -165,7 +165,7 @@ const countUseStates = (
   }
 
   return getDownstreamRefs(context, componentNode).filter((ref) =>
-    isState(context, ref),
+    isUseState(context, ref.identifier as Rule.Node),
   ).length;
 };
 
