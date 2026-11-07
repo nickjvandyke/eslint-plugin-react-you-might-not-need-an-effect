@@ -3,10 +3,12 @@ import { unwrapExpression } from "../util/typescript.ts";
 import {
   getCallExpr,
   getDownstreamRefs,
+  getSynchronousCallChain,
   getUpstreamRefs,
 } from "../util/ast.ts";
 import {
   isStateCall,
+  isStateSetter,
   isProp,
   getUseStateDecl,
   isCustomHook,
@@ -87,7 +89,13 @@ const isSetStateToInitialValue = (
   context: Rule.RuleContext,
   setterRef: Scope.Reference,
 ): boolean => {
-  const callExpr = getCallExpr(setterRef);
+  // A wrapper setter may take no arguments and call the real setter inside.
+  // Prefer the call that the state setter itself receives.
+  const setterCallRef =
+    getSynchronousCallChain(context, setterRef).find(
+      (chainRef) => isStateSetter(context, chainRef) && getCallExpr(chainRef),
+    ) ?? setterRef;
+  const callExpr = getCallExpr(setterCallRef);
   if (!callExpr || callExpr.type !== "CallExpression") return false;
   const rawSetStateToValue = callExpr.arguments[0] as Rule.Node | undefined;
   const setStateToValue = rawSetStateToValue

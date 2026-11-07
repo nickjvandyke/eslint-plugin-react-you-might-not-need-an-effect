@@ -331,6 +331,26 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      {
+        name: "Reset all state via a wrapper setter",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          const resetUser = () => setUser(null);
+
+          useEffect(() => {
+            resetUser();
+          }, [userId]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
     ],
   },
 );
