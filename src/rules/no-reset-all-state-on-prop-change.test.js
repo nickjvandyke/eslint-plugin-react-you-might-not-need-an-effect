@@ -176,6 +176,45 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Reset all state via an alias declared in the effect",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            const reset = setUser;
+            reset(null);
+          }, [userId]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
+        name: "Reset all state with an unused alias also declared",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            const reset = setUser;
+            setUser(null);
+            console.log(reset);
+          }, [userId]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
         name: "Reset all state to shared var when a prop changes",
         code: js`
         function ProfilePage({ userId }) {

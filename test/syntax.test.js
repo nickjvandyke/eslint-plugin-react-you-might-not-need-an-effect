@@ -300,6 +300,20 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }
         `,
       },
+      {
+        // Only `const` aliases are followed, because `let` may be reassigned before use.
+        name: "Alias declared with `let` is ignored",
+        code: js`
+          const Component = () => {
+            const [data, setData] = useState();
+
+            useEffect(() => {
+              let set = setData;
+              set(data);
+            }, [data]);
+          }
+        `,
+      },
     ],
     invalid: [
       {

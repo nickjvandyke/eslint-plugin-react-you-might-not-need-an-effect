@@ -186,13 +186,19 @@ export const getSynchronousCallChain = (
       "SequenceExpression",
     ];
     let node: Rule.Node = ref.identifier as Rule.Node;
-    for (;;) {
+    while (true) {
       const parent = node.parent;
       if (
         parent.type === "VariableDeclarator" &&
         (parent as Rule.Node & { init: Rule.Node }).init === node
       ) {
-        return true;
+        return (
+          parent.parent?.type === "VariableDeclaration" &&
+          // Only `const` aliases are stable. A reassigned alias may point somewhere else
+          // by the time it is used, e.g. `let set = setState; set = otherSetter; set(0)`.
+          // `let` is rare so we choose to ignore it for simplicity.
+          parent.parent.kind === "const"
+        );
       }
       if (containerParents.includes(parent.type)) {
         node = parent;
@@ -201,6 +207,12 @@ export const getSynchronousCallChain = (
       return false;
     }
   };
+
+  // Only a ref that is itself invoked can start a synchronous call chain.
+  // An alias that is never called (e.g. `const set = setState`) is not a call.
+  if (!getCallExpr(ref)) {
+    return [];
+  }
 
   const callExprRefs: Scope.Reference[] = [];
   ascend(context, ref, (upRef) => {
