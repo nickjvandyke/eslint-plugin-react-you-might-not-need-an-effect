@@ -1,8 +1,8 @@
 import type { Rule, Scope } from "eslint";
 import { unwrapExpression } from "../util/typescript.ts";
 import {
+  findDownstreamNodes,
   getCallExpr,
-  getDownstreamRefs,
   getSynchronousCallChain,
   getUpstreamRefs,
 } from "../util/ast.ts";
@@ -96,7 +96,7 @@ const isSetStateToInitialValue = (
       (chainRef) => isStateSetter(context, chainRef) && getCallExpr(chainRef),
     ) ?? setterRef;
   const callExpr = getCallExpr(setterCallRef);
-  if (!callExpr || callExpr.type !== "CallExpression") return false;
+  if (!callExpr) return false;
   const rawSetStateToValue = callExpr.arguments[0] as Rule.Node | undefined;
   const setStateToValue = rawSetStateToValue
     ? unwrapExpression(rawSetStateToValue)
@@ -151,21 +151,14 @@ const countUseStates = (
     return 0;
   }
 
-  if (
-    componentNode.type === "VariableDeclarator" &&
-    componentNode.init &&
-    unwrapExpression(componentNode.init).type === "CallExpression"
-  ) {
-    // Because `descend` will ignore the arguments.
-    // TODO: Maybe an indicator we should filter out arguments somewhere else?
-    const init = unwrapExpression(componentNode.init) as Rule.Node & {
-      type: "CallExpression";
-    };
-    componentNode = init.arguments[0] as Rule.Node;
-  }
-
-  return getDownstreamRefs(context, componentNode).filter((ref) =>
-    isUseState(context, ref.identifier as Rule.Node),
+  // Include call arguments so wrappers like `memo` and `forwardRef` expose the
+  // function body that holds the hooks.
+  return findDownstreamNodes(context, componentNode, "CallExpression", {
+    includeArguments: true,
+  }).filter(
+    (node) =>
+      node.type === "CallExpression" &&
+      isUseState(context, node.callee as Rule.Node),
   ).length;
 };
 

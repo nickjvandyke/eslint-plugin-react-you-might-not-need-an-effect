@@ -38,6 +38,8 @@ export const descend = (
   context: Rule.RuleContext,
   node: Rule.Node,
   visit: (node: Rule.Node) => void,
+  // Call arguments are skipped by default. Set this to walk them too.
+  options: { includeArguments?: boolean } = {},
   visited: Set<Rule.Node> = new Set(),
 ): void => {
   if (visited.has(node)) {
@@ -46,13 +48,17 @@ export const descend = (
   visit(node);
   visited.add(node);
 
+  const { includeArguments = false } = options;
+
   (context.sourceCode.visitorKeys[node.type] || [])
     // Many times simpler to just ignore arguments (to CallExpressions and NewExpressions).
     // Too complicated to follow them, and often we can't at all (imported functions).
     // Assuming they are used in a particular way introduces false positives, and sometimes libraries _intend_ for such uses.
     // Ignoring introduces some false negatives for uncommon patterns, but that's much preferred.
     // Also ignore type-only keys: they hold no runtime references.
-    .filter((key) => key !== "arguments" && !isTypeOnlyKey(key))
+    .filter(
+      (key) => (includeArguments || key !== "arguments") && !isTypeOnlyKey(key),
+    )
     .map((key) => (node as unknown as Record<string, unknown>)[key])
     // Some `visitorKeys` are optional, e.g. `IfStatement.alternate`.
     .filter(Boolean)
@@ -60,7 +66,9 @@ export const descend = (
     .flatMap((child) => (Array.isArray(child) ? child : [child]))
     // Can rarely be `null`, e.g. `ArrayPattern.elements[1]` when an element is skipped - `const [a, , b] = arr`
     .filter(Boolean)
-    .forEach((child) => descend(context, child as Rule.Node, visit, visited));
+    .forEach((child) =>
+      descend(context, child as Rule.Node, visit, options, visited),
+    );
 };
 
 export const getUpstreamRefs = (
@@ -79,51 +87,46 @@ export const findDownstreamNodes = (
   context: Rule.RuleContext,
   topNode: Rule.Node,
   type: string,
+  options: { includeArguments?: boolean } = {},
 ): Rule.Node[] => {
   const nodes: Rule.Node[] = [];
-  descend(context, topNode, (node) => {
-    if (node.type === type) {
-      nodes.push(node);
-    }
-  });
+  descend(
+    context,
+    topNode,
+    (node) => {
+      if (node.type === type) {
+        nodes.push(node);
+      }
+    },
+    options,
+  );
   return nodes;
 };
 
 export const getDownstreamRefs = (
   context: Rule.RuleContext,
   node: Rule.Node,
+  options: { includeArguments?: boolean } = {},
 ): Scope.Reference[] =>
-  findDownstreamNodes(context, node, "Identifier")
+  findDownstreamNodes(context, node, "Identifier", options)
     .map((identifier) => getRef(context, identifier))
     .filter(Boolean) as Scope.Reference[];
 
+// Finds the call expression that invokes the reference, if any.
+// Walks up through member accesses (`fn`, `obj.fn`, `obj.a.fn`) and transparent
+// TypeScript wrappers. Returns `undefined` when the reference is not the
+// eventual callee, e.g. when it is an argument.
 export const getCallExpr = (
   ref: Scope.Reference,
-  current: Rule.Node = (ref.identifier as Rule.Node).parent,
-): Rule.Node | undefined => {
-  // TypeScript wrappers around the callee are transparent. `ChainExpression`
-  // also wraps a call or member access, but we always visit the inner node first.
-  if (isWrapper(current)) {
-    return getCallExpr(ref, current.parent);
+): (Rule.Node & { type: "CallExpression" }) | undefined => {
+  let node: Rule.Node = ref.identifier as Rule.Node;
+  while (node.parent.type === "MemberExpression" || isWrapper(node.parent)) {
+    node = node.parent;
   }
 
-  if (current.type === "CallExpression") {
-    // We've reached the top - confirm that the ref is the (eventual) callee, as opposed to an argument.
-    let node: Rule.Node = ref.identifier as Rule.Node;
-    while (node.parent.type === "MemberExpression" || isWrapper(node.parent)) {
-      node = node.parent;
-    }
-
-    if (current.callee === node) {
-      return current;
-    }
-  }
-
-  if (current.type === "MemberExpression") {
-    return getCallExpr(ref, current.parent);
-  }
-
-  return undefined;
+  return node.parent.type === "CallExpression" && node.parent.callee === node
+    ? node.parent
+    : undefined;
 };
 
 export const getArgsUpstreamRefs = (
@@ -131,11 +134,9 @@ export const getArgsUpstreamRefs = (
   ref: Scope.Reference,
 ): Scope.Reference[] =>
   getUpstreamRefs(context, ref)
-    .map((ref) => getCallExpr(ref))
-    .filter(Boolean)
-    .flatMap((callExpr) => {
-      if (!callExpr || callExpr.type !== "CallExpression") return [];
-      return callExpr.arguments as Rule.Node[];
+    .flatMap((upRef) => {
+      const callExpr = getCallExpr(upRef);
+      return callExpr ? (callExpr.arguments as Rule.Node[]) : [];
     })
     .flatMap((arg) => getDownstreamRefs(context, arg))
     .flatMap((ref) => getUpstreamRefs(context, ref));

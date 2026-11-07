@@ -54,18 +54,26 @@ const rule: Rule.RuleModule = {
             // Mid-stream nodes are effectively nothing, and so would pass those.
             // TODO: Is there a positive way to identify "data" nodes instead of process of elimination?
             .filter((ref) => getUpstreamRefs(context, ref).length === 1)
-            .filter(
-              (ref) =>
-                // TODO: Ideally would use isState and isRef, not the hooks.
-                // But because it goes to leaves. Must be some other way?
-                !isUseState(context, ref.identifier as Rule.Node) &&
-                !isUseContext(context, ref.identifier as Rule.Node) &&
+            .filter((ref) => {
+              // The ref may be the hook itself, e.g. `useState` from
+              // `const [value] = useState()`. Resolve its call first.
+              const hookCall = getCallExpr(ref);
+              const isHook = (
+                check: (context: Rule.RuleContext, node: Rule.Node) => boolean,
+              ) =>
+                Boolean(
+                  hookCall && check(context, hookCall.callee as Rule.Node),
+                );
+              return (
+                !isHook(isUseState) &&
+                !isHook(isUseContext) &&
                 !isContextObject(context, ref) &&
                 !isProp(context, ref) &&
-                !isUseRef(context, ref.identifier as Rule.Node) &&
+                !isHook(isUseRef) &&
                 !isRefCurrent(ref) &&
-                !isConstant(ref),
-            );
+                !isConstant(ref)
+              );
+            });
           if (dataArgs.length === 0) return;
 
           const containingNode = findEnclosingReactNode(context, node);

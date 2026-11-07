@@ -43,11 +43,7 @@ const rule: Rule.RuleModule = {
           const stateName = getStateName(context, ref);
           if (!stateName) return;
           let argumentText = "undefined";
-          if (
-            callExpr &&
-            callExpr.type === "CallExpression" &&
-            callExpr.arguments[0]
-          ) {
+          if (callExpr?.arguments[0]) {
             argumentText = context.sourceCode.getText(
               callExpr.arguments[0] as Rule.Node,
             );

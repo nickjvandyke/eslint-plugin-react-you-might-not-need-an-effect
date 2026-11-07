@@ -221,31 +221,6 @@ const isReactHook = (
   node = unwrapExpression(node);
 
   if (node.type === "Identifier") {
-    const wrapper = outermostWrapper(node);
-    const parent = wrapper.parent;
-
-    // A non-computed property name is not a reference on its own.
-    // e.g. `useState` in `React.useState`
-    if (
-      parent.type === "MemberExpression" &&
-      parent.property === wrapper &&
-      !parent.computed
-    ) {
-      return false;
-    }
-
-    // Support passing `ref.identifier` directly for convenience.
-    // e.g. `React` from `React.useState`, including `React!.useState`
-    if (
-      parent.type === "MemberExpression" &&
-      parent.object === wrapper &&
-      !parent.computed &&
-      parent.property.type === "Identifier" &&
-      parent.property.name === hookName
-    ) {
-      return isReactNamespace(context, node);
-    }
-
     // Fast path, also covers globals, UMD builds, and auto-imported hooks.
     if (node.name === hookName) return true;
 
@@ -379,42 +354,53 @@ const getPatternName = (element: unknown): string | undefined => {
   return undefined;
 };
 
+// Runs `check` on the unwrapped initializer of each variable that defines the
+// reference. Returns true when any definition matches.
+const someVariableInit = (
+  ref: Scope.Reference,
+  check: (
+    init: Rule.Node,
+    declarator: Rule.Node & { type: "VariableDeclarator" },
+  ) => boolean,
+): boolean =>
+  (ref.resolved?.defs ?? []).some((def) => {
+    const declarator = def.node;
+    if (declarator.type !== "VariableDeclarator" || !declarator.init) {
+      return false;
+    }
+    return check(unwrapExpression(declarator.init), declarator);
+  });
+
+// Whether the reference is an element of a `useState` tuple.
+// Index 0 is the state value, index 1 is the setter.
+const isUseStateTupleElement = (
+  context: Rule.RuleContext,
+  ref: Scope.Reference,
+  index: 0 | 1,
+): boolean =>
+  someVariableInit(ref, (init, declarator) => {
+    if (
+      init.type !== "CallExpression" ||
+      !isUseState(context, init.callee as Rule.Node) ||
+      declarator.id.type !== "ArrayPattern" ||
+      declarator.id.elements.length > 2
+    ) {
+      return false;
+    }
+    return (
+      getPatternName(declarator.id.elements[index]) === ref.identifier.name
+    );
+  });
+
 export const isState = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
-): boolean =>
-  ref.resolved?.defs.some((def) => {
-    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
-      return false;
-    }
-    const init = unwrapExpression(def.node.init);
-    return (
-      init.type === "CallExpression" &&
-      isUseState(context, init.callee as Rule.Node) &&
-      def.node.id.type === "ArrayPattern" &&
-      (def.node.id.elements.length === 1 ||
-        def.node.id.elements.length === 2) &&
-      getPatternName(def.node.id.elements[0]) === ref.identifier.name
-    );
-  }) ?? false;
+): boolean => isUseStateTupleElement(context, ref, 0);
 
 export const isStateSetter = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
-): boolean =>
-  ref.resolved?.defs.some((def) => {
-    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
-      return false;
-    }
-    const init = unwrapExpression(def.node.init);
-    return (
-      init.type === "CallExpression" &&
-      isUseState(context, init.callee as Rule.Node) &&
-      def.node.id.type === "ArrayPattern" &&
-      def.node.id.elements.length === 2 &&
-      getPatternName(def.node.id.elements[1]) === ref.identifier.name
-    );
-  }) ?? false;
+): boolean => isUseStateTupleElement(context, ref, 1);
 
 // Returns false for props of HOCs (e.g. `withRouter`) because they usually have side effects.
 // Also returns true for `useContext` values, because they are owned by an ancestor
@@ -423,17 +409,13 @@ export const isProp = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean =>
-  ref.resolved?.defs.some((def) => {
-    if (def.node.type === "VariableDeclarator" && def.node.init) {
-      const init = unwrapExpression(def.node.init);
-      if (
-        init.type === "CallExpression" &&
-        isUseContext(context, init.callee as Rule.Node)
-      ) {
-        return true;
-      }
-    }
-
+  someVariableInit(
+    ref,
+    (init) =>
+      init.type === "CallExpression" &&
+      isUseContext(context, init.callee as Rule.Node),
+  ) ||
+  (ref.resolved?.defs ?? []).some((def) => {
     const isFunctionExpressionOrArrow =
       def.node.type === "ArrowFunctionExpression" ||
       def.node.type === "FunctionExpression";
@@ -450,36 +432,28 @@ export const isProp = (
         !isFunctionalHOC(context, declaringNode)) ||
         isCustomHook(declaringNode))
     );
-  }) ?? false;
+  });
 
 export const isConstant = (ref: Scope.Reference): boolean =>
-  (ref.resolved?.defs ?? []).some((def) => {
-    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
-      return false;
-    }
-    const init = unwrapExpression(def.node.init);
-    return (
+  someVariableInit(
+    ref,
+    (init) =>
       init.type === "Literal" ||
       init.type === "TemplateLiteral" ||
       init.type === "ArrayExpression" ||
-      init.type === "ObjectExpression"
-    );
-  });
+      init.type === "ObjectExpression",
+  );
 
 export const isRef = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean =>
-  ref.resolved?.defs.some((def) => {
-    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
-      return false;
-    }
-    const init = unwrapExpression(def.node.init);
-    return (
+  someVariableInit(
+    ref,
+    (init) =>
       init.type === "CallExpression" &&
-      isUseRef(context, init.callee as Rule.Node)
-    );
-  }) ?? false;
+      isUseRef(context, init.callee as Rule.Node),
+  );
 
 // Whether the reference's `current` property is being accessed.
 // Heuristic for whether the reference is a React ref object.

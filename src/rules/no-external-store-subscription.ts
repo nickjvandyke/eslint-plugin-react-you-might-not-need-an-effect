@@ -3,7 +3,6 @@ import {
   getUpstreamRefs,
   getCallExpr,
   getDownstreamRefs,
-  findDownstreamNodes,
   isSynchronous,
 } from "../util/ast.ts";
 import { getStateName, isStateCall, getEffect } from "../util/react.ts";
@@ -33,19 +32,10 @@ const rule: Rule.RuleModule = {
 
       const cleanupArg = effect.cleanup.argument as Rule.Node | undefined;
       if (!cleanupArg) return;
-      const cleanupRefs = getDownstreamRefs(context, cleanupArg);
-
-      // Manual descend because `descend` skips arguments.
-      // TODO: Refactor it to be more flexible
-      findDownstreamNodes(context, cleanupArg, "CallExpression").forEach(
-        (callExpr) => {
-          if (callExpr.type !== "CallExpression") return;
-          for (const arg of callExpr.arguments) {
-            if (!arg) continue;
-            cleanupRefs.push(...getDownstreamRefs(context, arg as Rule.Node));
-          }
-        },
-      );
+      // Include call arguments so setters passed to cleanup helpers are found.
+      const cleanupRefs = getDownstreamRefs(context, cleanupArg, {
+        includeArguments: true,
+      });
 
       // Trace both the body setter and cleanup refs through alias chains.
       // If they share any upstream variable, the cleanup references the same setter.
