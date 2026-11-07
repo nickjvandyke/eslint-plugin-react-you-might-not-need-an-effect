@@ -1,5 +1,5 @@
 import type { Rule } from "eslint";
-import { getDownstreamRefs, getRef } from "./ast.ts";
+import { getDownstreamRefs, getRef, isFunctionExpression } from "./ast.ts";
 import { isUseEffect } from "./hooks.ts";
 import { unwrapExpression } from "./typescript.ts";
 
@@ -11,10 +11,7 @@ const getEffectFn = (
   const effectFnArg = node.arguments[0] as Rule.Node | undefined;
   if (!effectFnArg) return undefined;
   const effectFn = unwrapExpression(effectFnArg);
-  if (
-    effectFn.type === "ArrowFunctionExpression" ||
-    effectFn.type === "FunctionExpression"
-  ) {
+  if (isFunctionExpression(effectFn)) {
     return effectFn;
   } else if (effectFn.type === "Identifier") {
     const ref = getRef(context, effectFn);
@@ -37,18 +34,13 @@ const getEffectDeps = (node: Rule.Node): Rule.Node | undefined => {
 };
 
 const getEffectCleanup = (
-  context: Rule.RuleContext,
-  node: Rule.Node,
+  effectFn: Rule.Node,
 ): (Rule.Node & { type: "ReturnStatement" }) | undefined => {
-  const effectFn = getEffectFn(context, node);
-  if (!effectFn) return undefined;
   if (
-    (effectFn.type !== "ArrowFunctionExpression" &&
-      effectFn.type !== "FunctionExpression") ||
+    !isFunctionExpression(effectFn) ||
     effectFn.body.type !== "BlockStatement"
-  ) {
+  )
     return undefined;
-  }
 
   return (
     effectFn.body.body
@@ -76,6 +68,6 @@ export const getEffect = (context: Rule.RuleContext, node: Rule.Node) => {
     // Treat that as empty so mount-only rules still apply.
     // A dependency variable stays non-empty, so it is not treated as mount.
     depsRefs: deps ? getDownstreamRefs(context, deps) : [],
-    cleanup: getEffectCleanup(context, node),
+    cleanup: getEffectCleanup(fn),
   };
 };

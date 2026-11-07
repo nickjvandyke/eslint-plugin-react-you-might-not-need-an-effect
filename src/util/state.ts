@@ -25,7 +25,7 @@ const isUseStateTupleElement = (
   someVariableInit(ref, (init, declarator) => {
     if (
       init.type !== "CallExpression" ||
-      !isUseState(context, init.callee as Rule.Node) ||
+      !isUseState(context, init) ||
       declarator.id.type !== "ArrayPattern" ||
       declarator.id.elements.length > 2
     ) {

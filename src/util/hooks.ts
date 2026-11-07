@@ -85,20 +85,22 @@ const isThirdPartyEffectHook = (
   context: Rule.RuleContext,
   node: Rule.Node,
 ): boolean => {
-  node = unwrapExpression(node);
-  if (node.type === "Identifier") {
-    const binding = getImportBinding(context, node);
+  if (node.type !== "CallExpression") return false;
+
+  const callee = unwrapExpression(node.callee as Rule.Node);
+  if (callee.type === "Identifier") {
+    const binding = getImportBinding(context, callee);
     if (!binding) return false;
 
     return EFFECT_HOOKS[binding.source]?.has(binding.imported) ?? false;
   }
 
-  if (node.type === "MemberExpression" && !node.computed) {
-    const property = node.property;
+  if (callee.type === "MemberExpression" && !callee.computed) {
+    const property = callee.property;
     if (property.type !== "Identifier") return false;
 
-    if (node.object.type === "Identifier") {
-      const binding = getImportBinding(context, node.object as Rule.Node);
+    if (callee.object.type === "Identifier") {
+      const binding = getImportBinding(context, callee.object as Rule.Node);
 
       if (binding?.imported === "namespace") {
         return EFFECT_HOOKS[binding.source]?.has(property.name) ?? false;
@@ -128,26 +130,30 @@ const isReactNamespace = (
 // - `React.useState`
 // - `import * as R from "react"` + `R.useState`
 // - `import R from "react"` + `R.useState`
+//
+// Takes the `CallExpression` node.
 const isReactHook = (
   context: Rule.RuleContext,
   node: Rule.Node,
   hookName: string,
 ): boolean => {
-  node = unwrapExpression(node);
+  if (node.type !== "CallExpression") return false;
 
-  if (node.type === "Identifier") {
+  const callee = unwrapExpression(node.callee as Rule.Node);
+
+  if (callee.type === "Identifier") {
     // Fast path, also covers globals, UMD builds, and auto-imported hooks.
-    if (node.name === hookName) return true;
+    if (callee.name === hookName) return true;
 
-    return getReactImport(context, node) === hookName;
+    return getReactImport(context, callee) === hookName;
   }
 
-  if (node.type === "MemberExpression") {
+  if (callee.type === "MemberExpression") {
     return (
-      !node.computed &&
-      node.property.type === "Identifier" &&
-      node.property.name === hookName &&
-      isReactNamespace(context, unwrapExpression(node.object as Rule.Node))
+      !callee.computed &&
+      callee.property.type === "Identifier" &&
+      callee.property.name === hookName &&
+      isReactNamespace(context, unwrapExpression(callee.object as Rule.Node))
     );
   }
 
@@ -178,6 +184,5 @@ export const isUseEffect = (
   context: Rule.RuleContext,
   node: Rule.Node,
 ): boolean =>
-  node.type === "CallExpression" &&
-  (isReactHook(context, node.callee as Rule.Node, "useEffect") ||
-    isThirdPartyEffectHook(context, node.callee as Rule.Node));
+  isReactHook(context, node, "useEffect") ||
+  isThirdPartyEffectHook(context, node);

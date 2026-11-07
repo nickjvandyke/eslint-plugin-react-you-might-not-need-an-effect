@@ -1,5 +1,5 @@
 import type { Rule } from "eslint";
-import { getRef } from "./ast.ts";
+import { getRef, isFunctionExpression } from "./ast.ts";
 import { getOutermostWrapper, unwrapExpression } from "./typescript.ts";
 
 export const isComponent = (node: Rule.Node): boolean => {
@@ -10,9 +10,8 @@ export const isComponent = (node: Rule.Node): boolean => {
   return (
     (node.type === "FunctionDeclaration" ||
       (node.type === "VariableDeclarator" &&
-        (init?.type === "ArrowFunctionExpression" ||
-          init?.type === "FunctionExpression" ||
-          init?.type === "CallExpression"))) &&
+        init !== undefined &&
+        (isFunctionExpression(init) || init.type === "CallExpression"))) &&
     node.id?.type === "Identifier" &&
     node.id.name[0].toUpperCase() === node.id.name[0]
   );
@@ -31,30 +30,29 @@ export const isHOC = (context: Rule.RuleContext, node: Rule.Node): boolean => {
       callee.type === "Identifier" &&
       !knownPureHocs.includes(callee.name) &&
       init.arguments.length > 0 &&
-      (init.arguments[0].type === "ArrowFunctionExpression" ||
-        init.arguments[0].type === "FunctionExpression")
+      isFunctionExpression(init.arguments[0] as Rule.Node)
     );
   };
 
   // e.g. `export default withRouter(MyComponent);`
   const isWrappedSeparately = (n: Rule.Node): boolean =>
-    getRef(context, (n as Rule.Node & { id: Rule.Node }).id)
-      ?.resolved?.references.filter((ref) => {
-        const wrapper = getOutermostWrapper(ref.identifier as Rule.Node);
-        const parent = wrapper.parent;
-        return (
-          parent?.type === "CallExpression" &&
-          parent.arguments.some((arg) => arg === wrapper)
-        );
-      })
-      .map((ref) => getOutermostWrapper(ref.identifier as Rule.Node).parent)
-      .some((wrapper) => {
-        if (wrapper.type !== "CallExpression") return false;
-        const callee = unwrapExpression(wrapper.callee as Rule.Node);
-        return (
-          callee.type === "Identifier" && !knownPureHocs.includes(callee.name)
-        );
-      }) ?? false;
+    getRef(
+      context,
+      (n as Rule.Node & { id: Rule.Node }).id,
+    )?.resolved?.references.some((ref) => {
+      const wrapper = getOutermostWrapper(ref.identifier as Rule.Node);
+      const call = wrapper.parent;
+      if (
+        call?.type !== "CallExpression" ||
+        !call.arguments.some((arg) => arg === wrapper)
+      ) {
+        return false;
+      }
+      const callee = unwrapExpression(call.callee as Rule.Node);
+      return (
+        callee.type === "Identifier" && !knownPureHocs.includes(callee.name)
+      );
+    }) ?? false;
 
   return (
     isComponent(node) && (isWrappedInline(node) || isWrappedSeparately(node))
@@ -69,8 +67,8 @@ export const isCustomHook = (node: Rule.Node): boolean => {
   if (
     node.type !== "FunctionDeclaration" &&
     (node.type !== "VariableDeclarator" ||
-      (init?.type !== "ArrowFunctionExpression" &&
-        init?.type !== "FunctionExpression"))
+      init === undefined ||
+      !isFunctionExpression(init))
   ) {
     return false;
   }

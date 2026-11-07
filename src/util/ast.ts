@@ -1,6 +1,25 @@
 import type { Scope, Rule } from "eslint";
 import { isTypeOnlyKey, isWrapper, unwrapExpression } from "./typescript.ts";
 
+export const isFunction = (
+  node: Rule.Node,
+): node is Rule.Node & {
+  type:
+    | "FunctionDeclaration"
+    | "FunctionExpression"
+    | "ArrowFunctionExpression";
+} =>
+  node.type === "FunctionDeclaration" ||
+  node.type === "FunctionExpression" ||
+  node.type === "ArrowFunctionExpression";
+
+export const isFunctionExpression = (
+  node: Rule.Node,
+): node is Rule.Node & {
+  type: "FunctionExpression" | "ArrowFunctionExpression";
+} =>
+  node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression";
+
 export const ascend = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -184,9 +203,7 @@ export const isSynchronous = (node: Rule.Node, within: Rule.Node): boolean => {
     node.type === "AwaitExpression" ||
     (node.type === "UnaryExpression" && node.operator === "void") ||
     // Inside a named or anonymous function that may be called later, either as a callback or by the developer.
-    node.type === "FunctionDeclaration" ||
-    node.type === "FunctionExpression" ||
-    node.type === "ArrowFunctionExpression"
+    isFunction(node)
   ) {
     return false;
   } else {
@@ -203,11 +220,7 @@ export const getSynchronousCallChain = (
   ): Rule.Node | undefined => {
     if (!node) {
       return undefined;
-    } else if (
-      node.type === "FunctionDeclaration" ||
-      node.type === "FunctionExpression" ||
-      node.type === "ArrowFunctionExpression"
-    ) {
+    } else if (isFunction(node)) {
       return node;
     } else {
       return findEnclosingFunction(node.parent);

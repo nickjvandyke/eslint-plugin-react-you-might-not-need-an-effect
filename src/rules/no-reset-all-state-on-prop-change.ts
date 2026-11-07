@@ -160,11 +160,7 @@ const countUseStates = (
   // function body that holds the hooks.
   return getDownstreamNodes(context, componentNode, "CallExpression", {
     includeArguments: true,
-  }).filter(
-    (node) =>
-      node.type === "CallExpression" &&
-      isUseState(context, node.callee as Rule.Node),
-  ).length;
+  }).filter((node) => isUseState(context, node)).length;
 };
 
 export default rule;

@@ -9,9 +9,7 @@ export const isRef = (
 ): boolean =>
   someVariableInit(
     ref,
-    (init) =>
-      init.type === "CallExpression" &&
-      isUseRef(context, init.callee as Rule.Node),
+    (init) => init.type === "CallExpression" && isUseRef(context, init),
   );
 
 // Whether the reference's `current` property is being accessed.

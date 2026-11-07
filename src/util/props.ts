@@ -1,5 +1,9 @@
 import type { Scope, Rule } from "eslint";
-import { getSynchronousCallChain, someVariableInit } from "./ast.ts";
+import {
+  getSynchronousCallChain,
+  isFunctionExpression,
+  someVariableInit,
+} from "./ast.ts";
 import { isComponent, isCustomHook, isHOC } from "./components.ts";
 import { isUseContext } from "./hooks.ts";
 import { getOutermostWrapper } from "./typescript.ts";
@@ -13,16 +17,11 @@ export const isProp = (
 ): boolean =>
   someVariableInit(
     ref,
-    (init) =>
-      init.type === "CallExpression" &&
-      isUseContext(context, init.callee as Rule.Node),
+    (init) => init.type === "CallExpression" && isUseContext(context, init),
   ) ||
   (ref.resolved?.defs ?? []).some((def) => {
-    const isFunctionExpressionOrArrow =
-      def.node.type === "ArrowFunctionExpression" ||
-      def.node.type === "FunctionExpression";
     let declaringNode: Rule.Node = def.node;
-    if (isFunctionExpressionOrArrow) {
+    if (isFunctionExpression(declaringNode)) {
       declaringNode = getOutermostWrapper(declaringNode).parent;
       if (declaringNode.type === "CallExpression") {
         declaringNode = getOutermostWrapper(declaringNode).parent;

@@ -56,10 +56,7 @@ const rule: Rule.RuleModule = {
               const hookCall = getCallExpr(ref);
               const isHook = (
                 check: (context: Rule.RuleContext, node: Rule.Node) => boolean,
-              ) =>
-                Boolean(
-                  hookCall && check(context, hookCall.callee as Rule.Node),
-                );
+              ) => Boolean(hookCall && check(context, hookCall));
               return (
                 !isHook(isUseState) &&
                 !isHook(isUseContext) &&
@@ -114,7 +111,7 @@ const isContextObject = (
   return (
     parent.type === "CallExpression" &&
     (parent.arguments as Rule.Node[]).includes(identifier) &&
-    isUseContext(context, parent.callee as Rule.Node)
+    isUseContext(context, parent)
   );
 };
 
