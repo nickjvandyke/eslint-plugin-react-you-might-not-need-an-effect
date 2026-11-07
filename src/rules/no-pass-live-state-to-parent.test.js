@@ -451,6 +451,42 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Pass live internal state from a function-expression component",
+        code: js`
+        const Child = function ({ onFetched }) {
+          const [data, setData] = useState();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"data"', name: '"Child"' },
+          },
+        ],
+      },
+      {
+        name: "Pass live internal state from a memoized function-expression component",
+        code: js`
+        const Child = memo(function ({ onFetched }) {
+          const [data, setData] = useState();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        })
+      `,
+        errors: [
+          {
+            messageId: "avoidPassingLiveStateToParentInComponent",
+            data: { state: '"data"', name: '"Child"' },
+          },
+        ],
+      },
+      {
         name: "Pass live internal state via context callback",
         code: js`
         const Child = () => {

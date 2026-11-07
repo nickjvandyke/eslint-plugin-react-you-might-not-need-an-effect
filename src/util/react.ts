@@ -10,6 +10,7 @@ export const isFunctionalComponent = (node: Rule.Node): boolean =>
   (node.type === "FunctionDeclaration" ||
     (node.type === "VariableDeclarator" &&
       (node.init?.type === "ArrowFunctionExpression" ||
+        node.init?.type === "FunctionExpression" ||
         node.init?.type === "CallExpression"))) &&
   node.id?.type === "Identifier" &&
   node.id.name[0].toUpperCase() === node.id.name[0];
@@ -391,12 +392,14 @@ export const isProp = (
       return true;
     }
 
-    const declaringNode: Rule.Node =
-      def.node.type === "ArrowFunctionExpression"
-        ? def.node.parent.type === "CallExpression"
-          ? def.node.parent.parent
-          : def.node.parent
-        : def.node;
+    const isFunctionExpressionOrArrow =
+      def.node.type === "ArrowFunctionExpression" ||
+      def.node.type === "FunctionExpression";
+    const declaringNode: Rule.Node = isFunctionExpressionOrArrow
+      ? def.node.parent.type === "CallExpression"
+        ? def.node.parent.parent
+        : def.node.parent
+      : def.node;
     return (
       def.type === "Parameter" &&
       ((isFunctionalComponent(declaringNode) &&
