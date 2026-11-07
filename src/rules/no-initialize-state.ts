@@ -1,5 +1,5 @@
 import type { Rule } from "eslint";
-import { getCallExpr, isSynchronous } from "../util/ast.ts";
+import { getCallExpr, getUpstreamRefs, isSynchronous } from "../util/ast.ts";
 import {
   getStateName,
   isStateSetter,
@@ -26,8 +26,12 @@ const rule: Rule.RuleModule = {
       if (!effect) return;
 
       const isEffectRunOnlyOnMount =
-        effect.depsRefs.filter((ref) => !isStateSetter(context, ref)).length ===
-        0;
+        effect.depsRefs.filter(
+          (ref) =>
+            !getUpstreamRefs(context, ref).some((upRef) =>
+              isStateSetter(context, upRef),
+            ),
+        ).length === 0;
       if (!isEffectRunOnlyOnMount) return;
 
       effect.fnRefs

@@ -290,6 +290,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
+      {
+        name: "Only aliased setter in deps",
+        code: js`
+        function MyComponent() {
+          const [state, setState] = useState();
+          const setAlias = setState;
+
+          useEffect(() => {
+            setState("Hello");
+          }, [setAlias]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "state", arguments: '"Hello"' },
+          },
+        ],
+      },
     ],
   },
 );
