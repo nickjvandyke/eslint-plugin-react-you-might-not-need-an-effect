@@ -1,10 +1,5 @@
 import type { Scope, Rule } from "eslint";
-import {
-  getDownstreamRefs,
-  getSynchronousCallChain,
-  getUpstreamRefs,
-  getRef,
-} from "./ast.ts";
+import { getDownstreamRefs, getSynchronousCallChain, getRef } from "./ast.ts";
 import { outermostWrapper, unwrapExpression } from "./typescript.ts";
 
 export const isFunctionalComponent = (node: Rule.Node): boolean => {
@@ -535,18 +530,24 @@ export const getStateName = (
   );
 };
 
+// Callers pass a ref that is already a state setter call (filtered by
+// `isStateCall`), so the call chain contains the written setter.
 export const getUseStateDecl = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): (Rule.Node & { type: "VariableDeclarator" }) | undefined => {
-  const node = getUpstreamRefs(context, ref).find((upRef) =>
-    isUseState(context, upRef.identifier as Rule.Node),
-  )?.identifier as Rule.Node | undefined;
-  let result = node;
-  while (result && result.type !== "VariableDeclarator") {
-    result = result.parent;
-  }
-  return result as (Rule.Node & { type: "VariableDeclarator" }) | undefined;
+  // Use the setter's resolved definition, not its usage node.
+  // A wrapper setter may read other state before it calls the real setter,
+  // so the wrapper name is not the written one.
+  const setterRef = getSynchronousCallChain(context, ref).find((chainRef) =>
+    isStateSetter(context, chainRef),
+  );
+  const setterDecl = setterRef?.resolved?.defs.find(
+    (def) => def.node.type === "VariableDeclarator",
+  );
+  return setterDecl?.node as
+    | (Rule.Node & { type: "VariableDeclarator" })
+    | undefined;
 };
 
 // Returns the component or custom hook that contains the `useEffect` node.

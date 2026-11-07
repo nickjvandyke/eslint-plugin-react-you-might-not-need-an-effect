@@ -756,6 +756,30 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Wrapper setter that reads another state first",
+        code: js`
+        function Form() {
+          const [firstName, setFirstName] = useState('Nick');
+          const [fullName, setFullName] = useState('');
+
+          function updateFullName() {
+            const name = firstName;
+            setFullName(name);
+          }
+
+          useEffect(() => {
+            updateFullName();
+          }, [firstName]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidDerivedState",
+            data: { state: "fullName" },
+          },
+        ],
+      },
+      {
         name: "Default value in the state destructuring",
         code: js`
         function Form({ count }) {
