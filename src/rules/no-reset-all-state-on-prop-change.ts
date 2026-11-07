@@ -1,4 +1,5 @@
 import type { Rule, Scope } from "eslint";
+import { unwrapExpression } from "../util/typescript.ts";
 import {
   getCallExpr,
   getDownstreamRefs,
@@ -88,18 +89,20 @@ const isSetStateToInitialValue = (
 ): boolean => {
   const callExpr = getCallExpr(setterRef);
   if (!callExpr || callExpr.type !== "CallExpression") return false;
-  const setStateToValue: Rule.Node | undefined = callExpr.arguments[0] as
+  const rawSetStateToValue = callExpr.arguments[0] as Rule.Node | undefined;
+  const setStateToValue = rawSetStateToValue
+    ? unwrapExpression(rawSetStateToValue)
+    : undefined;
+  const useStateDecl = getUseStateDecl(context, setterRef);
+  if (!useStateDecl || !useStateDecl.init) return false;
+  const useStateInit = unwrapExpression(useStateDecl.init);
+  if (useStateInit.type !== "CallExpression") return false;
+  const rawStateInitialValue = useStateInit.arguments[0] as
     | Rule.Node
     | undefined;
-  const useStateDecl = getUseStateDecl(context, setterRef);
-  if (
-    !useStateDecl ||
-    !useStateDecl.init ||
-    useStateDecl.init.type !== "CallExpression"
-  )
-    return false;
-  const stateInitialValue: Rule.Node | undefined = useStateDecl.init
-    .arguments[0] as Rule.Node | undefined;
+  const stateInitialValue = rawStateInitialValue
+    ? unwrapExpression(rawStateInitialValue)
+    : undefined;
 
   // `useState()` (with no args) defaults to `undefined`,
   // so ommitting the arg is equivalent to passing `undefined`.
@@ -142,11 +145,15 @@ const countUseStates = (
 
   if (
     componentNode.type === "VariableDeclarator" &&
-    componentNode.init?.type === "CallExpression"
+    componentNode.init &&
+    unwrapExpression(componentNode.init).type === "CallExpression"
   ) {
     // Because `descend` will ignore the arguments.
     // TODO: Maybe an indicator we should filter out arguments somewhere else?
-    componentNode = componentNode.init.arguments[0] as Rule.Node;
+    const init = unwrapExpression(componentNode.init) as Rule.Node & {
+      type: "CallExpression";
+    };
+    componentNode = init.arguments[0] as Rule.Node;
   }
 
   return getDownstreamRefs(context, componentNode).filter((ref) =>

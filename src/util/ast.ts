@@ -1,4 +1,5 @@
 import type { Scope, Rule } from "eslint";
+import { isTypeOnlyKey, isWrapper } from "./typescript.ts";
 
 export const ascend = (
   context: Rule.RuleContext,
@@ -50,7 +51,8 @@ export const descend = (
     // Too complicated to follow them, and often we can't at all (imported functions).
     // Assuming they are used in a particular way introduces false positives, and sometimes libraries _intend_ for such uses.
     // Ignoring introduces some false negatives for uncommon patterns, but that's much preferred.
-    .filter((key) => key !== "arguments")
+    // Also ignore type-only keys: they hold no runtime references.
+    .filter((key) => key !== "arguments" && !isTypeOnlyKey(key))
     .map((key) => (node as unknown as Record<string, unknown>)[key])
     // Some `visitorKeys` are optional, e.g. `IfStatement.alternate`.
     .filter(Boolean)
@@ -99,10 +101,16 @@ export const getCallExpr = (
   ref: Scope.Reference,
   current: Rule.Node = (ref.identifier as Rule.Node).parent,
 ): Rule.Node | undefined => {
+  // TypeScript wrappers around the callee are transparent. `ChainExpression`
+  // also wraps a call or member access, but we always visit the inner node first.
+  if (isWrapper(current)) {
+    return getCallExpr(ref, current.parent);
+  }
+
   if (current.type === "CallExpression") {
     // We've reached the top - confirm that the ref is the (eventual) callee, as opposed to an argument.
     let node: Rule.Node = ref.identifier as Rule.Node;
-    while (node.parent.type === "MemberExpression") {
+    while (node.parent.type === "MemberExpression" || isWrapper(node.parent)) {
       node = node.parent;
     }
 
@@ -204,6 +212,11 @@ export const getSynchronousCallChain = (
       // The ref is the object of a member access, e.g. `props.onChange`.
       // Follow only the object position so we ignore property positions.
       if (parent.type === "MemberExpression" && parent.object === node) {
+        node = parent;
+        continue;
+      }
+      // TypeScript wrappers are transparent, e.g. `const f = (props.onChange as Handler)`.
+      if (isWrapper(parent)) {
         node = parent;
         continue;
       }

@@ -5,15 +5,23 @@ import {
   getUpstreamRefs,
   getRef,
 } from "./ast.ts";
+import { outermostWrapper, unwrapExpression } from "./typescript.ts";
 
-export const isFunctionalComponent = (node: Rule.Node): boolean =>
-  (node.type === "FunctionDeclaration" ||
-    (node.type === "VariableDeclarator" &&
-      (node.init?.type === "ArrowFunctionExpression" ||
-        node.init?.type === "FunctionExpression" ||
-        node.init?.type === "CallExpression"))) &&
-  node.id?.type === "Identifier" &&
-  node.id.name[0].toUpperCase() === node.id.name[0];
+export const isFunctionalComponent = (node: Rule.Node): boolean => {
+  const init =
+    node.type === "VariableDeclarator" && node.init
+      ? unwrapExpression(node.init)
+      : undefined;
+  return (
+    (node.type === "FunctionDeclaration" ||
+      (node.type === "VariableDeclarator" &&
+        (init?.type === "ArrowFunctionExpression" ||
+          init?.type === "FunctionExpression" ||
+          init?.type === "CallExpression"))) &&
+    node.id?.type === "Identifier" &&
+    node.id.name[0].toUpperCase() === node.id.name[0]
+  );
+};
 
 export const isFunctionalHOC = (
   context: Rule.RuleContext,
@@ -22,32 +30,39 @@ export const isFunctionalHOC = (
   const knownPureHocs = ["memo", "forwardRef"];
 
   // e.g. `const MyComponent = withRouter(() => ...)`
-  const isWrappedInline = (n: Rule.Node): boolean =>
-    n.type === "VariableDeclarator" &&
-    n.init?.type === "CallExpression" &&
-    n.init.callee.type === "Identifier" &&
-    !knownPureHocs.includes(n.init.callee.name) &&
-    n.init.arguments.length > 0 &&
-    (n.init.arguments[0].type === "ArrowFunctionExpression" ||
-      n.init.arguments[0].type === "FunctionExpression");
+  const isWrappedInline = (n: Rule.Node): boolean => {
+    if (n.type !== "VariableDeclarator" || !n.init) return false;
+    const init = unwrapExpression(n.init);
+    if (init.type !== "CallExpression") return false;
+    const callee = unwrapExpression(init.callee as Rule.Node);
+    return (
+      callee.type === "Identifier" &&
+      !knownPureHocs.includes(callee.name) &&
+      init.arguments.length > 0 &&
+      (init.arguments[0].type === "ArrowFunctionExpression" ||
+        init.arguments[0].type === "FunctionExpression")
+    );
+  };
 
   // e.g. `export default withRouter(MyComponent);`
   const isWrappedSeparately = (n: Rule.Node): boolean =>
     getRef(context, (n as Rule.Node & { id: Rule.Node }).id)
       ?.resolved?.references.filter((ref) => {
-        const parent = (ref.identifier as Rule.Node).parent;
+        const wrapper = outermostWrapper(ref.identifier as Rule.Node);
+        const parent = wrapper.parent;
         return (
           parent?.type === "CallExpression" &&
-          parent.arguments.includes(ref.identifier)
+          parent.arguments.some((arg) => arg === wrapper)
         );
       })
-      .map((ref) => (ref.identifier as Rule.Node).parent)
-      .some(
-        (wrapper) =>
-          wrapper.type === "CallExpression" &&
-          wrapper.callee.type === "Identifier" &&
-          !knownPureHocs.includes(wrapper.callee.name),
-      ) ?? false;
+      .map((ref) => outermostWrapper(ref.identifier as Rule.Node).parent)
+      .some((wrapper) => {
+        if (wrapper.type !== "CallExpression") return false;
+        const callee = unwrapExpression(wrapper.callee as Rule.Node);
+        return (
+          callee.type === "Identifier" && !knownPureHocs.includes(callee.name)
+        );
+      }) ?? false;
 
   return (
     isFunctionalComponent(node) &&
@@ -56,12 +71,15 @@ export const isFunctionalHOC = (
 };
 
 export const isCustomHook = (node: Rule.Node): boolean => {
+  const init =
+    node.type === "VariableDeclarator" && node.init
+      ? unwrapExpression(node.init)
+      : undefined;
   if (
     node.type !== "FunctionDeclaration" &&
     (node.type !== "VariableDeclarator" ||
-      !node.init ||
-      (node.init.type !== "ArrowFunctionExpression" &&
-        node.init.type !== "FunctionExpression"))
+      (init?.type !== "ArrowFunctionExpression" &&
+        init?.type !== "FunctionExpression"))
   ) {
     return false;
   }
@@ -157,6 +175,7 @@ const isThirdPartyEffectHook = (
   context: Rule.RuleContext,
   node: Rule.Node,
 ): boolean => {
+  node = unwrapExpression(node);
   if (node.type === "Identifier") {
     const binding = getImportBinding(context, node);
     if (!binding) return false;
@@ -204,24 +223,27 @@ const isReactHook = (
   node: Rule.Node,
   hookName: string,
 ): boolean => {
+  node = unwrapExpression(node);
+
   if (node.type === "Identifier") {
-    const parent = node.parent;
+    const wrapper = outermostWrapper(node);
+    const parent = wrapper.parent;
 
     // A non-computed property name is not a reference on its own.
     // e.g. `useState` in `React.useState`
     if (
       parent.type === "MemberExpression" &&
-      parent.property === node &&
+      parent.property === wrapper &&
       !parent.computed
     ) {
       return false;
     }
 
     // Support passing `ref.identifier` directly for convenience.
-    // e.g. `React` from `React.useState`
+    // e.g. `React` from `React.useState`, including `React!.useState`
     if (
       parent.type === "MemberExpression" &&
-      parent.object === node &&
+      parent.object === wrapper &&
       !parent.computed &&
       parent.property.type === "Identifier" &&
       parent.property.name === hookName
@@ -240,7 +262,7 @@ const isReactHook = (
       !node.computed &&
       node.property.type === "Identifier" &&
       node.property.name === hookName &&
-      isReactNamespace(context, node.object as Rule.Node)
+      isReactNamespace(context, unwrapExpression(node.object as Rule.Node))
     );
   }
 
@@ -277,18 +299,21 @@ const getEffectFn = (
   node: Rule.Node,
 ): Rule.Node | undefined => {
   if (node.type !== "CallExpression") return undefined;
-  const effectFn = node.arguments[0];
+  const effectFnArg = node.arguments[0] as Rule.Node | undefined;
+  if (!effectFnArg) return undefined;
+  const effectFn = unwrapExpression(effectFnArg);
   if (
-    effectFn?.type === "ArrowFunctionExpression" ||
-    effectFn?.type === "FunctionExpression"
+    effectFn.type === "ArrowFunctionExpression" ||
+    effectFn.type === "FunctionExpression"
   ) {
-    return effectFn as Rule.Node;
-  } else if (effectFn?.type === "Identifier") {
-    const ref = getRef(context, effectFn as Rule.Node);
+    return effectFn;
+  } else if (effectFn.type === "Identifier") {
+    const ref = getRef(context, effectFn);
     const def = ref?.resolved?.defs[0];
     if (!def) return undefined;
+    const init = (def.node as Rule.Node & { init?: Rule.Node }).init;
     return (
-      (def.node as Rule.Node & { init?: Rule.Node }).init ??
+      (init && unwrapExpression(init)) ??
       (def.node as Rule.Node & { body?: Rule.Node }).body
     );
   }
@@ -298,7 +323,8 @@ const getEffectFn = (
 
 const getEffectDeps = (node: Rule.Node): Rule.Node | undefined => {
   if (node.type !== "CallExpression") return undefined;
-  return node.arguments[1] as Rule.Node | undefined;
+  const deps = node.arguments[1] as Rule.Node | undefined;
+  return deps && unwrapExpression(deps);
 };
 
 const getEffectCleanup = (
@@ -349,32 +375,40 @@ export const isState = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean =>
-  ref.resolved?.defs.some(
-    (def) =>
-      def.node.type === "VariableDeclarator" &&
-      def.node.init?.type === "CallExpression" &&
-      isUseState(context, def.node.init.callee as Rule.Node) &&
+  ref.resolved?.defs.some((def) => {
+    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
+      return false;
+    }
+    const init = unwrapExpression(def.node.init);
+    return (
+      init.type === "CallExpression" &&
+      isUseState(context, init.callee as Rule.Node) &&
       def.node.id.type === "ArrayPattern" &&
       (def.node.id.elements.length === 1 ||
         def.node.id.elements.length === 2) &&
       def.node.id.elements[0]?.type === "Identifier" &&
-      def.node.id.elements[0].name === ref.identifier.name,
-  ) ?? false;
+      def.node.id.elements[0].name === ref.identifier.name
+    );
+  }) ?? false;
 
 export const isStateSetter = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean =>
-  ref.resolved?.defs.some(
-    (def) =>
-      def.node.type === "VariableDeclarator" &&
-      def.node.init?.type === "CallExpression" &&
-      isUseState(context, def.node.init.callee as Rule.Node) &&
+  ref.resolved?.defs.some((def) => {
+    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
+      return false;
+    }
+    const init = unwrapExpression(def.node.init);
+    return (
+      init.type === "CallExpression" &&
+      isUseState(context, init.callee as Rule.Node) &&
       def.node.id.type === "ArrayPattern" &&
       def.node.id.elements.length === 2 &&
       def.node.id.elements[1]?.type === "Identifier" &&
-      def.node.id.elements[1].name === ref.identifier.name,
-  ) ?? false;
+      def.node.id.elements[1].name === ref.identifier.name
+    );
+  }) ?? false;
 
 // Returns false for props of HOCs (e.g. `withRouter`) because they usually have side effects.
 // Also returns true for `useContext` values, because they are owned by an ancestor
@@ -384,22 +418,26 @@ export const isProp = (
   ref: Scope.Reference,
 ): boolean =>
   ref.resolved?.defs.some((def) => {
-    if (
-      def.node.type === "VariableDeclarator" &&
-      def.node.init?.type === "CallExpression" &&
-      isUseContext(context, def.node.init.callee as Rule.Node)
-    ) {
-      return true;
+    if (def.node.type === "VariableDeclarator" && def.node.init) {
+      const init = unwrapExpression(def.node.init);
+      if (
+        init.type === "CallExpression" &&
+        isUseContext(context, init.callee as Rule.Node)
+      ) {
+        return true;
+      }
     }
 
     const isFunctionExpressionOrArrow =
       def.node.type === "ArrowFunctionExpression" ||
       def.node.type === "FunctionExpression";
-    const declaringNode: Rule.Node = isFunctionExpressionOrArrow
-      ? def.node.parent.type === "CallExpression"
-        ? def.node.parent.parent
-        : def.node.parent
-      : def.node;
+    let declaringNode: Rule.Node = def.node;
+    if (isFunctionExpressionOrArrow) {
+      declaringNode = outermostWrapper(declaringNode).parent;
+      if (declaringNode.type === "CallExpression") {
+        declaringNode = outermostWrapper(declaringNode).parent;
+      }
+    }
     return (
       def.type === "Parameter" &&
       ((isFunctionalComponent(declaringNode) &&
@@ -409,32 +447,40 @@ export const isProp = (
   }) ?? false;
 
 export const isConstant = (ref: Scope.Reference): boolean =>
-  (ref.resolved?.defs ?? []).some(
-    (def) =>
-      (def.node.type === "VariableDeclarator" &&
-        def.node.init?.type === "Literal") ||
-      def.node.init?.type === "TemplateLiteral" ||
-      def.node.init?.type === "ArrayExpression" ||
-      def.node.init?.type === "ObjectExpression",
-  );
+  (ref.resolved?.defs ?? []).some((def) => {
+    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
+      return false;
+    }
+    const init = unwrapExpression(def.node.init);
+    return (
+      init.type === "Literal" ||
+      init.type === "TemplateLiteral" ||
+      init.type === "ArrayExpression" ||
+      init.type === "ObjectExpression"
+    );
+  });
 
 export const isRef = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean =>
-  ref.resolved?.defs.some(
-    (def) =>
-      def.node.type === "VariableDeclarator" &&
-      def.node.init?.type === "CallExpression" &&
-      isUseRef(context, def.node.init.callee as Rule.Node),
-  ) ?? false;
+  ref.resolved?.defs.some((def) => {
+    if (def.node.type !== "VariableDeclarator" || !def.node.init) {
+      return false;
+    }
+    const init = unwrapExpression(def.node.init);
+    return (
+      init.type === "CallExpression" &&
+      isUseRef(context, init.callee as Rule.Node)
+    );
+  }) ?? false;
 
 // Whether the reference's `current` property is being accessed.
 // Heuristic for whether the reference is a React ref object.
 // Because we don't always have access to the `useRef` call itself.
 // For example when receiving a ref from props.
 export const isRefCurrent = (ref: Scope.Reference): boolean => {
-  const parent = (ref.identifier as Rule.Node).parent;
+  const parent = outermostWrapper(ref.identifier as Rule.Node).parent;
   return (
     parent.type === "MemberExpression" &&
     parent.property.type === "Identifier" &&
