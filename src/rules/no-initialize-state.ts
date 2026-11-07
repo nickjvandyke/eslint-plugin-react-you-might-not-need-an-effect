@@ -1,11 +1,11 @@
 import type { Rule } from "eslint";
 import { getCallExpr, getUpstreamRefs, isSynchronous } from "../util/ast.ts";
+import { getEffect } from "../util/effect.ts";
 import {
   getStateName,
   isStateSetter,
-  isStateCall,
-  getEffect,
-} from "../util/react.ts";
+  isStateSetterCall,
+} from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -36,7 +36,7 @@ const rule: Rule.RuleModule = {
 
       effect.fnRefs
         .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
-        .filter((ref) => isStateCall(context, ref))
+        .filter((ref) => isStateSetterCall(context, ref))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;

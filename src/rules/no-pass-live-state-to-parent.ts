@@ -5,13 +5,13 @@ import {
   isSynchronous,
 } from "../util/ast.ts";
 import {
-  getComponentName,
-  isPropCall,
-  isState,
+  findEnclosingComponentOrHook,
+  getComponentOrHookName,
   isCustomHook,
-  findEnclosingReactNode,
-  getEffect,
-} from "../util/react.ts";
+} from "../util/components.ts";
+import { getEffect } from "../util/effect.ts";
+import { isPropCall } from "../util/props.ts";
+import { isState } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -45,7 +45,7 @@ const rule: Rule.RuleModule = {
           );
           if (stateRefs.length === 0) return;
 
-          const containingNode = findEnclosingReactNode(context, node);
+          const containingNode = findEnclosingComponentOrHook(context, node);
           const isInCustomHook = containingNode && isCustomHook(containingNode);
 
           context.report({
@@ -59,7 +59,7 @@ const rule: Rule.RuleModule = {
                 .map((n) => `"${n}"`)
                 .join(" and "),
               name: (() => {
-                const n = getComponentName(containingNode);
+                const n = getComponentOrHookName(containingNode);
                 return n
                   ? `"${n}"`
                   : isInCustomHook

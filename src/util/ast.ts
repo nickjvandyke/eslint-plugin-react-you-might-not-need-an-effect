@@ -1,5 +1,5 @@
 import type { Scope, Rule } from "eslint";
-import { isTypeOnlyKey, isWrapper } from "./typescript.ts";
+import { isTypeOnlyKey, isWrapper, unwrapExpression } from "./typescript.ts";
 
 export const ascend = (
   context: Rule.RuleContext,
@@ -83,7 +83,7 @@ export const getUpstreamRefs = (
   return refs;
 };
 
-export const findDownstreamNodes = (
+export const getDownstreamNodes = (
   context: Rule.RuleContext,
   topNode: Rule.Node,
   type: string,
@@ -108,7 +108,7 @@ export const getDownstreamRefs = (
   node: Rule.Node,
   options: { includeArguments?: boolean } = {},
 ): Scope.Reference[] =>
-  findDownstreamNodes(context, node, "Identifier", options)
+  getDownstreamNodes(context, node, "Identifier", options)
     .map((identifier) => getRef(context, identifier))
     .filter(Boolean) as Scope.Reference[];
 
@@ -148,6 +148,33 @@ export const getRef = (
   context.sourceCode
     .getScope(identifier)
     ?.references.find((ref) => ref.identifier == identifier);
+
+// Runs `check` on the unwrapped initializer of each variable that defines the
+// reference. Returns true when any definition matches.
+export const someVariableInit = (
+  ref: Scope.Reference,
+  check: (
+    init: Rule.Node,
+    declarator: Rule.Node & { type: "VariableDeclarator" },
+  ) => boolean,
+): boolean =>
+  (ref.resolved?.defs ?? []).some((def) => {
+    const declarator = def.node;
+    if (declarator.type !== "VariableDeclarator" || !declarator.init) {
+      return false;
+    }
+    return check(unwrapExpression(declarator.init), declarator);
+  });
+
+export const isConstant = (ref: Scope.Reference): boolean =>
+  someVariableInit(
+    ref,
+    (init) =>
+      init.type === "Literal" ||
+      init.type === "TemplateLiteral" ||
+      init.type === "ArrayExpression" ||
+      init.type === "ObjectExpression",
+  );
 
 export const isSynchronous = (node: Rule.Node, within: Rule.Node): boolean => {
   if (node === within) {

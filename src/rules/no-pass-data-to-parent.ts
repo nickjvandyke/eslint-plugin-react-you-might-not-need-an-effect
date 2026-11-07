@@ -3,22 +3,18 @@ import {
   getArgsUpstreamRefs,
   getCallExpr,
   getUpstreamRefs,
+  isConstant,
   isSynchronous,
 } from "../util/ast.ts";
 import {
-  getComponentName,
-  isPropCall,
-  isConstant,
-  isRefCurrent,
-  isUseState,
-  isUseRef,
-  isUseContext,
-  isProp,
-  isRefCall,
+  findEnclosingComponentOrHook,
+  getComponentOrHookName,
   isCustomHook,
-  findEnclosingReactNode,
-  getEffect,
-} from "../util/react.ts";
+} from "../util/components.ts";
+import { getEffect } from "../util/effect.ts";
+import { isUseContext, isUseRef, isUseState } from "../util/hooks.ts";
+import { isProp, isPropCall } from "../util/props.ts";
+import { isRefCall, isRefCurrent } from "../util/refs.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -76,7 +72,7 @@ const rule: Rule.RuleModule = {
             });
           if (dataArgs.length === 0) return;
 
-          const containingNode = findEnclosingReactNode(context, node);
+          const containingNode = findEnclosingComponentOrHook(context, node);
           const isInCustomHook = containingNode && isCustomHook(containingNode);
 
           context.report({
@@ -92,7 +88,7 @@ const rule: Rule.RuleModule = {
                 .map((n) => `"${n}"`)
                 .join(" and "),
               name: (() => {
-                const n = getComponentName(containingNode);
+                const n = getComponentOrHookName(containingNode);
                 return n
                   ? `"${n}"`
                   : isInCustomHook

@@ -40,7 +40,7 @@ export const unwrapExpression = (node: { type: string }): Rule.Node => {
 
 // Returns the outermost wrapper around `node`.
 // The wrapper's `.parent` is the node that actually contains the expression.
-export const outermostWrapper = (node: Rule.Node): Rule.Node => {
+export const getOutermostWrapper = (node: Rule.Node): Rule.Node => {
   let current = node;
   while (current.parent && isWrapper(current.parent)) {
     current = current.parent;

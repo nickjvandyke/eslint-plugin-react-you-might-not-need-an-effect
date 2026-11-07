@@ -1,21 +1,23 @@
 import type { Rule, Scope } from "eslint";
 import { unwrapExpression } from "../util/typescript.ts";
 import {
-  findDownstreamNodes,
   getCallExpr,
+  getDownstreamNodes,
   getSynchronousCallChain,
   getUpstreamRefs,
 } from "../util/ast.ts";
 import {
-  isStateCall,
-  isStateSetter,
-  isUseState,
-  isProp,
-  getUseStateDecl,
+  findEnclosingComponentOrHook,
   isCustomHook,
-  findEnclosingReactNode,
-  getEffect,
-} from "../util/react.ts";
+} from "../util/components.ts";
+import { getEffect } from "../util/effect.ts";
+import { isUseState } from "../util/hooks.ts";
+import { isProp } from "../util/props.ts";
+import {
+  getUseStateDeclarator,
+  isStateSetter,
+  isStateSetterCall,
+} from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -36,7 +38,7 @@ const rule: Rule.RuleModule = {
       const effect = getEffect(context, node);
       if (!effect) return;
       // Skip custom hooks because they can't receive `key` like components can.
-      const containingNode = findEnclosingReactNode(context, node);
+      const containingNode = findEnclosingComponentOrHook(context, node);
       if (containingNode && isCustomHook(containingNode)) return;
 
       const propUsedToResetAllState = findPropUsedToResetAllState(
@@ -64,7 +66,7 @@ const findPropUsedToResetAllState = (
   useEffectNode: Rule.Node,
 ): Scope.Reference | undefined => {
   const stateSetterRefs = effectFnRefs
-    .filter((ref) => isStateCall(context, ref))
+    .filter((ref) => isStateSetterCall(context, ref))
     // The same setter can be called more than once in one effect.
     // Count each state setter once.
     .filter(
@@ -76,7 +78,10 @@ const findPropUsedToResetAllState = (
     stateSetterRefs.length > 0 &&
     stateSetterRefs.every((ref) => isSetStateToInitialValue(context, ref)) &&
     stateSetterRefs.length ===
-      countUseStates(context, findEnclosingReactNode(context, useEffectNode));
+      countUseStates(
+        context,
+        findEnclosingComponentOrHook(context, useEffectNode),
+      );
 
   return isAllStateReset
     ? depsRefs
@@ -101,7 +106,7 @@ const isSetStateToInitialValue = (
   const setStateToValue = rawSetStateToValue
     ? unwrapExpression(rawSetStateToValue)
     : undefined;
-  const useStateDecl = getUseStateDecl(context, setterRef);
+  const useStateDecl = getUseStateDeclarator(context, setterRef);
   if (!useStateDecl || !useStateDecl.init) return false;
   const useStateInit = unwrapExpression(useStateDecl.init);
   if (useStateInit.type !== "CallExpression") return false;
@@ -153,7 +158,7 @@ const countUseStates = (
 
   // Include call arguments so wrappers like `memo` and `forwardRef` expose the
   // function body that holds the hooks.
-  return findDownstreamNodes(context, componentNode, "CallExpression", {
+  return getDownstreamNodes(context, componentNode, "CallExpression", {
     includeArguments: true,
   }).filter(
     (node) =>

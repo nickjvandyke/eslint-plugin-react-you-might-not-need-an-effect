@@ -5,7 +5,9 @@ import {
   getUpstreamRefs,
   isSynchronous,
 } from "../util/ast.ts";
-import { getStateName, isProp, isStateCall, getEffect } from "../util/react.ts";
+import { getEffect } from "../util/effect.ts";
+import { isProp } from "../util/props.ts";
+import { getStateName, isStateSetterCall } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -32,7 +34,7 @@ const rule: Rule.RuleModule = {
 
       effect.fnRefs
         .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
-        .filter((ref) => isStateCall(context, ref))
+        .filter((ref) => isStateSetterCall(context, ref))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;

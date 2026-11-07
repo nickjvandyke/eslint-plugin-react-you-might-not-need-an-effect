@@ -5,7 +5,8 @@ import {
   getDownstreamRefs,
   isSynchronous,
 } from "../util/ast.ts";
-import { getStateName, isStateCall, getEffect } from "../util/react.ts";
+import { getEffect } from "../util/effect.ts";
+import { getStateName, isStateSetterCall } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -27,7 +28,7 @@ const rule: Rule.RuleModule = {
 
       const bodySetters = effect.fnRefs
         .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
-        .filter((ref) => isStateCall(context, ref));
+        .filter((ref) => isStateSetterCall(context, ref));
       if (bodySetters.length === 0) return;
 
       const cleanupArg = effect.cleanup.argument as Rule.Node | undefined;

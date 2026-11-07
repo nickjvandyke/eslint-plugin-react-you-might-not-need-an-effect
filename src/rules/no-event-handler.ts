@@ -1,10 +1,12 @@
 import type { Rule } from "eslint";
 import {
-  findDownstreamNodes,
+  getDownstreamNodes,
   getDownstreamRefs,
   getUpstreamRefs,
 } from "../util/ast.ts";
-import { isProp, isState, getEffect } from "../util/react.ts";
+import { getEffect } from "../util/effect.ts";
+import { isProp } from "../util/props.ts";
+import { isState } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -29,7 +31,7 @@ const rule: Rule.RuleModule = {
       // TODO: Can we also flag this when the deps are internal, and the body calls internal stuff?
       // That'd overlap with other rules though... maybe just useRefs?
 
-      findDownstreamNodes(context, effect.fn, "IfStatement")
+      getDownstreamNodes(context, effect.fn, "IfStatement")
         .filter(
           (
             ifNode,

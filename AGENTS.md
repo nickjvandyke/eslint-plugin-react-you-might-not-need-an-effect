@@ -20,7 +20,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - **Single package** (not a monorepo). Package manager: `yarn 4.12.0`, `nodeLinker: node-modules` (not PnP).
 - **Entry**: `src/index.ts` — exports a flat ESLint plugin with 4 configs: `recommended`, `strict`, `legacy-recommended`, `legacy-strict`.
 - **9 rules** in `src/rules/`, each a separate `.ts` file with a co-located `.test.js` file.
-- **Utilities**: `src/util/ast.ts` (AST traversal/ref analysis), `src/util/react.ts` (React-specific helpers like `isUseEffect`, `isState`, `isProp`, etc.).
+- **Utilities**: `src/util/ast.ts` (AST traversal, ref analysis, constant checks), `src/util/typescript.ts` (TypeScript wrappers and type-only keys), `src/util/hooks.ts` (React hook and third-party effect detection), `src/util/components.ts` (component, HOC, and custom hook detection), `src/util/effect.ts` (effect function, deps, and cleanup extraction), `src/util/state.ts` (state and setter detection), `src/util/props.ts` (prop detection), `src/util/refs.ts` (ref detection).
 - **Test pattern**: Each `.test.js` imports `RuleTester` from `eslint` + `plugin` from `../src/index.ts`, and defines `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`.
 - **Other tests**: `test/syntax.test.js` (syntax variants), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first).
 
