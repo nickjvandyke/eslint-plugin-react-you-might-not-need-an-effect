@@ -60,9 +60,14 @@ const findPropUsedToResetAllState = (
   depsRefs: Scope.Reference[],
   useEffectNode: Rule.Node,
 ): Scope.Reference | undefined => {
-  const stateSetterRefs = effectFnRefs.filter((ref) =>
-    isStateCall(context, ref),
-  );
+  const stateSetterRefs = effectFnRefs
+    .filter((ref) => isStateCall(context, ref))
+    // The same setter can be called more than once in one effect.
+    // Count each state setter once.
+    .filter(
+      (ref, index, refs) =>
+        refs.findIndex((other) => other.resolved === ref.resolved) === index,
+    );
 
   const isAllStateReset =
     stateSetterRefs.length > 0 &&

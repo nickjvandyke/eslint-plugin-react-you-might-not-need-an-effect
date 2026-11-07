@@ -195,6 +195,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        name: "Reset all state by calling the same setter twice",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            setUser(null);
+            setUser(null);
+          }, [userId]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidResettingAllStateWhenAPropChanges",
+            data: { prop: "userId" },
+          },
+        ],
+      },
+      {
         name: "Reset all state with an unused alias also declared",
         code: js`
         function ProfilePage({ userId }) {
