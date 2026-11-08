@@ -1,24 +1,72 @@
 import type { Scope, Rule } from "eslint";
 import { isTypeOnlyKey, isWrapper, unwrapExpression } from "./typescript.ts";
 
-export const isFunction = (
-  node: Rule.Node,
-): node is Rule.Node & {
-  type:
-    | "FunctionDeclaration"
-    | "FunctionExpression"
-    | "ArrowFunctionExpression";
-} =>
+export type FunctionNode = Extract<
+  Rule.Node,
+  {
+    type:
+      | "FunctionDeclaration"
+      | "FunctionExpression"
+      | "ArrowFunctionExpression";
+  }
+>;
+
+export type FunctionExpressionNode = Extract<
+  FunctionNode,
+  { type: "FunctionExpression" | "ArrowFunctionExpression" }
+>;
+
+export type CallExpressionNode = Extract<Rule.Node, { type: "CallExpression" }>;
+
+export type VariableDeclaratorNode = Extract<
+  Rule.Node,
+  { type: "VariableDeclarator" }
+>;
+
+export type ReturnStatementNode = Extract<
+  Rule.Node,
+  { type: "ReturnStatement" }
+>;
+
+// Type guard for `Array.prototype.filter` that also removes `null`.
+export const isDefined = <T>(value: T | null | undefined): value is T =>
+  value != null;
+
+// AST nodes are objects with a `type` property. Used to validate children that
+// come from `visitorKeys`, which are typed as `unknown`.
+const isNode = (value: unknown): value is Rule.Node =>
+  typeof value === "object" && value !== null && "type" in value;
+
+export const isFunction = (node: Rule.Node): node is FunctionNode =>
   node.type === "FunctionDeclaration" ||
   node.type === "FunctionExpression" ||
   node.type === "ArrowFunctionExpression";
 
 export const isFunctionExpression = (
   node: Rule.Node,
-): node is Rule.Node & {
-  type: "FunctionExpression" | "ArrowFunctionExpression";
-} =>
+): node is FunctionExpressionNode =>
   node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression";
+
+// Returns the node that holds a definition's runtime value: the initializer of
+// a variable, or the body of a function, class, or catch clause.
+// Returns `undefined` for definitions that have no analyzable value.
+export const getDefinitionValueNode = (
+  def: Scope.Definition,
+): Rule.Node | undefined => {
+  switch (def.type) {
+    case "Variable":
+      return def.node.init ?? undefined;
+    case "FunctionName":
+    case "ClassName":
+    case "CatchClause":
+      return def.node.body;
+    default:
+      // Import bindings are opaque: analysis must terminate at the import usage,
+      // not at the imported module. Parameters would pull in the whole function
+      // body, so they are ignored too.
+      return undefined;
+  }
+};
 
 export const ascend = (
   context: Rule.RuleContext,
@@ -35,20 +83,9 @@ export const ascend = (
     return;
   }
 
-  ref.resolved?.defs
-    // We have no analytical use for import statements; terminate at the previous reference (actually using the imported thing).
-    .filter((def) => def.type !== "ImportBinding")
-    // Don't traverse parameter definitions.
-    // Their definition node is the function, so downstream would include the whole function body.
-    .filter((def) => def.type !== "Parameter")
-    // `def.node.init` is for ArrowFunctionExpression, VariableDeclarator, (etc?).
-    // `def.node.body` is for FunctionDeclaration.
-    .map(
-      (def) =>
-        (def.node as Rule.Node & { init?: Rule.Node }).init ??
-        (def.node as Rule.Node & { body?: Rule.Node }).body,
-    )
-    .filter((n): n is Rule.Node => Boolean(n))
+  (ref.resolved?.defs ?? [])
+    .map(getDefinitionValueNode)
+    .filter(isDefined)
     .flatMap((node) => getDownstreamRefs(context, node))
     .forEach((ref) => ascend(context, ref, visit, visited));
 };
@@ -69,7 +106,7 @@ export const descend = (
 
   const { includeArguments = false } = options;
 
-  (context.sourceCode.visitorKeys[node.type] || [])
+  (context.sourceCode.visitorKeys[node.type] ?? [])
     // Many times simpler to just ignore arguments (to CallExpressions and NewExpressions).
     // Too complicated to follow them, and often we can't at all (imported functions).
     // Assuming they are used in a particular way introduces false positives, and sometimes libraries _intend_ for such uses.
@@ -78,16 +115,13 @@ export const descend = (
     .filter(
       (key) => (includeArguments || key !== "arguments") && !isTypeOnlyKey(key),
     )
-    .map((key) => (node as unknown as Record<string, unknown>)[key])
-    // Some `visitorKeys` are optional, e.g. `IfStatement.alternate`.
-    .filter(Boolean)
-    // Can be an array, like `CallExpression.arguments`
-    .flatMap((child) => (Array.isArray(child) ? child : [child]))
-    // Can rarely be `null`, e.g. `ArrayPattern.elements[1]` when an element is skipped - `const [a, , b] = arr`
-    .filter(Boolean)
-    .forEach((child) =>
-      descend(context, child as Rule.Node, visit, options, visited),
-    );
+    .flatMap((key): unknown[] => {
+      const child: unknown = Reflect.get(node, key);
+      return Array.isArray(child) ? child : [child];
+    })
+    // Children can be absent (optional `visitorKeys`, skipped array holes).
+    .filter(isNode)
+    .forEach((child) => descend(context, child, visit, options, visited));
 };
 
 export const getUpstreamRefs = (
@@ -102,19 +136,20 @@ export const getUpstreamRefs = (
   return refs;
 };
 
-export const getDownstreamNodes = (
+export const getDownstreamNodes = <T extends Rule.Node["type"]>(
   context: Rule.RuleContext,
   topNode: Rule.Node,
-  type: string,
+  type: T,
   options: { includeArguments?: boolean } = {},
-): Rule.Node[] => {
-  const nodes: Rule.Node[] = [];
+): Extract<Rule.Node, { type: T }>[] => {
+  const nodes: Extract<Rule.Node, { type: T }>[] = [];
   descend(
     context,
     topNode,
     (node) => {
       if (node.type === type) {
-        nodes.push(node);
+        // `node.type` does not narrow through a generic type parameter.
+        nodes.push(node as Extract<Rule.Node, { type: T }>);
       }
     },
     options,
@@ -129,7 +164,7 @@ export const getDownstreamRefs = (
 ): Scope.Reference[] =>
   getDownstreamNodes(context, node, "Identifier", options)
     .map((identifier) => getRef(context, identifier))
-    .filter(Boolean) as Scope.Reference[];
+    .filter(isDefined);
 
 // Finds the call expression that invokes the reference, if any.
 // Walks up through member accesses (`fn`, `obj.fn`, `obj.a.fn`) and transparent
@@ -137,8 +172,8 @@ export const getDownstreamRefs = (
 // eventual callee, e.g. when it is an argument.
 export const getCallExpr = (
   ref: Scope.Reference,
-): (Rule.Node & { type: "CallExpression" }) | undefined => {
-  let node: Rule.Node = ref.identifier as Rule.Node;
+): CallExpressionNode | undefined => {
+  let node: Rule.Node = ref.identifier;
   while (node.parent.type === "MemberExpression" || isWrapper(node.parent)) {
     node = node.parent;
   }
@@ -153,10 +188,7 @@ export const getArgsUpstreamRefs = (
   ref: Scope.Reference,
 ): Scope.Reference[] =>
   getUpstreamRefs(context, ref)
-    .flatMap((upRef) => {
-      const callExpr = getCallExpr(upRef);
-      return callExpr ? (callExpr.arguments as Rule.Node[]) : [];
-    })
+    .flatMap((upRef) => getCallExpr(upRef)?.arguments ?? [])
     .flatMap((arg) => getDownstreamRefs(context, arg))
     .flatMap((ref) => getUpstreamRefs(context, ref));
 
@@ -166,23 +198,19 @@ export const getRef = (
 ): Scope.Reference | undefined =>
   context.sourceCode
     .getScope(identifier)
-    ?.references.find((ref) => ref.identifier == identifier);
+    ?.references.find((ref) => ref.identifier === identifier);
 
 // Runs `check` on the unwrapped initializer of each variable that defines the
 // reference. Returns true when any definition matches.
 export const someVariableInit = (
   ref: Scope.Reference,
-  check: (
-    init: Rule.Node,
-    declarator: Rule.Node & { type: "VariableDeclarator" },
-  ) => boolean,
+  check: (init: Rule.Node, declarator: VariableDeclaratorNode) => boolean,
 ): boolean =>
   (ref.resolved?.defs ?? []).some((def) => {
-    const declarator = def.node;
-    if (declarator.type !== "VariableDeclarator" || !declarator.init) {
+    if (def.type !== "Variable" || !def.node.init) {
       return false;
     }
-    return check(unwrapExpression(declarator.init), declarator);
+    return check(unwrapExpression(def.node.init), def.node);
   });
 
 export const isConstant = (ref: Scope.Reference): boolean =>
@@ -235,13 +263,10 @@ export const getSynchronousCallChain = (
       "SequenceExpression",
       "ChainExpression",
     ];
-    let node: Rule.Node = ref.identifier as Rule.Node;
+    let node: Rule.Node = ref.identifier;
     while (true) {
-      const parent = node.parent;
-      if (
-        parent.type === "VariableDeclarator" &&
-        (parent as Rule.Node & { init: Rule.Node }).init === node
-      ) {
+      const parent: Rule.Node = node.parent;
+      if (parent.type === "VariableDeclarator" && parent.init === node) {
         return (
           parent.parent?.type === "VariableDeclaration" &&
           // Only `const` aliases are stable. A reassigned alias may point somewhere else

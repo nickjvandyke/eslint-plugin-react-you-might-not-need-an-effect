@@ -33,7 +33,7 @@ const rule: Rule.RuleModule = {
       if (depsPropRefs.length === 0) return;
 
       effect.fnRefs
-        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
+        .filter((ref) => isSynchronous(ref.identifier, effect.fn))
         .filter((ref) => isStateSetterCall(context, ref))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);

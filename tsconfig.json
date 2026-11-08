@@ -5,6 +5,7 @@
     "lib": ["es2022"],
     "module": "esnext",
     "moduleResolution": "bundler",
+    "strict": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "allowJs": true,

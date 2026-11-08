@@ -17,7 +17,7 @@ export const isRef = (
 // Because we don't always have access to the `useRef` call itself.
 // For example when receiving a ref from props.
 export const isRefCurrent = (ref: Scope.Reference): boolean => {
-  const parent = getOutermostWrapper(ref.identifier as Rule.Node).parent;
+  const parent = getOutermostWrapper(ref.identifier).parent;
   return (
     parent.type === "MemberExpression" &&
     parent.property.type === "Identifier" &&

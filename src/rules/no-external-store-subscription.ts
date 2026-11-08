@@ -27,12 +27,11 @@ const rule: Rule.RuleModule = {
       if (!effect || !effect.cleanup) return;
 
       const bodySetters = effect.fnRefs
-        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
+        .filter((ref) => isSynchronous(ref.identifier, effect.fn))
         .filter((ref) => isStateSetterCall(context, ref));
       if (bodySetters.length === 0) return;
 
-      const cleanupArg = effect.cleanup.argument as Rule.Node | undefined;
-      if (!cleanupArg) return;
+      const cleanupArg = effect.cleanup.argument;
       // Include call arguments so setters passed to cleanup helpers are found.
       const cleanupRefs = getDownstreamRefs(context, cleanupArg, {
         includeArguments: true,

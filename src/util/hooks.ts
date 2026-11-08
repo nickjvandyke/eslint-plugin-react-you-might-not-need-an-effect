@@ -87,7 +87,7 @@ const isThirdPartyEffectHook = (
 ): boolean => {
   if (node.type !== "CallExpression") return false;
 
-  const callee = unwrapExpression(node.callee as Rule.Node);
+  const callee = unwrapExpression(node.callee);
   if (callee.type === "Identifier") {
     const binding = getImportBinding(context, callee);
     if (!binding) return false;
@@ -100,7 +100,7 @@ const isThirdPartyEffectHook = (
     if (property.type !== "Identifier") return false;
 
     if (callee.object.type === "Identifier") {
-      const binding = getImportBinding(context, callee.object as Rule.Node);
+      const binding = getImportBinding(context, callee.object);
 
       if (binding?.imported === "namespace") {
         return EFFECT_HOOKS[binding.source]?.has(property.name) ?? false;
@@ -139,7 +139,7 @@ const isReactHook = (
 ): boolean => {
   if (node.type !== "CallExpression") return false;
 
-  const callee = unwrapExpression(node.callee as Rule.Node);
+  const callee = unwrapExpression(node.callee);
 
   if (callee.type === "Identifier") {
     // Fast path, also covers globals, UMD builds, and auto-imported hooks.
@@ -153,7 +153,7 @@ const isReactHook = (
       !callee.computed &&
       callee.property.type === "Identifier" &&
       callee.property.name === hookName &&
-      isReactNamespace(context, unwrapExpression(callee.object as Rule.Node))
+      isReactNamespace(context, unwrapExpression(callee.object))
     );
   }
 

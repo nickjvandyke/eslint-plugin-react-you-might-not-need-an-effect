@@ -32,15 +32,7 @@ const rule: Rule.RuleModule = {
       // That'd overlap with other rules though... maybe just useRefs?
 
       getDownstreamNodes(context, effect.fn, "IfStatement")
-        .filter(
-          (
-            ifNode,
-          ): ifNode is Rule.Node & {
-            type: "IfStatement";
-            test: Rule.Node;
-            alternate: Rule.Node | null;
-          } => ifNode.type === "IfStatement" && !ifNode.alternate,
-        )
+        .filter((ifNode) => !ifNode.alternate)
         .map((ifNode) => ifNode.test)
         .flatMap((ifTestNode) => getDownstreamRefs(context, ifTestNode))
         .forEach((ifTestRef) => {

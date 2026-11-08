@@ -1,17 +1,17 @@
-import type { Scope, Rule } from "eslint";
+import type { Rule, Scope } from "eslint";
 import { getSynchronousCallChain, someVariableInit } from "./ast.ts";
 import { isUseState } from "./hooks.ts";
 
-// Reads the local name from an array pattern element, including defaults
+// Reads the local name from a pattern element, including defaults
 // like `const [count = 0, setCount] = useState()`.
-const getPatternName = (element: unknown): string | undefined => {
-  const node = element as
-    | { type: string; name?: string; left?: unknown }
-    | null
-    | undefined;
-  if (!node) return undefined;
-  if (node.type === "Identifier") return node.name;
-  if (node.type === "AssignmentPattern") return getPatternName(node.left);
+const getPatternName = (
+  element: Rule.Node | null | undefined,
+): string | undefined => {
+  if (!element) return undefined;
+  if (element.type === "Identifier") return element.name;
+  if (element.type === "AssignmentPattern") {
+    return getPatternName(element.left);
+  }
   return undefined;
 };
 
@@ -79,9 +79,8 @@ export const getUseStateDeclarator = (
     isStateSetter(context, chainRef),
   );
   const setterDecl = setterRef?.resolved?.defs.find(
-    (def) => def.node.type === "VariableDeclarator",
+    (def): def is Extract<Scope.Definition, { type: "Variable" }> =>
+      def.type === "Variable",
   );
-  return setterDecl?.node as
-    | (Rule.Node & { type: "VariableDeclarator" })
-    | undefined;
+  return setterDecl?.node;
 };

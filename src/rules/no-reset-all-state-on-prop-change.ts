@@ -102,7 +102,7 @@ const isSetStateToInitialValue = (
     ) ?? setterRef;
   const callExpr = getCallExpr(setterCallRef);
   if (!callExpr) return false;
-  const rawSetStateToValue = callExpr.arguments[0] as Rule.Node | undefined;
+  const rawSetStateToValue = callExpr.arguments[0];
   const setStateToValue = rawSetStateToValue
     ? unwrapExpression(rawSetStateToValue)
     : undefined;
@@ -110,9 +110,7 @@ const isSetStateToInitialValue = (
   if (!useStateDecl || !useStateDecl.init) return false;
   const useStateInit = unwrapExpression(useStateDecl.init);
   if (useStateInit.type !== "CallExpression") return false;
-  const rawStateInitialValue = useStateInit.arguments[0] as
-    | Rule.Node
-    | undefined;
+  const rawStateInitialValue = useStateInit.arguments[0];
   const stateInitialValue = rawStateInitialValue
     ? unwrapExpression(rawStateInitialValue)
     : undefined;
@@ -126,16 +124,6 @@ const isSetStateToInitialValue = (
     node === undefined || ("name" in node && node.name === "undefined");
   if (isUndefined(setStateToValue) && isUndefined(stateInitialValue)) {
     return true;
-  }
-
-  // `sourceCode.getText()` returns the entire file when passed null/undefined - let's short circuit that
-  if (setStateToValue === null && stateInitialValue === null) {
-    return true;
-  } else if (
-    (setStateToValue && !stateInitialValue) ||
-    (!setStateToValue && stateInitialValue)
-  ) {
-    return false;
   }
 
   // TODO: This is one of the few times we compare just the immediate nodes,

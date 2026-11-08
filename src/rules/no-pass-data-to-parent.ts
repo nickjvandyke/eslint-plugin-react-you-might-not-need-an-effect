@@ -37,7 +37,7 @@ const rule: Rule.RuleModule = {
       if (!effect || effect.cleanup) return;
 
       effect.fnRefs
-        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
+        .filter((ref) => isSynchronous(ref.identifier, effect.fn))
         .filter((ref) => isPropCall(context, ref))
         .filter((ref) => !isRefCall(context, ref))
         .forEach((ref) => {
@@ -106,11 +106,11 @@ const isContextObject = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean => {
-  const identifier = ref.identifier as Rule.Node;
+  const identifier = ref.identifier;
   const parent = identifier.parent;
   return (
     parent.type === "CallExpression" &&
-    (parent.arguments as Rule.Node[]).includes(identifier) &&
+    parent.arguments.includes(identifier) &&
     isUseContext(context, parent)
   );
 };

@@ -26,17 +26,16 @@ const plugin = {
     "no-external-store-subscription": noExternalStoreSubscription,
     "no-initialize-state": noInitializeState,
   },
-  // Later `Object.assign`ed because it needs to self-reference `plugin`
-  configs: {},
-};
+} satisfies ESLint.Plugin;
 
-const rules = (severity: "error" | "warn") =>
-  Object.keys(plugin.rules).reduce(
-    (acc, ruleName) => {
-      acc[plugin.meta.name + "/" + ruleName] = severity;
-      return acc;
-    },
-    {} as Record<string, "error" | "warn">,
+type Severity = "error" | "warn";
+
+const rules = (severity: Severity): Record<string, Severity> =>
+  Object.fromEntries(
+    Object.keys(plugin.rules).map((ruleName): [string, Severity] => [
+      `${plugin.meta.name}/${ruleName}`,
+      severity,
+    ]),
   );
 
 const languageOptions = {
@@ -47,7 +46,7 @@ const languageOptions = {
   },
 };
 
-const flat = (severity: "error" | "warn", name: string) => ({
+const flat = (severity: Severity, name: string): Linter.Config => ({
   name: `${plugin.meta.name}/${name}`,
   plugins: {
     [plugin.meta.name]: plugin,
@@ -56,21 +55,13 @@ const flat = (severity: "error" | "warn", name: string) => ({
   rules: rules(severity),
 });
 
-const legacy = (severity: "error" | "warn") => ({
+const legacy = (severity: Severity): Linter.LegacyConfig => ({
   plugins: [plugin.meta.name],
   ...languageOptions,
   rules: rules(severity),
 });
 
-Object.assign(plugin.configs, {
-  recommended: flat("warn", "recommended"),
-  strict: flat("error", "strict"),
-  "legacy-recommended": legacy("warn"),
-  "legacy-strict": legacy("error"),
-});
-
-// HACK: Need to cast because of the `Object.assign`. Unsure of workaround - that's the official method...
-export default plugin as unknown as ESLint.Plugin & {
+type Plugin = ESLint.Plugin & {
   configs: {
     recommended: Linter.Config;
     strict: Linter.Config;
@@ -78,3 +69,17 @@ export default plugin as unknown as ESLint.Plugin & {
     "legacy-strict": Linter.LegacyConfig;
   };
 };
+
+// The configs reference `plugin` itself, so they are assigned after it exists.
+// `Object.assign` mutates and returns the same object, so the identity that
+// ESLint relies on for plugin resolution is preserved.
+const pluginWithConfigs: Plugin = Object.assign(plugin, {
+  configs: {
+    recommended: flat("warn", "recommended"),
+    strict: flat("error", "strict"),
+    "legacy-recommended": legacy("warn"),
+    "legacy-strict": legacy("error"),
+  },
+});
+
+export default pluginWithConfigs;

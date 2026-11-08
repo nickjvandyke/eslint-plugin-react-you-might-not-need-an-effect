@@ -24,16 +24,19 @@ const TYPE_ONLY_KEYS: ReadonlySet<string> = new Set([
   "superTypeParameters",
 ]);
 
-export const isWrapper = (node: Rule.Node): boolean =>
-  WRAPPER_TYPES.has(node.type as string);
+// A wrapper node always holds the wrapped expression in `expression`.
+export type WrapperNode = Rule.Node & { expression: Rule.Node };
+
+export const isWrapper = (node: Rule.Node): node is WrapperNode =>
+  WRAPPER_TYPES.has(node.type);
 
 export const isTypeOnlyKey = (key: string): boolean => TYPE_ONLY_KEYS.has(key);
 
 // Reaches the runtime expression inside TypeScript-only wrappers.
-export const unwrapExpression = (node: { type: string }): Rule.Node => {
-  let current = node as unknown as Rule.Node;
+export const unwrapExpression = (node: Rule.Node): Rule.Node => {
+  let current = node;
   while (isWrapper(current)) {
-    current = (current as Rule.Node & { expression: Rule.Node }).expression;
+    current = current.expression;
   }
   return current;
 };
@@ -42,6 +45,7 @@ export const unwrapExpression = (node: { type: string }): Rule.Node => {
 // The wrapper's `.parent` is the node that actually contains the expression.
 export const getOutermostWrapper = (node: Rule.Node): Rule.Node => {
   let current = node;
+  // `Program` has no parent, so the guard is required at runtime.
   while (current.parent && isWrapper(current.parent)) {
     current = current.parent;
   }

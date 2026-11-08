@@ -35,7 +35,7 @@ const rule: Rule.RuleModule = {
       if (!isEffectRunOnlyOnMount) return;
 
       effect.fnRefs
-        .filter((ref) => isSynchronous(ref.identifier as Rule.Node, effect.fn))
+        .filter((ref) => isSynchronous(ref.identifier, effect.fn))
         .filter((ref) => isStateSetterCall(context, ref))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
@@ -44,9 +44,7 @@ const rule: Rule.RuleModule = {
           if (!stateName) return;
           let argumentText = "undefined";
           if (callExpr?.arguments[0]) {
-            argumentText = context.sourceCode.getText(
-              callExpr.arguments[0] as Rule.Node,
-            );
+            argumentText = context.sourceCode.getText(callExpr.arguments[0]);
           }
 
           context.report({

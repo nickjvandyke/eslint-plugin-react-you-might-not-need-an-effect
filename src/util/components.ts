@@ -25,34 +25,39 @@ export const isHOC = (context: Rule.RuleContext, node: Rule.Node): boolean => {
     if (n.type !== "VariableDeclarator" || !n.init) return false;
     const init = unwrapExpression(n.init);
     if (init.type !== "CallExpression") return false;
-    const callee = unwrapExpression(init.callee as Rule.Node);
+    const callee = unwrapExpression(init.callee);
     return (
       callee.type === "Identifier" &&
       !knownPureHocs.includes(callee.name) &&
       init.arguments.length > 0 &&
-      isFunctionExpression(init.arguments[0] as Rule.Node)
+      isFunctionExpression(init.arguments[0])
     );
   };
 
   // e.g. `export default withRouter(MyComponent);`
-  const isWrappedSeparately = (n: Rule.Node): boolean =>
-    getRef(
-      context,
-      (n as Rule.Node & { id: Rule.Node }).id,
-    )?.resolved?.references.some((ref) => {
-      const wrapper = getOutermostWrapper(ref.identifier as Rule.Node);
-      const call = wrapper.parent;
-      if (
-        call?.type !== "CallExpression" ||
-        !call.arguments.some((arg) => arg === wrapper)
-      ) {
-        return false;
-      }
-      const callee = unwrapExpression(call.callee as Rule.Node);
-      return (
-        callee.type === "Identifier" && !knownPureHocs.includes(callee.name)
-      );
-    }) ?? false;
+  const isWrappedSeparately = (n: Rule.Node): boolean => {
+    const id =
+      n.type === "VariableDeclarator" || n.type === "FunctionDeclaration"
+        ? n.id
+        : undefined;
+    if (id?.type !== "Identifier") return false;
+    return (
+      getRef(context, id)?.resolved?.references.some((ref) => {
+        const wrapper = getOutermostWrapper(ref.identifier);
+        const call = wrapper.parent;
+        if (
+          call?.type !== "CallExpression" ||
+          !call.arguments.some((arg) => arg === wrapper)
+        ) {
+          return false;
+        }
+        const callee = unwrapExpression(call.callee);
+        return (
+          callee.type === "Identifier" && !knownPureHocs.includes(callee.name)
+        );
+      }) ?? false
+    );
+  };
 
   return (
     isComponent(node) && (isWrappedInline(node) || isWrappedSeparately(node))
@@ -104,12 +109,13 @@ export const findEnclosingComponentOrHook = (
 export const getComponentOrHookName = (
   containingNode: Rule.Node | undefined,
 ): string | undefined => {
-  if (!containingNode) return undefined;
   if (
-    containingNode.type !== "FunctionDeclaration" &&
-    containingNode.type !== "VariableDeclarator"
-  )
+    containingNode?.type !== "FunctionDeclaration" &&
+    containingNode?.type !== "VariableDeclarator"
+  ) {
     return undefined;
-  return (containingNode as Rule.Node & { id: { name?: string } | null }).id
-    ?.name;
+  }
+  return containingNode.id?.type === "Identifier"
+    ? containingNode.id.name
+    : undefined;
 };
