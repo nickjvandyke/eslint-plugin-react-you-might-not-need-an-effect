@@ -61,7 +61,8 @@
     "publint": "^0.3.20",
     "simple-git-hooks": "^2.13.0",
     "tsdown": "^0.22.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.1"
   },
   "peerDependencies": {
     "eslint": ">=8.40.0"

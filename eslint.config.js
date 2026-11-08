@@ -1,10 +1,10 @@
 import eslint from "@eslint/js";
-import tsParser from "@typescript-eslint/parser";
 import eslintPlugin from "eslint-plugin-eslint-plugin";
 import nodePlugin from "eslint-plugin-n";
 import globals from "globals";
+import tseslint from "typescript-eslint";
 
-export default [
+export default tseslint.config(
   eslint.configs.recommended,
   eslintPlugin.configs["flat/recommended"],
   nodePlugin.configs["flat/recommended"],
@@ -20,17 +20,12 @@ export default [
   },
   {
     files: ["**/*.ts"],
+    extends: [tseslint.configs.recommended],
     languageOptions: {
-      parser: tsParser,
       parserOptions: {
         ecmaVersion: "latest",
         sourceType: "module",
       },
-    },
-    rules: {
-      // The core rule does not understand TypeScript type positions and reports
-      // their parameters as unused. `tsgo` checks unused values instead.
-      "no-unused-vars": "off",
     },
   },
   {
@@ -44,4 +39,4 @@ export default [
       ],
     },
   },
-];
+);
