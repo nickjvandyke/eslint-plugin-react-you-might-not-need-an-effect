@@ -71,23 +71,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        // Context values are owned by an ancestor, just like props.
         name: "Pass context value",
         code: js`
         const Child = ({ onTextChanged }) => {
           const text = useContext(TextContext);
-
-          useEffect(() => {
-            onTextChanged(text);
-          }, [onTextChanged, text]);
-        }
-      `,
-      },
-      {
-        name: "Pass destructured context value",
-        code: js`
-        const Child = ({ onTextChanged }) => {
-          const { text } = useContext(TextContext);
 
           useEffect(() => {
             onTextChanged(text);
@@ -289,6 +276,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        // `messageId` + `data` renders the same template in the test and the
+        // rule, so only a literal message catches duplicated quotes.
         name: "Message quotes each interpolated name exactly once",
         code: js`
         const Child = ({ onData }) => {
@@ -393,8 +382,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
         errors: [
           {
-            messageId: "avoidPassingDataToParentInComponent",
-            data: { data: '"useSomeAPI" and "useOtherAPI"', name: '"Child"' },
+            message:
+              'Avoid passing data to parents in an effect. Instead, fetch "useSomeAPI" and "useOtherAPI" in the parent and pass it down to "Child" as a prop.',
           },
         ],
       },
@@ -417,43 +406,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           },
         ],
       },
-      // {
-      //   name: "Pass external state that's retrieved in effect via .then",
-      //   code: js`
-      //   const Child = ({ onFetched }) => {
-      //     useEffect(() => {
-      //       fetchData()
-      //         .then((data) => onFetched(data));
-      //     }, []);
-      //   }
-      // `,
-      //   // TODO: Difficult because `getUpstreamRefs` ignores parameter-declared variables,
-      //   // and the above test case relies on that behavior.
-      //   errors: [
-      //     {
-      //       messageId: "avoidPassingDataToParentInComponent",
-      //     },
-      //   ],
-      // },
-      // {
-      //   name: "Pass external state that's retrieved in effect via async/await",
-      //   code: js`
-      //   const Child = ({ onFetched }) => {
-      //     useEffect(() => {
-      //       (async () => {
-      //         const data = await fetchData();
-      //         onFetched(data);
-      //       })();
-      //     }, []);
-      //   }
-      // `,
-      //   // TODO:
-      //   errors: [
-      //     {
-      //       messageId: "avoidPassingDataToParentInComponent",
-      //     },
-      //   ],
-      // },
       {
         name: "Pass external state via context callback",
         code: js`

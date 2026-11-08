@@ -407,8 +407,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
         errors: [
           {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"text" and "count"', name: '"Child"' },
+            message:
+              'Avoid passing live state to parents in an effect. Instead, lift "text" and "count" to the parent and pass it down to "Child" as a prop.',
           },
         ],
       },
@@ -506,6 +506,8 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
+        // `messageId` + `data` renders the same template in the test and the
+        // rule, so only a literal message catches duplicated quotes.
         name: "Message quotes each interpolated name exactly once",
         code: js`
         const Child = ({ onData }) => {

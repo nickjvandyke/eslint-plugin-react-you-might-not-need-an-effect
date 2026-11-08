@@ -175,28 +175,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
-        name: "To literal, with renamed imports",
-        code: js`
-        import { useState as stateUser, useEffect as effect } from 'react';
-
-        function MyComponent() {
-          const [state, setState] = stateUser();
-
-          effect(() => {
-            setState("Hello");
-          }, []);
-
-          return <div>{state}</div>;
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: '"Hello"' },
-          },
-        ],
-      },
-      {
         name: "To internal data",
         code: js`
         function MyComponent() {

@@ -1,12 +1,12 @@
 import { RuleTester } from "eslint";
 import tsParser from "@typescript-eslint/parser";
-import plugin from "../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
 
-import noDerivedState from "../src/rules/no-derived-state.ts";
-import noPassLiveStateToParent from "../src/rules/no-pass-live-state-to-parent.ts";
-import noPassDataToParent from "../src/rules/no-pass-data-to-parent.ts";
-import noResetAllStateOnPropChange from "../src/rules/no-reset-all-state-on-prop-change.ts";
+import noDerivedState from "../rules/no-derived-state.ts";
+import noPassLiveStateToParent from "../rules/no-pass-live-state-to-parent.ts";
+import noPassDataToParent from "../rules/no-pass-data-to-parent.ts";
+import noResetAllStateOnPropChange from "../rules/no-reset-all-state-on-prop-change.ts";
 
 // TypeScript-only syntax (`as`, `satisfies`, `!`, `as const`) is erased before
 // the code runs, so it must not change what the analysis sees.

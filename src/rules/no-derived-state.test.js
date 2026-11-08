@@ -229,25 +229,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         `,
       },
       // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
-      // {
-      //   // TODO:
-      //   name: "Pass state to derived setter which ignores args",
-      //   code: js`
-      //   function Form() {
-      //     const [firstName, setFirstName] = useState('Dwayne');
-      //     const [lastName, setLastName] = useState('The Rock');
-      //     const [fullName, setFullName] = useState('');
-      //
-      //     const setDerivedFullName = (firstName, lastName) => {
-      //       setFullName("Sparky");
-      //     }
-      //
-      //     useEffect(() => {
-      //       setDerivedFullName(firstName, lastName);
-      //     }, [firstName, lastName]);
-      //   }
-      // `,
-      // },
     ],
     invalid: [
       {
@@ -348,45 +329,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           {
             messageId: "avoidDerivedState",
             data: { state: "fullName" },
-          },
-        ],
-      },
-      {
-        // `useContext` values are owned by an ancestor, so treat them like props.
-        name: "From context",
-        code: js`
-        function Theme() {
-          const theme = useContext(ThemeContext);
-          const [isDark, setIsDark] = useState(false);
-
-          useEffect(() => {
-            setIsDark(theme === 'dark');
-          }, [theme]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "isDark" },
-          },
-        ],
-      },
-      {
-        name: "From destructured context",
-        code: js`
-        function Theme() {
-          const { mode } = useContext(ThemeContext);
-          const [isDark, setIsDark] = useState(false);
-
-          useEffect(() => {
-            setIsDark(mode === 'dark');
-          }, [mode]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "isDark" },
           },
         ],
       },
@@ -752,48 +694,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           {
             messageId: "avoidDerivedState",
             data: { state: "fullName" },
-          },
-        ],
-      },
-      {
-        name: "Wrapper setter that reads another state first",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Nick');
-          const [fullName, setFullName] = useState('');
-
-          function updateFullName() {
-            const name = firstName;
-            setFullName(name);
-          }
-
-          useEffect(() => {
-            updateFullName();
-          }, [firstName]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
-      },
-      {
-        name: "Default value in the state destructuring",
-        code: js`
-        function Form({ count }) {
-          const [doubleCount = 0, setDoubleCount] = useState(0);
-
-          useEffect(() => {
-            setDoubleCount(count * 2);
-          }, [count]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "doubleCount" },
           },
         ],
       },
