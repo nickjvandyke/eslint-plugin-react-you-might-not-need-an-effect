@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-pass-live-state-to-parent.ts";
 
@@ -120,12 +122,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           );
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"text"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingLiveStateToParentInComponent", {
+          state: '"text"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass live internal state, empty deps",
@@ -138,12 +138,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"text"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingLiveStateToParentInComponent", {
+          state: '"text"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass live derived internal state in custom hook",
@@ -156,12 +154,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onTextChanged, text]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInHook",
-            data: { state: '"text"', name: '"useCustomHook"' },
-          },
-        ],
+        errors: error("avoidPassingLiveStateToParentInHook", {
+          state: '"text"',
+          name: '"useCustomHook"',
+        }),
       },
       {
         name: "Pass live internal state AND external state",
@@ -175,12 +171,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onTextChanged, text, data]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"text"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingLiveStateToParentInComponent", {
+          state: '"text"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass live derived internal state",
@@ -194,12 +188,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onTextChanged, text]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"text"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingLiveStateToParentInComponent", {
+          state: '"text"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass final internal state",
@@ -214,12 +206,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [dataToSubmit]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"dataToSubmit"', name: '"Form"' },
-          },
-        ],
+        errors: error("avoidPassingLiveStateToParentInComponent", {
+          state: '"dataToSubmit"',
+          name: '"Form"',
+        }),
       },
       {
         name: "Pass multiple live internal state",
@@ -252,12 +242,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onTextChanged, text]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"text"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingLiveStateToParentInComponent", {
+          state: '"text"',
+          name: '"Child"',
+        }),
       },
       {
         // `messageId` + `data` renders the same template in the test and the

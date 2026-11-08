@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-derived-state.ts";
 
@@ -207,12 +209,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => setFullName(firstName + ' ' + lastName), [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "From derived internal state",
@@ -228,12 +225,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "From derived internal state outside effect",
@@ -249,12 +241,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [name]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "From internal state and external state",
@@ -272,12 +259,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [prefix, name])
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "prefixedName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "prefixedName" }),
       },
       {
         name: "From props",
@@ -290,12 +272,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "From intermediate prop",
@@ -309,12 +286,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [prefixedName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "From props via method",
@@ -327,12 +299,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [list]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "doubleList" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "doubleList" }),
       },
       {
         name: "From internal state via method",
@@ -346,12 +313,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [list]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "doubleList" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "doubleList" }),
       },
       {
         // Verifies that we don't check for upstream state and props in isolation
@@ -366,12 +328,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [title, name]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "From props and internal state via intermediate variable",
@@ -386,12 +343,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [title, name]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "From props via callback setter",
@@ -406,12 +358,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [count]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "total" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "total" }),
       },
       {
         name: "From props via pure derived setter",
@@ -426,12 +373,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [count]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "doubleCount" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "doubleCount" }),
       },
       {
         name: "Partially update complex state from props",
@@ -450,12 +392,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName, formData]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "formData" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "formData" }),
       },
       {
         name: "Partially update complex state from props via callback setter",
@@ -474,12 +411,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "formData" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "formData" }),
       },
       {
         name: "Derived state in larger, otherwise legit effect",
@@ -496,12 +428,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         // It's not technically a pure function since it closes over state,
@@ -520,12 +447,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "Set to result of semi-pure local FunctionDeclaration",
@@ -544,12 +466,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "Set to result of semi-pure function defined outside effect",
@@ -566,12 +483,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [computeName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "Via no-arg intermediate setter",
@@ -590,12 +502,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
         name: "Bare return is not treated as a cleanup function",
@@ -609,12 +516,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [firstName, lastName]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "fullName" },
-          },
-        ],
+        errors: error("avoidDerivedState", { state: "fullName" }),
       },
     ],
   },

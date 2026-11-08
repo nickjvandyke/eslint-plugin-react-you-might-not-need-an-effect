@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-pass-data-to-parent.ts";
 
@@ -186,12 +188,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onFetched, data]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingDataToParentInComponent",
-            data: { data: '"useSomeAPI"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"useSomeAPI"',
+          name: '"Child"',
+        }),
       },
       {
         // `messageId` + `data` renders the same template in the test and the
@@ -224,12 +224,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingDataToParentInComponent",
-            data: { data: '"useSomeAPI"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"useSomeAPI"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass external state in custom hook",
@@ -242,12 +240,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onFetched, data]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingDataToParentInHook",
-            data: { data: '"useSomeAPI"', name: '"useCustomHook"' },
-          },
-        ],
+        errors: error("avoidPassingDataToParentInHook", {
+          data: '"useSomeAPI"',
+          name: '"useCustomHook"',
+        }),
       },
       {
         name: "Pass derived external state",
@@ -261,12 +257,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onFetched, firstElement]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingDataToParentInComponent",
-            data: { data: '"useSomeAPI"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"useSomeAPI"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass multiple external state",
@@ -299,12 +293,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onChanged, data, count]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingDataToParentInComponent",
-            data: { data: '"useSomeAPI"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"useSomeAPI"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass external state via context callback",
@@ -318,12 +310,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onFetched, data]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPassingDataToParentInComponent",
-            data: { data: '"useSomeAPI"', name: '"Child"' },
-          },
-        ],
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"useSomeAPI"',
+          name: '"Child"',
+        }),
       },
     ],
   },

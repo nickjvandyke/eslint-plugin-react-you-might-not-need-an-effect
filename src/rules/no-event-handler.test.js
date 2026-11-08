@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-event-handler.ts";
 
@@ -69,12 +71,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [dataToSubmit]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPropHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
+        errors: error("avoidPropHandler", { name: "dataToSubmit" }),
       },
       {
         name: "Using context to handle an event and call an external function",
@@ -89,12 +86,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [dataToSubmit]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidPropHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
+        errors: error("avoidPropHandler", { name: "dataToSubmit" }),
       },
       {
         name: "Using state to handle an event and call an external function",
@@ -121,12 +113,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           )
         }
       `,
-        errors: [
-          {
-            messageId: "avoidEventHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
+        errors: error("avoidEventHandler", { name: "dataToSubmit" }),
       },
       {
         name: "Using state to handle an event, empty deps",
@@ -141,12 +128,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidEventHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
+        errors: error("avoidEventHandler", { name: "dataToSubmit" }),
       },
       {
         name: "Using state to handle an event and call a prop",
@@ -161,12 +143,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [dataToSubmit]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidEventHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
+        errors: error("avoidEventHandler", { name: "dataToSubmit" }),
       },
       {
         name: "Early return in if test",
@@ -181,12 +158,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [dataToSubmit]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidEventHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
+        errors: error("avoidEventHandler", { name: "dataToSubmit" }),
       },
       {
         name: "Member access and double test in condition",
@@ -252,12 +224,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [dataToSubmit]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidEventHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
+        errors: error("avoidEventHandler", { name: "dataToSubmit" }),
       },
     ],
   },

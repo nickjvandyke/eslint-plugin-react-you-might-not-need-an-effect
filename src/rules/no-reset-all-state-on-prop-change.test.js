@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-reset-all-state-on-prop-change.ts";
 
@@ -127,12 +129,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state when context changes",
@@ -148,12 +147,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state when a prop changes in memoized component",
@@ -168,12 +164,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         })
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state via an alias declared in the effect",
@@ -187,12 +180,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state by calling the same setter twice",
@@ -206,12 +196,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state with an unused alias also declared",
@@ -226,12 +213,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state to shared var when a prop changes",
@@ -247,12 +231,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state when a prop member changes",
@@ -284,12 +265,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId, friends]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         // These are equivalent because state initializes to `undefined` when it has no argument
@@ -324,12 +302,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return 'type something';
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state via a wrapper setter",
@@ -344,12 +319,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
       {
         name: "Reset all state when state is read in render",
@@ -366,12 +338,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return <div>{user}{user}{comment}</div>;
         }
       `,
-        errors: [
-          {
-            messageId: "avoidResettingAllStateWhenAPropChanges",
-            data: { prop: "userId" },
-          },
-        ],
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
       },
     ],
   },

@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-initialize-state.ts";
 
@@ -147,12 +149,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return <div>{state}</div>;
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: '"Hello"' },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: '"Hello"',
+        }),
       },
       {
         name: "To literal, no dependency array",
@@ -167,12 +167,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return <div>{state}</div>;
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: '"Hello"' },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: '"Hello"',
+        }),
       },
       {
         name: "To internal data",
@@ -186,12 +184,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: "otherState" },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: "otherState",
+        }),
       },
       {
         name: "In an otherwise valid effect",
@@ -205,12 +201,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: "'Hello World'" },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: "'Hello World'",
+        }),
       },
       {
         name: "To undefined",
@@ -223,12 +217,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: "undefined" },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: "undefined",
+        }),
       },
       {
         name: "To equivalent derived literals",
@@ -243,12 +235,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: "upstreamTwo" },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: "upstreamTwo",
+        }),
       },
       {
         name: "Only setter in deps",
@@ -261,12 +251,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [setState]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: '"Hello"' },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: '"Hello"',
+        }),
       },
       {
         name: "Only aliased setter in deps",
@@ -280,12 +268,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [setAlias]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidInitializingState",
-            data: { state: "state", arguments: '"Hello"' },
-          },
-        ],
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: '"Hello"',
+        }),
       },
     ],
   },

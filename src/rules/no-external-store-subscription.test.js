@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-external-store-subscription.ts";
 
@@ -211,12 +213,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return isOnline;
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "isOnline" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "isOnline" }),
       },
       {
         name: "Inline arrow cleanup with same closure chain",
@@ -232,12 +229,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return isOnline;
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "isOnline" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "isOnline" }),
       },
       {
         name: "Setter referenced directly in cleanup",
@@ -250,12 +242,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "isOnline" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "isOnline" }),
       },
       {
         name: "Handler referenced in cleanup calls the setter",
@@ -271,12 +258,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return value;
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "value" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "value" }),
       },
       {
         name: "Multiple setters, one matching cleanup",
@@ -316,12 +298,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "value" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "value" }),
       },
       {
         name: "Intermediate synchronous function call pattern",
@@ -337,12 +314,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           return value;
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "value" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "value" }),
       },
       {
         name: "Multiple sync setters, cleanup references one via arrow body",
@@ -374,12 +346,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "count" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "count" }),
       },
       {
         name: "Body aliases setter directly, cleanup uses original name",
@@ -393,12 +360,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "count" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "count" }),
       },
       {
         name: "Body wraps setter in arrow function, cleanup uses original name",
@@ -412,12 +374,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidExternalStoreSubscription",
-            data: { state: "count" },
-          },
-        ],
+        errors: error("avoidExternalStoreSubscription", { state: "count" }),
       },
     ],
   },

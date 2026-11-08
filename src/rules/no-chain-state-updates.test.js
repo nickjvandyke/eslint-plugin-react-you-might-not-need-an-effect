@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-chain-state-updates.ts";
 
@@ -117,12 +119,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [round]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidChainingStateUpdates",
-            data: { state: "isGameOver" },
-          },
-        ],
+        errors: error("avoidChainingStateUpdates", { state: "isGameOver" }),
       },
       {
         name: "Set state to derived literal when internal state changes",
@@ -139,12 +136,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [round]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidChainingStateUpdates",
-            data: { state: "isGameOver" },
-          },
-        ],
+        errors: error("avoidChainingStateUpdates", { state: "isGameOver" }),
       },
       {
         name: "Set state to literal when internal or external state changes",
@@ -161,12 +153,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [round, players]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidChainingStateUpdates",
-            data: { state: "isGameOver" },
-          },
-        ],
+        errors: error("avoidChainingStateUpdates", { state: "isGameOver" }),
       },
       {
         name: "Set state to external state when internal state changes",
@@ -183,12 +170,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [round, players]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidChainingStateUpdates",
-            data: { state: "isGameOver" },
-          },
-        ],
+        errors: error("avoidChainingStateUpdates", { state: "isGameOver" }),
       },
       {
         name: "In an otherwise valid effect",
@@ -203,12 +185,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [otherState]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidChainingStateUpdates",
-            data: { state: "state" },
-          },
-        ],
+        errors: error("avoidChainingStateUpdates", { state: "state" }),
       },
     ],
   },

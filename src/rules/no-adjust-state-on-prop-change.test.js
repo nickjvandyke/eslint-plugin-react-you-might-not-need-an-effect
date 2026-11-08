@@ -1,6 +1,8 @@
 import { RuleTester } from "eslint";
-import plugin from "../../src/index.ts";
+import plugin from "../index.ts";
 const js = String.raw;
+
+const error = (messageId, data) => [{ messageId, data }];
 
 import rule from "./no-adjust-state-on-prop-change.ts";
 
@@ -75,12 +77,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidAdjustingStateWhenAPropChanges",
-            data: { state: "selection", props: '"items"' },
-          },
-        ],
+        errors: error("avoidAdjustingStateWhenAPropChanges", {
+          state: "selection",
+          props: '"items"',
+        }),
       },
       {
         name: "Set state to literal when prop changes, with cleanup",
@@ -97,12 +97,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidAdjustingStateWhenAPropChanges",
-            data: { state: "selection", props: '"items"' },
-          },
-        ],
+        errors: error("avoidAdjustingStateWhenAPropChanges", {
+          state: "selection",
+          props: '"items"',
+        }),
       },
       {
         name: "Set state to internal state when prop changes",
@@ -116,12 +114,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items, internalData]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidAdjustingStateWhenAPropChanges",
-            data: { state: "selection", props: '"items"' },
-          },
-        ],
+        errors: error("avoidAdjustingStateWhenAPropChanges", {
+          state: "selection",
+          props: '"items"',
+        }),
       },
       {
         name: "Set state to external state when prop changes",
@@ -135,12 +131,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidAdjustingStateWhenAPropChanges",
-            data: { state: "selection", props: '"items"' },
-          },
-        ],
+        errors: error("avoidAdjustingStateWhenAPropChanges", {
+          state: "selection",
+          props: '"items"',
+        }),
       },
       {
         name: "Conditionally set state to literal when prop changes",
@@ -155,12 +149,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [result]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidAdjustingStateWhenAPropChanges",
-            data: { state: "error", props: '"result"' },
-          },
-        ],
+        errors: error("avoidAdjustingStateWhenAPropChanges", {
+          state: "error",
+          props: '"result"',
+        }),
       },
       {
         name: "Set state to literal when two props change",
@@ -173,12 +165,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items, user]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidAdjustingStateWhenAPropChanges",
-            data: { state: "selection", props: '"items" and "user"' },
-          },
-        ],
+        errors: error("avoidAdjustingStateWhenAPropChanges", {
+          state: "selection",
+          props: '"items" and "user"',
+        }),
       },
       {
         name: "Set state to literal when context changes",
@@ -192,12 +182,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: [
-          {
-            messageId: "avoidAdjustingStateWhenAPropChanges",
-            data: { state: "selection", props: '"items"' },
-          },
-        ],
+        errors: error("avoidAdjustingStateWhenAPropChanges", {
+          state: "selection",
+          props: '"items"',
+        }),
       },
     ],
   },
