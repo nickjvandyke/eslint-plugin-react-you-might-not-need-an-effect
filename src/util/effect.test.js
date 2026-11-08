@@ -15,7 +15,19 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
   "effect shapes",
   noDerivedState,
   {
-    valid: [],
+    valid: [
+      {
+        name: "Effect callback is a parameter, so the effect body is opaque",
+        code: js`
+        function useThing(callback) {
+          const [count, setCount] = useState(0);
+
+          useEffect(callback, []);
+          setCount(count * 2);
+        }
+      `,
+      },
+    ],
     invalid: [
       {
         name: "Effect one-liner body",
