@@ -1,5 +1,31 @@
 # Changelog
 
+## [1.2.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.1.0...v1.2.0) (2026-11-08)
+
+
+### Features
+
+* see through TypeScript-only syntax ([4eeb4ad](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/4eeb4ad935e7a426cf2dafbef10d7cbf31f3133c))
+* support popular third-party effect wrappers ([2b32a9e](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/2b32a9e005e4fef60b635b62b25c163b51e5a4fb))
+* treat context values as props ([8c1c7ec](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/8c1c7ec7015e6ee5a4be28cb5c0f37dc92717619))
+
+
+### Bug Fixes
+
+* analyze `const Component = function() {}` components ([d26fee7](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/d26fee7d22569884afd07c4fb7e402e8f54ee865))
+* analyze effects with omitted or variable deps ([3e7dc7e](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/3e7dc7e3cf8aa4fd25c7c71b13eb852cfbf60b9b))
+* don't fall-through to entire enclosing body when `useEffect` fn arg is opaque ([a7039f3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/a7039f363a069883ca0cd3b02489acc895746f22))
+* follow member access on aliases ([0faca35](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/0faca35e082b0a334e62a3d24451a56c790ac5de))
+* follow only stable, invoked aliases in call chains ([54c13f6](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/54c13f6d3ba794892ee042f1336a35ef2740030d))
+* handle defaults in useState destructuring ([36bda5f](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/36bda5f59d555282c2ed88387c4af07a1824162e))
+* ignore non-function effect callbacks ([e6fa03b](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/e6fa03ba1ac5573d0b4d3e00836207d127df1c3a))
+* **no-initialize-state:** treat aliased setters in deps as setters ([997216e](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/997216e2d8e68df6460cb55f6f825445d3d0cb06))
+* **no-pass-live-state-to-parent:** remove duplicated quotes from message ([96a22c5](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/96a22c58dce13443cc0aa746545a9004a7761b68))
+* **no-reset-all-state-on-prop-change:** count useState calls instead of state reads ([23e5bea](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/23e5bea9d275f4e9095629ed240b2c92ae33accd))
+* **no-reset-all-state-on-prop-change:** flag when the same setter is called twice ([80a0ec0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/80a0ec0501be38d90df276cbb155bc32fc277b72))
+* **no-reset-all-state-on-prop-change:** handle wrapper setters ([493d052](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/493d052fad67f8e60a2940cc8634193345854e13))
+* report the written state for wrapper setters ([7bf9dc9](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/7bf9dc9bec0fd729c6e4848c75b5be167bd501e0))
+
 ## [1.1.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.0.3...v1.1.0) (2026-11-01)
 
 
