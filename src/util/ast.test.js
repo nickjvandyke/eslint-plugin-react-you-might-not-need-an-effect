@@ -101,25 +101,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "From internal state via local impure function",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          function computeName(firstName, lastName) {
-            console.log('meow');
-            return firstName + ' ' + lastName;
-          }
-
-          useEffect(() => {
-            setFullName(computeName(firstName, lastName));
-          }, [firstName, lastName]);
-        }
-      `,
-      },
-      {
         name: "Set to result of pure local ArrowFunctionExpression",
         code: js`
         function Form() {

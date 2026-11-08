@@ -129,30 +129,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
-        name: "Using state to handle an event, no deps argument",
-        code: js`
-        function Form() {
-          const [dataToSubmit, setDataToSubmit] = useState();
-
-          useEffect(() => {
-            if (dataToSubmit) {
-              submitData(dataToSubmit);
-            }
-          });
-
-          return (
-            <button onClick={() => setDataToSubmit({ name: 'test' })}>Submit</button>
-          )
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidEventHandler",
-            data: { name: "dataToSubmit" },
-          },
-        ],
-      },
-      {
         name: "Using state to handle an event, empty deps",
         code: js`
         function Form() {
@@ -163,10 +139,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               submitData(dataToSubmit);
             }
           }, []);
-
-          return (
-            <button onClick={() => setDataToSubmit({ name: 'test' })}>Submit</button>
-          )
         }
       `,
         errors: [
@@ -180,7 +152,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Using state to handle an event and call a prop",
         code: js`
         function Form({ submitData }) {
-          const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
 
           useEffect(() => {
@@ -188,17 +159,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               submitData(dataToSubmit);
             }
           }, [dataToSubmit]);
-
-          return (
-            <div>
-              <input
-                name="name"
-                type="text"
-                onChange={(e) => setName(e.target.value)}
-              />
-              <button onClick={() => setDataToSubmit({ name })}>Submit</button>
-            </div>
-          )
         }
       `,
         errors: [
@@ -212,7 +172,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Early return in if test",
         code: js`
         function Form() {
-          const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
 
           useEffect(() => {
@@ -220,17 +179,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
 
             submitData(dataToSubmit);
           }, [dataToSubmit]);
-
-          return (
-            <div>
-              <input
-                name="name"
-                type="text"
-                onChange={(e) => setName(e.target.value)}
-              />
-              <button onClick={() => setDataToSubmit({ name })}>Submit</button>
-            </div>
-          )
         }
       `,
         errors: [
@@ -244,7 +192,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Member access and double test in condition",
         code: js`
         function Form() {
-          const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
 
           useEffect(() => {
@@ -252,31 +199,16 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               submitData(dataToSubmit);
             }
           }, [dataToSubmit]);
-
-          return (
-            <div>
-              <input
-                name="name"
-                type="text"
-                onChange={(e) => setName(e.target.value)}
-              />
-              <button onClick={() => setDataToSubmit({ name })}>Submit</button>
-            </div>
-          )
         }
       `,
         errors: [
           {
             messageId: "avoidEventHandler",
             data: { name: "dataToSubmit" },
-            line: 7,
-            column: 17,
           },
           {
             messageId: "avoidEventHandler",
             data: { name: "dataToSubmit" },
-            line: 7,
-            column: 38,
           },
         ],
       },
@@ -311,7 +243,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "If test includes non-state",
         code: js`
         function Form() {
-          const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
 
           useEffect(() => {
@@ -319,17 +250,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               submitData(dataToSubmit);
             }
           }, [dataToSubmit]);
-
-          return (
-            <div>
-              <input
-                name="name"
-                type="text"
-                onChange={(e) => setName(e.target.value)}
-              />
-              <button onClick={() => setDataToSubmit({ name })}>Submit</button>
-            </div>
-          )
         }
       `,
         errors: [

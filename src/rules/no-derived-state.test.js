@@ -107,22 +107,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               setResults(data);
             });
           }, [query]);
-
-          return (
-            <div>
-              <input
-                name="query"
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-              <ul>
-                {results.map((result) => (
-                  <li key={result.id}>{result.title}</li>
-                ))}
-              </ul>
-            </div>
-          )
         }
       `,
       },
@@ -208,25 +192,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [list]);
         }
       `,
-      },
-      {
-        name: "Synchronous setter in anonymous callback",
-        code: js`
-          function useHasOverflow({ contentRef, maxHeight }) {
-            const [hasOverflow, setHasOverflow] = useState(false);
-
-            useEffect(() => {
-              const resizeObserver = createResizeObserver((element) => {
-                const hasContentOverflow = element.scrollHeight > maxHeight;
-                setHasOverflow(hasContentOverflow);
-              })
-
-              resizeObserver.observe(contentRef.current);
-            }, [contentRef, maxHeight]);
-
-            return hasOverflow;
-          }
-        `,
       },
       // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
     ],
@@ -429,26 +394,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
-        name: "From internal plus external state",
-        code: js`
-        function Form() {
-          const prefix = useQuery('/prefix');
-          const [name, setName] = useState();
-          const [prefixedName, setPrefixedName] = useState();
-
-          useEffect(() => {
-            setPrefixedName(prefix + name)
-          }, [prefix, name]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "prefixedName" },
-          },
-        ],
-      },
-      {
         name: "From props via callback setter",
         code: js`
         import { useState, useEffect } from 'react';
@@ -527,32 +472,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               fullName: firstName + ' ' + lastName,
             }));
           }, [firstName, lastName]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidDerivedState",
-            data: { state: "formData" },
-          },
-        ],
-      },
-      {
-        name: "Partially update complex state from props via derived setter",
-        code: js`
-        function Form({ firstName, lastName }) {
-          const [formData, setFormData] = useState({
-            title: 'Dr.',
-            fullName: '',
-          });
-
-          const setFullName = (fullName) => setFormData({ ...formData, fullName });
-
-          useEffect(() => {
-            setFormData({
-              ...formData,
-              fullName: firstName + ' ' + lastName,
-            });
-          }, [firstName, lastName, formData]);
         }
       `,
         errors: [

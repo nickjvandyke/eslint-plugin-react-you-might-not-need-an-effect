@@ -113,62 +113,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Pass internal state to HOC prop",
-        code: js`
-        import { withRouter } from 'react-router-dom';
-
-        const MyComponent = withRouter(({ history }) => {
-          const [option, setOption] = useState();
-
-          useEffect(() => {
-            history.push(option);
-          }, [option]);
-        });
-      `,
-      },
-      {
-        name: "Pass external state to HOC prop",
-        code: js`
-        import { withRouter } from 'react-router-dom';
-
-        const MyComponent = withRouter(({ history }) => {
-          const data = useSomeAPI();
-
-          useEffect(() => {
-            if (data.error) {
-              history.push('/error');
-            }
-          }, [data]);
-        });
-      `,
-      },
-      {
-        name: "Pass ref to parent",
-        code: js`
-        const Child = ({ onRef }) => {
-          const ref = useRef();
-
-          useEffect(() => {
-            onRef(ref.current);
-          }, [onRef, ref.current]);
-        }
-      `,
-      },
-      {
-        name: "Pass ref to parent, with renamed useRef import",
-        code: js`
-        import { useRef as useReference, useEffect } from 'react';
-
-        const Child = ({ onRef }) => {
-          const ref = useReference();
-
-          useEffect(() => {
-            onRef(ref.current);
-          }, [onRef, ref.current]);
-        }
-      `,
-      },
-      {
         // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
         // Alternate solutions exist, but this is arguably the most readable.
         name: "Pass cleanup function that depends on ref",
@@ -210,32 +154,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               }
             }).unsubscribe;
           }, [actorRef]);
-        }
-      `,
-      },
-      {
-        name: "Register callback on own ref to pass data to parent",
-        code: js`
-        const Child = ({ onClicked }) => {
-          const ref = useRef();
-
-          useEffect(() => {
-            ref.current.addEventListener('click', (event) => {
-              onClicked(event);
-            });
-          }, [onClicked, ref]);
-        }
-      `,
-      },
-      {
-        name: "Register external callback on ref prop",
-        code: js`
-        const Child = ({ ref }) => {
-          useEffect(() => {
-            ref.current.addEventListener('click', (event) => {
-              console.log('Clicked', event);
-            });
-          }, [ref]);
         }
       `,
       },
@@ -292,24 +210,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           {
             message:
               'Avoid passing data to parents in an effect. Instead, fetch "useFetch" in the parent and pass it down to "Child" as a prop.',
-          },
-        ],
-      },
-      {
-        name: "Pass external state, no deps argument",
-        code: js`
-        const Child = ({ onFetched }) => {
-          const data = useSomeAPI();
-
-          useEffect(() => {
-            onFetched(data);
-          });
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingDataToParentInComponent",
-            data: { data: '"useSomeAPI"', name: '"Child"' },
           },
         ],
       },

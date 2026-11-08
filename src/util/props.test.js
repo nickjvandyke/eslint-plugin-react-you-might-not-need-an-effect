@@ -1,6 +1,7 @@
 import { RuleTester } from "eslint";
 import plugin from "../index.ts";
 import noDerivedState from "../rules/no-derived-state.ts";
+import noPassLiveStateToParent from "../rules/no-pass-live-state-to-parent.ts";
 
 const js = String.raw;
 
@@ -8,6 +9,13 @@ const avoidDerivedState = (state) => [
   {
     messageId: "avoidDerivedState",
     data: { state },
+  },
+];
+
+const avoidPassingLiveState = (state, name) => [
+  {
+    messageId: "avoidPassingLiveStateToParentInComponent",
+    data: { state, name },
   },
 ];
 
@@ -35,7 +43,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Non-destructured props",
         code: js`
         function DoubleCounter(props) {
-          const [count, setCount] = useState(0);
           const [doubleCount, setDoubleCount] = useState(0);
 
           useEffect(() => setDoubleCount(props.count * 2), [props.count]);
@@ -47,7 +54,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Destructured props",
         code: js`
         function DoubleCounter({ propCount }) {
-          const [count, setCount] = useState(0);
           const [doubleCount, setDoubleCount] = useState(0);
 
           useEffect(() => setDoubleCount(propCount * 2), [propCount]);
@@ -59,7 +65,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Renamed destructured props",
         code: js`
         function DoubleCounter({ count: countProp }) {
-          const [count, setCount] = useState(0);
           const [doubleCount, setDoubleCount] = useState(0);
 
           useEffect(() => setDoubleCount(countProp * 2), [countProp]);
@@ -71,7 +76,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Doubly deep MemberExpression in effect",
         code: js`
         function DoubleCounter(props) {
-          const [count, setCount] = useState(0);
           const [doubleCount, setDoubleCount] = useState(0);
 
           useEffect(() => setDoubleCount(props.nested.count * 2), [props.nested.count]);
@@ -97,7 +101,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         name: "Member access in effect body but not in deps",
         code: js`
         function DoubleCounter(props) {
-          const [count, setCount] = useState(0);
           const [doubleCount, setDoubleCount] = useState(0);
 
           useEffect(() => setDoubleCount(props.count * 2), [props]);
@@ -142,6 +145,72 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: avoidDerivedState("isDark"),
+      },
+    ],
+  },
+);
+
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "props: call aliases",
+  noPassLiveStateToParent,
+  {
+    valid: [],
+    invalid: [
+      {
+        name: "Pass live internal state via derived prop",
+        code: js`
+        const Child = ({ onFetched }) => {
+          const [data, setData] = useState();
+          const onFetchedWrapper = (v) => onFetched(v);
+
+          useEffect(() => {
+            onFetchedWrapper(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: avoidPassingLiveState('"data"', '"Child"'),
+      },
+      {
+        name: "Pass live internal state via later-destructured prop",
+        code: js`
+        const Child = (props) => {
+          const [data, setData] = useState();
+          const { onFetched } = props;
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: avoidPassingLiveState('"data"', '"Child"'),
+      },
+      {
+        name: "Pass live internal state via member-access alias of a prop",
+        code: js`
+        const Child = (props) => {
+          const [data, setData] = useState();
+          const onFetched = props.onFetched;
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: avoidPassingLiveState('"data"', '"Child"'),
+      },
+      {
+        name: "Pass live internal state via member destructuring of a prop",
+        code: js`
+        const Child = (props) => {
+          const [data, setData] = useState();
+          const { onFetched } = props.callbacks;
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: avoidPassingLiveState('"data"', '"Child"'),
       },
     ],
   },

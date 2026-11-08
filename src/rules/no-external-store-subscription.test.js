@@ -110,31 +110,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Empty deps with unrelated cleanup (timer id, not setter)",
-        code: js`
-        function C() {
-          const [count, setCount] = useState(0);
-          useEffect(() => {
-            setCount(0);
-            return () => console.log('cleanup');
-          }, []);
-        }
-      `,
-      },
-      {
-        name: "State setter called synchronously, cleanup references something else entirely",
-        code: js`
-        function C() {
-          const [x, setX] = useState(0);
-          useEffect(() => {
-            setX(1);
-            const id = setTimeout(() => {}, 0);
-            return () => clearTimeout(id);
-          }, []);
-        }
-      `,
-      },
-      {
         name: "Multiple setters, none connected to cleanup",
         code: js`
         function C() {

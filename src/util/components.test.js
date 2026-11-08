@@ -1,6 +1,7 @@
 import { RuleTester } from "eslint";
 import plugin from "../index.ts";
 import noDerivedState from "../rules/no-derived-state.ts";
+import noPassLiveStateToParent from "../rules/no-pass-live-state-to-parent.ts";
 
 const js = String.raw;
 
@@ -8,6 +9,13 @@ const avoidDerivedState = (state) => [
   {
     messageId: "avoidDerivedState",
     data: { state },
+  },
+];
+
+const avoidPassingLiveState = (state, name) => [
+  {
+    messageId: "avoidPassingLiveStateToParentInComponent",
+    data: { state, name },
   },
 ];
 
@@ -101,6 +109,119 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: avoidDerivedState("state"),
+      },
+    ],
+  },
+);
+
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "components: HOCs and function expressions",
+  noPassLiveStateToParent,
+  {
+    valid: [
+      {
+        name: "Pass internal state to HOC prop",
+        code: js`
+        import { withRouter } from 'react-router-dom';
+
+        const MyComponent = withRouter(({ history }) => {
+          const [option, setOption] = useState();
+
+          useEffect(() => {
+            history.push(option);
+          }, [option]);
+        });
+      `,
+      },
+      {
+        name: "Pass internal state to weird HOC prop",
+        code: js`
+        const MyComponent = inject('ourStore')(observer(({ ourStore }) => {
+          const [option, setOption] = useState();
+
+          useEffect(() => {
+            ourStore.push(option);
+          }, [option]);
+        }));
+      `,
+      },
+      {
+        name: "Pass internal state to separately-wrapped HOC prop",
+        code: js`
+        import { withRouter } from 'react-router-dom';
+
+        const MyComponent = ({ history }) => {
+          const [option, setOption] = useState();
+
+          useEffect(() => {
+            history.push(option);
+          }, [option]);
+        };
+
+        const wrapped = withRouter(MyComponent);
+      `,
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/46
+        name: "Pass internal state to weirdly-separately-wrapped HOC prop",
+        code: js`
+        import { withRouter } from 'react-router-dom';
+
+        const MyComponent = ({ history }) => {
+          const [option, setOption] = useState();
+
+          useEffect(() => {
+            history.push(option);
+          }, [option]);
+        };
+
+        const EnhancedComponent = inject('ourStore')(observer(MyComponent))
+        export default EnhancedComponent
+      `,
+      },
+      {
+        name: "Pass external state to HOC prop",
+        code: js`
+        import { withRouter } from 'react-router-dom';
+
+        const MyComponent = withRouter(({ history }) => {
+          const data = useSomeAPI();
+
+          useEffect(() => {
+            if (data.error) {
+              history.push(data.error);
+            }
+          }, [data]);
+        });
+      `,
+      },
+    ],
+    invalid: [
+      {
+        name: "Pass live internal state from a function-expression component",
+        code: js`
+        const Child = function ({ onFetched }) {
+          const [data, setData] = useState();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+        errors: avoidPassingLiveState('"data"', '"Child"'),
+      },
+      {
+        name: "Pass live internal state from a memoized function-expression component",
+        code: js`
+        const Child = memo(function ({ onFetched }) {
+          const [data, setData] = useState();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        })
+      `,
+        errors: avoidPassingLiveState('"data"', '"Child"'),
       },
     ],
   },

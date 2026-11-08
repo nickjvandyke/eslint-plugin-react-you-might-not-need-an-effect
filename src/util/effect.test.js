@@ -66,6 +66,20 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: 1,
       },
       {
+        name: "Effect with no dependency array",
+        code: js`
+        function DoubleCounter() {
+          const [count, setCount] = useState(0);
+          const [doubleCount, setDoubleCount] = useState(0);
+
+          useEffect(() => {
+            setDoubleCount(count * 2);
+          });
+        }
+      `,
+        errors: avoidDerivedState("doubleCount"),
+      },
+      {
         name: "Conditional useEffect",
         code: js`
         function DoubleCounter() {

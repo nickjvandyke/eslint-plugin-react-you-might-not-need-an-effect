@@ -2,6 +2,7 @@ import { RuleTester } from "eslint";
 import plugin from "../index.ts";
 import noDerivedState from "../rules/no-derived-state.ts";
 import noInitializeState from "../rules/no-initialize-state.ts";
+import noPassDataToParent from "../rules/no-pass-data-to-parent.ts";
 
 const js = String.raw;
 const config = { ...plugin.configs.recommended, rules: {} };
@@ -488,4 +489,24 @@ new RuleTester(config).run("hooks: imports", noDerivedState, {
       errors: avoidDerivedState("isDark"),
     },
   ],
+});
+
+new RuleTester(config).run("hooks: useRef imports", noPassDataToParent, {
+  valid: [
+    {
+      name: "Renamed useRef import",
+      code: js`
+        import { useRef as useReference, useEffect } from 'react';
+
+        const Child = ({ onRef }) => {
+          const ref = useReference();
+
+          useEffect(() => {
+            onRef(ref.current);
+          }, [onRef, ref.current]);
+        }
+      `,
+    },
+  ],
+  invalid: [],
 });

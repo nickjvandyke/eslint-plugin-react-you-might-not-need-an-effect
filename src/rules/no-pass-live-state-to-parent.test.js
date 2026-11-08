@@ -87,82 +87,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Pass internal state to HOC prop",
-        code: js`
-        import { withRouter } from 'react-router-dom';
-
-        const MyComponent = withRouter(({ history }) => {
-          const [option, setOption] = useState();
-
-          useEffect(() => {
-            history.push(option);
-          }, [option]);
-        });
-      `,
-      },
-      {
-        name: "Pass internal state to weird HOC prop",
-        code: js`
-        const MyComponent = inject('ourStore')(observer(({ ourStore }) => {
-          const [option, setOption] = useState();
-
-          useEffect(() => {
-            ourStore.push(option);
-          }, [option]);
-        }));
-      `,
-      },
-      {
-        name: "Pass internal state to separately-wrapped HOC prop",
-        code: js`
-        import { withRouter } from 'react-router-dom';
-
-        const MyComponent = ({ history }) => {
-          const [option, setOption] = useState();
-
-          useEffect(() => {
-            history.push(option);
-          }, [option]);
-        };
-
-        const wrapped = withRouter(MyComponent);
-      `,
-      },
-      {
-        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/46
-        name: "Pass internal state to weirdly-separately-wrapped HOC prop",
-        code: js`
-        import { withRouter } from 'react-router-dom';
-
-        const MyComponent = ({ history }) => {
-          const [option, setOption] = useState();
-
-          useEffect(() => {
-            history.push(option);
-          }, [option]);
-        };
-
-        const EnhancedComponent = inject('ourStore')(observer(MyComponent))
-        export default EnhancedComponent
-      `,
-      },
-      {
-        name: "Pass external state to HOC prop",
-        code: js`
-        import { withRouter } from 'react-router-dom';
-
-        const MyComponent = withRouter(({ history }) => {
-          const data = useSomeAPI();
-
-          useEffect(() => {
-            if (data.error) {
-              history.push(data.error);
-            }
-          }, [data]);
-        });
-      `,
-      },
-      {
         name: "Pass ref to parent",
         code: js`
         const Child = ({ onRef }) => {
@@ -204,31 +128,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
-        name: "Pass live internal state, no deps argument",
-        code: js`
-        const Child = ({ onTextChanged }) => {
-          const [text, setText] = useState();
-
-          useEffect(() => {
-            onTextChanged(text);
-          });
-
-          return (
-            <input
-              type="text"
-              onChange={(e) => setText(e.target.value)}
-            />
-          );
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"text"', name: '"Child"' },
-          },
-        ],
-      },
-      {
         name: "Pass live internal state, empty deps",
         code: js`
         const Child = ({ onTextChanged }) => {
@@ -237,13 +136,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             onTextChanged(text);
           }, []);
-
-          return (
-            <input
-              type="text"
-              onChange={(e) => setText(e.target.value)}
-            />
-          );
         }
       `,
         errors: [
@@ -281,13 +173,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             onTextChanged(text, data);
           }, [onTextChanged, text, data]);
-
-          return (
-            <input
-              type="text"
-              onChange={(e) => setText(e.target.value)}
-            />
-          );
         }
       `,
         errors: [
@@ -307,13 +192,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
             const firstChar = text[0];
             onTextChanged(firstChar);
           }, [onTextChanged, text]);
-
-          return (
-            <input
-              type="text"
-              onChange={(e) => setText(e.target.value)}
-            />
-          );
         }
       `,
         errors: [
@@ -324,48 +202,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
-        name: "Pass live internal state via derived prop",
-        code: js`
-        const Child = ({ onFetched }) => {
-          const [data, setData] = useState();
-          const onFetchedWrapper = (v) => onFetched(v);
-
-          useEffect(() => {
-            onFetchedWrapper(data);
-          }, [onFetched, data]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"data"', name: '"Child"' },
-          },
-        ],
-      },
-      {
-        name: "Pass live internal state via later-destructured prop",
-        code: js`
-        const Child = (props) => {
-          const [data, setData] = useState();
-          const { onFetched } = props;
-
-          useEffect(() => {
-            onFetched(data);
-          }, [onFetched, data]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"data"', name: '"Child"' },
-          },
-        ],
-      },
-      {
         name: "Pass final internal state",
         code: js`
         function Form({ onSubmit }) {
-          const [name, setName] = useState();
           const [dataToSubmit, setDataToSubmit] = useState();
 
           useEffect(() => {
@@ -373,17 +212,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
 
             onSubmit(dataToSubmit);
           }, [dataToSubmit]);
-
-          return (
-            <div>
-              <input
-                name="name"
-                type="text"
-                onChange={(e) => setName(e.target.value)}
-              />
-              <button onClick={() => setDataToSubmit({ name })}>Submit</button>
-            </div>
-          )
         }
       `,
         errors: [
@@ -409,80 +237,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           {
             message:
               'Avoid passing live state to parents in an effect. Instead, lift "text" and "count" to the parent and pass it down to "Child" as a prop.',
-          },
-        ],
-      },
-      {
-        name: "Pass live internal state via member-access alias of a prop",
-        code: js`
-        const Child = (props) => {
-          const [data, setData] = useState();
-          const onFetched = props.onFetched;
-
-          useEffect(() => {
-            onFetched(data);
-          }, [onFetched, data]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"data"', name: '"Child"' },
-          },
-        ],
-      },
-      {
-        name: "Pass live internal state via member destructuring of a prop",
-        code: js`
-        const Child = (props) => {
-          const [data, setData] = useState();
-          const { onFetched } = props.callbacks;
-
-          useEffect(() => {
-            onFetched(data);
-          }, [onFetched, data]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"data"', name: '"Child"' },
-          },
-        ],
-      },
-      {
-        name: "Pass live internal state from a function-expression component",
-        code: js`
-        const Child = function ({ onFetched }) {
-          const [data, setData] = useState();
-
-          useEffect(() => {
-            onFetched(data);
-          }, [onFetched, data]);
-        }
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"data"', name: '"Child"' },
-          },
-        ],
-      },
-      {
-        name: "Pass live internal state from a memoized function-expression component",
-        code: js`
-        const Child = memo(function ({ onFetched }) {
-          const [data, setData] = useState();
-
-          useEffect(() => {
-            onFetched(data);
-          }, [onFetched, data]);
-        })
-      `,
-        errors: [
-          {
-            messageId: "avoidPassingLiveStateToParentInComponent",
-            data: { state: '"data"', name: '"Child"' },
           },
         ],
       },
