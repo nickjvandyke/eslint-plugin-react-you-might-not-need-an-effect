@@ -6,6 +6,8 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "allowJs": true,

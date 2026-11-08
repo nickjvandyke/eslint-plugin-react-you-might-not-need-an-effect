@@ -27,6 +27,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 ## Key conventions
 
 - ESLint **flat config only** in this repo (`eslint.config.js`). Uses `@eslint/js` recommended + `eslint-plugin-eslint-plugin` + `eslint-plugin-n`.
+- `**/*.ts` files are parsed with `@typescript-eslint/parser`. The core `no-unused-vars` rule is off for TypeScript because it misreads type positions; `tsgo` (`noUnusedLocals`, `noUnusedParameters`) covers unused values.
 - Tests need Node >= 22.18 (they import `.ts` files directly, which needs native type stripping). The published package keeps `engines.node` at `>=14`.
 - `useLayoutEffect` is intentionally excluded from all rules (considered a valid DOM-interaction effect).
 - `React.*` namespace calls (`React.useEffect`, `React.useState`) are supported alongside direct imports.

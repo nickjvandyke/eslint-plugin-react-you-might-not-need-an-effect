@@ -1,4 +1,5 @@
 import eslint from "@eslint/js";
+import tsParser from "@typescript-eslint/parser";
 import eslintPlugin from "eslint-plugin-eslint-plugin";
 import nodePlugin from "eslint-plugin-n";
 import globals from "globals";
@@ -15,6 +16,21 @@ export default [
       globals: {
         ...globals.node,
       },
+    },
+  },
+  {
+    files: ["**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+    },
+    rules: {
+      // The core rule does not understand TypeScript type positions and reports
+      // their parameters as unused. `tsgo` checks unused values instead.
+      "no-unused-vars": "off",
     },
   },
   {
