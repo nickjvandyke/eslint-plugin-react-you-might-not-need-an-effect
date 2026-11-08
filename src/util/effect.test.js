@@ -27,6 +27,34 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
+      {
+        name: "Effect callback is a render-time call result, so it is opaque",
+        code: js`
+        function DoubleCounter() {
+          const [count, setCount] = useState(0);
+          const [doubleCount, setDoubleCount] = useState(0);
+          const effect = makeEffect(setDoubleCount(count * 2));
+
+          useEffect(effect, [count]);
+        }
+      `,
+      },
+      {
+        name: "Effect callback is a function declaration with a cleanup",
+        code: js`
+        function useThing() {
+          const [count, setCount] = useState(0);
+          const [doubleCount, setDoubleCount] = useState(0);
+
+          function subscribe() {
+            setDoubleCount(count * 2);
+            return () => {};
+          }
+
+          useEffect(subscribe, [count]);
+        }
+      `,
+      },
     ],
     invalid: [
       {
@@ -123,6 +151,22 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: avoidDerivedState("name"),
+      },
+      {
+        name: "Passing a function variable to effect",
+        code: js`
+        function DoubleCounter() {
+          const [count, setCount] = useState(0);
+          const [doubleCount, setDoubleCount] = useState(0);
+
+          const derive = () => {
+            setDoubleCount(count * 2);
+          };
+
+          useEffect(derive, [count]);
+        }
+      `,
+        errors: avoidDerivedState("doubleCount"),
       },
     ],
   },

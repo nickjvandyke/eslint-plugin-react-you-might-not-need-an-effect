@@ -3,7 +3,8 @@ import {
   getDefinitionValueNode,
   getDownstreamRefs,
   getRef,
-  isFunctionExpression,
+  isFunction,
+  type FunctionNode,
   type ReturnStatementNode,
 } from "./ast.ts";
 import { isUseEffect } from "./hooks.ts";
@@ -13,7 +14,7 @@ import { unwrapExpression } from "./typescript.ts";
 export type CleanupReturn = ReturnStatementNode & { argument: Rule.Node };
 
 export interface Effect {
-  fn: Rule.Node;
+  fn: FunctionNode;
   fnRefs: Scope.Reference[];
   depsRefs: Scope.Reference[];
   cleanup: CleanupReturn | undefined;
@@ -22,17 +23,22 @@ export interface Effect {
 const getEffectFn = (
   context: Rule.RuleContext,
   node: Rule.Node,
-): Rule.Node | undefined => {
+): FunctionNode | undefined => {
   if (node.type !== "CallExpression") return undefined;
   const [effectFnArg] = node.arguments;
   if (!effectFnArg) return undefined;
   const effectFn = unwrapExpression(effectFnArg);
-  if (isFunctionExpression(effectFn)) {
+  if (isFunction(effectFn)) {
     return effectFn;
   } else if (effectFn.type === "Identifier") {
     const def = getRef(context, effectFn)?.resolved?.defs[0];
+    // A `FunctionDeclaration` is already the function node.
+    if (def?.type === "FunctionName") return def.node;
     const valueNode = def && getDefinitionValueNode(def);
-    return valueNode && unwrapExpression(valueNode);
+    const resolved = valueNode && unwrapExpression(valueNode);
+    // Ignore values that are not functions, e.g. the render-time call result
+    // of `const fn = makeEffect(state)`.
+    return resolved && isFunction(resolved) ? resolved : undefined;
   }
 
   return undefined;
@@ -44,12 +50,10 @@ const getEffectDeps = (node: Rule.Node): Rule.Node | undefined => {
   return deps ? unwrapExpression(deps) : undefined;
 };
 
-const getEffectCleanup = (effectFn: Rule.Node): CleanupReturn | undefined => {
-  if (
-    !isFunctionExpression(effectFn) ||
-    effectFn.body.type !== "BlockStatement"
-  )
-    return undefined;
+const getEffectCleanup = (
+  effectFn: FunctionNode,
+): CleanupReturn | undefined => {
+  if (effectFn.body.type !== "BlockStatement") return undefined;
 
   return [...effectFn.body.body].reverse().find(
     // Check `.argument` so we don't consider bare `return`s
