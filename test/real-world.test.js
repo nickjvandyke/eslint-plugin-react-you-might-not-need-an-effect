@@ -664,6 +664,37 @@ describe("recommended rules on real-world code", () => {
           },
         ],
       },
+      {
+        name: "React Query: state reset on fresh data",
+        // `data` only says *when* to reset. It does not supply the new value, so
+        // the dependency is a trigger, not a source. `no-adjust-state-on-prop-change`
+        // owns this case; `no-derived-state` skips it.
+        code: js`
+          import { useState, useEffect } from 'react'
+          import { useQuery } from '@tanstack/react-query'
+
+          function Selection() {
+            const { data } = useQuery({
+              queryKey: ['items'],
+              queryFn: () => fetchItems(),
+            })
+            const [selection, setSelection] = useState(null)
+
+            useEffect(() => {
+              setSelection(null)
+            }, [data])
+
+            return <div>{selection}</div>
+          }
+        `,
+        messages: [
+          {
+            ruleId:
+              "react-you-might-not-need-an-effect/no-adjust-state-on-prop-change",
+            messageId: "avoidAdjustingStateWhenAValueChanges",
+          },
+        ],
+      },
     ].forEach(({ name, code, messages }) => {
       it(name, async () => {
         const results = await eslint.lintText(code);

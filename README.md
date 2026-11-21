@@ -207,7 +207,7 @@ function ProductPage({ product, addToCart }) {
 
 ### [no-adjust-state-on-prop-change](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)
 
-Disallow adjusting state in an effect when a prop changes:
+Disallow adjusting state in an effect when an external value changes. External values are props, `useContext` values, and hook return values.
 
 ```js
 function List({ items }) {
@@ -215,10 +215,25 @@ function List({ items }) {
   const [selection, setSelection] = useState(null);
 
   useEffect(() => {
-    // ❌ Avoid adjusting state when a prop changes. Instead, adjust "selection" directly during render when "items" changes, or refactor your state to avoid this need entirely.
+    // ❌ Avoid adjusting state when "items" changes. Instead, adjust "selection" directly during render, or refactor your state to avoid this need entirely.
     // 📖 react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
     setSelection(null);
   }, [items]);
+}
+```
+
+Hook return values behave the same as props, because the hook owns the value:
+
+```js
+function Items() {
+  const { data } = useQuery("/items");
+  const [selection, setSelection] = useState(null);
+
+  useEffect(() => {
+    // ❌ Avoid adjusting state when "data" changes. Instead, adjust "selection" directly during render, or refactor your state to avoid this need entirely.
+    // 📖 react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+    setSelection(null);
+  }, [data]);
 }
 ```
 

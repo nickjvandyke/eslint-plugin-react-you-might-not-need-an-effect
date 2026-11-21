@@ -64,6 +64,60 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
+      {
+        name: "Set state to a value derived from an external hook value",
+        code: js`
+        function Items() {
+          const { data } = useQuery('/items');
+          const [items, setItems] = useState([]);
+
+          useEffect(() => {
+            setItems(data);
+          }, [data]);
+        }
+      `,
+      },
+      {
+        name: "Set state inside an async function when an external hook value changes",
+        code: js`
+        function Items() {
+          const { data } = useQuery('/items');
+          const [items, setItems] = useState([]);
+
+          useEffect(() => {
+            const load = async () => {
+              setItems(data);
+            };
+            load();
+          }, [data]);
+        }
+      `,
+      },
+      {
+        name: "Set ref value when an external hook value changes",
+        code: js`
+        function Items() {
+          const { data } = useQuery('/items');
+          const ref = useRef();
+
+          useEffect(() => {
+            ref.current.value = data;
+          }, [data]);
+        }
+      `,
+      },
+      {
+        name: "Set state to literal in a mount-only effect",
+        code: js`
+        function Items() {
+          const [selection, setSelection] = useState(null);
+
+          useEffect(() => {
+            setSelection(null);
+          }, []);
+        }
+      `,
+      },
     ],
     invalid: [
       {
@@ -77,9 +131,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: error("avoidAdjustingStateWhenAPropChanges", {
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
           state: "selection",
-          props: '"items"',
+          values: '"items"',
         }),
       },
       {
@@ -97,9 +151,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: error("avoidAdjustingStateWhenAPropChanges", {
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
           state: "selection",
-          props: '"items"',
+          values: '"items"',
         }),
       },
       {
@@ -111,12 +165,12 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
 
           useEffect(() => {
             setSelection(internalData);
-          }, [items, internalData]);
+          }, [items]);
         }
       `,
-        errors: error("avoidAdjustingStateWhenAPropChanges", {
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
           state: "selection",
-          props: '"items"',
+          values: '"items"',
         }),
       },
       {
@@ -131,9 +185,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: error("avoidAdjustingStateWhenAPropChanges", {
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
           state: "selection",
-          props: '"items"',
+          values: '"items"',
         }),
       },
       {
@@ -149,9 +203,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [result]);
         }
       `,
-        errors: error("avoidAdjustingStateWhenAPropChanges", {
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
           state: "error",
-          props: '"result"',
+          values: '"result"',
         }),
       },
       {
@@ -165,9 +219,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items, user]);
         }
       `,
-        errors: error("avoidAdjustingStateWhenAPropChanges", {
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
           state: "selection",
-          props: '"items" and "user"',
+          values: '"items" and "user"',
         }),
       },
       {
@@ -182,9 +236,80 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [items]);
         }
       `,
-        errors: error("avoidAdjustingStateWhenAPropChanges", {
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
           state: "selection",
-          props: '"items"',
+          values: '"items"',
+        }),
+      },
+      {
+        name: "Set state to literal when an external hook value changes",
+        code: js`
+        function Items() {
+          const { data } = useQuery('/items');
+          const [selection, setSelection] = useState(null);
+
+          useEffect(() => {
+            setSelection(null);
+          }, [data]);
+        }
+      `,
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
+          state: "selection",
+          values: '"data"',
+        }),
+      },
+      {
+        name: "Set state to another external hook value when an external hook value changes",
+        code: js`
+        function Items() {
+          const { data } = useQuery('/items');
+          const preferred = usePreferredSelection();
+          const [selection, setSelection] = useState(null);
+
+          useEffect(() => {
+            setSelection(preferred);
+          }, [data]);
+        }
+      `,
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
+          state: "selection",
+          values: '"data"',
+        }),
+      },
+      {
+        name: "Conditionally set state to literal when an external hook value changes",
+        code: js`
+        function Items() {
+          const { data } = useQuery('/items');
+          const [selection, setSelection] = useState(null);
+
+          useEffect(() => {
+            if (data) {
+              setSelection(null);
+            }
+          }, [data]);
+        }
+      `,
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
+          state: "selection",
+          values: '"data"',
+        }),
+      },
+      {
+        name: "Set state to literal when a prop and an external hook value change",
+        code: js`
+        function Items({ filter }) {
+          const { data } = useQuery('/items');
+          const [selection, setSelection] = useState(null);
+
+          useEffect(() => {
+            setSelection(null);
+          }, [filter, data]);
+        }
+      `,
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
+          state: "selection",
+          values: '"filter" and "data"',
         }),
       },
     ],

@@ -168,6 +168,16 @@ export const isUseState = (
 export const isUseRef = (context: Rule.RuleContext, node: Rule.Node): boolean =>
   isReactHook(context, node, "useRef");
 
+export const isUseMemo = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): boolean => isReactHook(context, node, "useMemo");
+
+export const isUseCallback = (
+  context: Rule.RuleContext,
+  node: Rule.Node,
+): boolean => isReactHook(context, node, "useCallback");
+
 // `useContext` returns a value that is owned by a parent, just like a prop.
 // It changes outside the component and re-renders the component on change.
 export const isUseContext = (
