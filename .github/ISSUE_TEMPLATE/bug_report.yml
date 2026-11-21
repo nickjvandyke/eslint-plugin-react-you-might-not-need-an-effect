@@ -12,11 +12,11 @@ body:
       label: Did you check docs and existing issues?
       description: Make sure you checked all of the below before submitting an issue
       options:
-        - label: I have read the plugin docs
+        - label: I read the plugin docs
           required: true
-        - label: I have searched the existing issues
+        - label: I searched the existing issues
           required: true
-        - label: I have read [You Might Not Need An Effect](https://react.dev/learn/you-might-not-need-an-effect) and am reasonably confident that I *do* need an effect
+        - label: I read [You Might Not Need An Effect](https://react.dev/learn/you-might-not-need-an-effect) and I'm reasonably confident that I *do* need an effect
           required: true
   - type: input
     attributes:
