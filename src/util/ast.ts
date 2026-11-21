@@ -224,11 +224,20 @@ export const isConstant = (ref: Scope.Reference): boolean =>
   );
 
 export const isSynchronous = (node: Rule.Node, within: Rule.Node): boolean => {
-  if (node === within) {
+  if (isFunction(node) && node.async) {
+    // An async function returns a promise, so its body does not run to
+    // completion while the caller continues. This also ignores setters that
+    // run before the first `await` (for example a loading flag). We accept that
+    // false negative to avoid flagging the common fetch-then-set pattern.
+    return false;
+  } else if (node === within) {
     // Reached the top without finding any blocking conditions
     return true;
   } else if (
+    // Inside an awaited expression, e.g. `await fetchUser(id)`.
     node.type === "AwaitExpression" ||
+    // Inside an async function that is not awaited.
+    // `typescript-eslint/no-floating-promises` rule enforces the leading `void`.
     (node.type === "UnaryExpression" && node.operator === "void") ||
     // Inside a named or anonymous function that may be called later, either as a callback or by the developer.
     isFunction(node)
@@ -243,6 +252,12 @@ export const getSynchronousCallChain = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): Scope.Reference[] => {
+  // Only a ref that is itself invoked can start a synchronous call chain.
+  // An alias that is never called (e.g. `const set = setState`) is not a call.
+  if (!getCallExpr(ref)) {
+    return [];
+  }
+
   const findEnclosingFunction = (
     node: Rule.Node | undefined,
   ): Rule.Node | undefined => {
@@ -294,11 +309,12 @@ export const getSynchronousCallChain = (
     }
   };
 
-  // Only a ref that is itself invoked can start a synchronous call chain.
-  // An alias that is never called (e.g. `const set = setState`) is not a call.
-  if (!getCallExpr(ref)) {
-    return [];
-  }
+  // An alias declared in an async function inherits its asynchrony, so the
+  // chain must stop there too.
+  const isSynchronousAlias = (ref: Scope.Reference): boolean => {
+    const enclosingFn = findEnclosingFunction(ref.identifier);
+    return !enclosingFn || isSynchronous(ref.identifier, enclosingFn);
+  };
 
   const callExprRefs: Scope.Reference[] = [];
   ascend(context, ref, (upRef) => {
@@ -306,7 +322,7 @@ export const getSynchronousCallChain = (
     const enclosingFn = findEnclosingFunction(callExpr);
     if (callExpr && enclosingFn && isSynchronous(callExpr, enclosingFn)) {
       callExprRefs.push(upRef);
-    } else if (isAliasRef(upRef)) {
+    } else if (isAliasRef(upRef) && isSynchronousAlias(upRef)) {
       callExprRefs.push(upRef);
     } else {
       return false;

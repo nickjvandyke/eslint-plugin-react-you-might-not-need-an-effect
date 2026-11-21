@@ -560,6 +560,77 @@ describe("recommended rules on real-world code", () => {
           }
         `,
       },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/85
+        name: "Async data fetching inside the effect",
+        code: js`
+          import { useEffect, useState } from 'react';
+
+          const fetchUser = async (id) => ({ id });
+
+          export function DerivedArrow({ id }) {
+            const [user, setUser] = useState();
+            useEffect(() => {
+              const load = async () => {
+                const data = await fetchUser(id);
+                setUser(data);
+              };
+              load();
+            }, [id]);
+            return <p>{user?.id}</p>;
+          }
+
+          export function DerivedDeclaration({ id }) {
+            const [user, setUser] = useState();
+            useEffect(() => {
+              async function load() {
+                const data = await fetchUser(id);
+                setUser(data);
+              }
+              load();
+            }, [id]);
+            return <p>{user?.id}</p>;
+          }
+
+          export function AdjustOnPropChange({ id }) {
+            const [user, setUser] = useState();
+            useEffect(() => {
+              const load = async () => {
+                setUser(await fetchUser(id));
+              };
+              load();
+            }, [id]);
+            return <p>{user?.id}</p>;
+          }
+
+          export function InitializeOnMount({ id }) {
+            const [user, setUser] = useState();
+            useEffect(() => {
+              const load = async () => {
+                setUser(await fetchUser(id));
+              };
+              load();
+            }, []);
+            return <p>{user?.id}</p>;
+          }
+
+          export function Cancellable({ id }) {
+            const [user, setUser] = useState();
+            useEffect(() => {
+              let cancelled = false;
+              const load = async () => {
+                const data = await fetchUser(id);
+                if (!cancelled) setUser(data);
+              };
+              load();
+              return () => {
+                cancelled = true;
+              };
+            }, [id]);
+            return <p>{user?.id}</p>;
+          }
+        `,
+      },
     ].forEach(({ name, code }) => {
       it(name, async () => {
         const results = await eslint.lintText(code);

@@ -188,6 +188,78 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        name: "From external data retrieved in async arrow function called by the effect",
+        code: js`
+        function Component({ id }) {
+          const [user, setUser] = useState();
+
+          useEffect(() => {
+            const load = async () => {
+              const data = await fetchUser(id);
+              setUser(data);
+            };
+            load();
+          }, [id]);
+        }
+      `,
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/85
+        name: "From external data retrieved in async function declaration called by the effect",
+        code: js`
+        function Component({ id }) {
+          const [user, setUser] = useState();
+
+          useEffect(() => {
+            async function load() {
+              const data = await fetchUser(id);
+              setUser(data);
+            }
+            load();
+          }, [id]);
+        }
+      `,
+      },
+      {
+        // An alias declared inside the async function must not keep the call chain alive.
+        name: "From internal state via alias declared inside async function",
+        code: js`
+        function Component() {
+          const [count, setCount] = useState(0);
+          const [double, setDouble] = useState();
+
+          useEffect(() => {
+            const load = async () => {
+              const set = setDouble;
+              const data = await fetchDouble(count);
+              set(data);
+            };
+            load();
+          }, [count]);
+        }
+      `,
+      },
+      {
+        // Deliberate false negative: a setter before the first `await` runs
+        // synchronously (for example `setLoading(true)`), but we ignore the
+        // whole async function. Tracking await position would add complexity
+        // and false positives.
+        name: "Set state from a prop before the first await in an async function",
+        code: js`
+        function Component({ id }) {
+          const [lastId, setLastId] = useState();
+
+          useEffect(() => {
+            const load = async () => {
+              setLastId(id);
+              await fetchUser(id);
+            };
+            load();
+          }, [id]);
+        }
+      `,
+      },
+      {
         name: "Synchronous setter in anonymous function passed to constructor",
         code: js`
         function useHasOverflow({ contentRef, maxHeight }) {
