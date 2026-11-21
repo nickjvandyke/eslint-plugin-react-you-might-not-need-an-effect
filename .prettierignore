@@ -1,6 +1,7 @@
 .prettierignore
-CHANGELOG.md
-dist
+.gitignore
 .yarn
 .nvmrc
 yarn.lock
+CHANGELOG.md
+dist

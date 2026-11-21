@@ -14,4 +14,5 @@ dist
 #!.yarn/cache
 .pnp.*
 node_modules
-.aider*
+
+.DS_Store
