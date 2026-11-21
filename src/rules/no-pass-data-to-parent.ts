@@ -1,9 +1,8 @@
-import type { Rule, Scope } from "eslint";
+import type { Rule } from "eslint";
 import {
   getArgsUpstreamRefs,
   getCallExpr,
-  getUpstreamRefs,
-  isConstant,
+  getDownstreamRefs,
   isSynchronous,
 } from "../util/ast.ts";
 import {
@@ -12,9 +11,13 @@ import {
   isCustomHook,
 } from "../util/components.ts";
 import { getEffect } from "../util/effect.ts";
-import { isUseContext, isUseRef, isUseState } from "../util/hooks.ts";
-import { isProp, isPropCall } from "../util/props.ts";
-import { isRefCall, isRefCurrent } from "../util/refs.ts";
+import {
+  isExternalHookValue,
+  isExternalSource,
+  isProp,
+  isPropCall,
+} from "../util/props.ts";
+import { isRefCall } from "../util/refs.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -44,30 +47,27 @@ const rule: Rule.RuleModule = {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
 
-          const dataArgs = getArgsUpstreamRefs(context, ref)
-            // Leaves only because our "is data" check is essentially "is not all this other stuff",
-            // and the "other stuff" only works on leaf nodes.
-            // Mid-stream nodes are effectively nothing, and so would pass those.
-            // TODO: Is there a positive way to identify "data" nodes instead of process of elimination?
-            .filter((ref) => getUpstreamRefs(context, ref).length === 1)
-            .filter((ref) => {
-              // The ref may be the hook itself, e.g. `useState` from
-              // `const [value] = useState()`. Resolve its call first.
-              const hookCall = getCallExpr(ref);
-              const isHook = (
-                check: (context: Rule.RuleContext, node: Rule.Node) => boolean,
-              ) => Boolean(hookCall && check(context, hookCall));
-              return (
-                !isHook(isUseState) &&
-                !isHook(isUseContext) &&
-                !isContextObject(context, ref) &&
-                !isProp(context, ref) &&
-                !isHook(isUseRef) &&
-                !isRefCurrent(ref) &&
-                !isConstant(ref)
-              );
-            });
-          if (dataArgs.length === 0) return;
+          // A parent callback that receives data can be replaced: the parent
+          // can read that data itself. Three sources count as data:
+          // - an external hook value, including aliases and derived values
+          // - a global, or a call on a global or imported function
+          // - a call on a prop, which the parent can call directly
+          const names = [
+            ...getArgsUpstreamRefs(context, ref)
+              .filter((argRef) => isExternalHookValue(context, argRef))
+              .map((argRef) => argRef.identifier.name),
+            ...callExpr.arguments
+              .flatMap((arg) => getDownstreamRefs(context, arg))
+              .filter(
+                (argRef) =>
+                  isExternalSource(argRef) ||
+                  (isProp(context, argRef) &&
+                    getCallExpr(argRef) !== undefined),
+              )
+              .map((argRef) => argRef.identifier.name),
+          ];
+          const dataNames = [...new Set(names)];
+          if (dataNames.length === 0) return;
 
           const containingNode = findEnclosingComponentOrHook(context, node);
           const isInCustomHook = containingNode && isCustomHook(containingNode);
@@ -78,12 +78,7 @@ const rule: Rule.RuleModule = {
               ? "avoidPassingDataToParentInHook"
               : "avoidPassingDataToParentInComponent",
             data: {
-              // TODO: Due to leaves above, name is the function called.
-              // We'd prefer the variable name that it's assigned to.
-              data: dataArgs
-                .map((r) => r.identifier.name)
-                .map((n) => `"${n}"`)
-                .join(" and "),
+              data: dataNames.map((n) => `"${n}"`).join(" and "),
               name: (() => {
                 const n = getComponentOrHookName(containingNode);
                 return n
@@ -97,24 +92,6 @@ const rule: Rule.RuleModule = {
         });
     },
   }),
-};
-
-/**
- * The context object passed to `useContext` is never data.
- * `getArgsUpstreamRefs` can reach it through the `useContext` call that
- * declares the value we actually pass to the parent.
- */
-const isContextObject = (
-  context: Rule.RuleContext,
-  ref: Scope.Reference,
-): boolean => {
-  const identifier = ref.identifier;
-  const parent = identifier.parent;
-  return (
-    parent.type === "CallExpression" &&
-    parent.arguments.includes(identifier) &&
-    isUseContext(context, parent)
-  );
 };
 
 export default rule;

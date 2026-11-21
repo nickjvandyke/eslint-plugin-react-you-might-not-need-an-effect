@@ -115,6 +115,16 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        name: "Pass undefined",
+        code: js`
+        function Child({ onFetched }) {
+          useEffect(() => {
+            onFetched(undefined);
+          }, [onFetched]);
+        }
+      `,
+      },
+      {
         // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
         // Alternate solutions exist, but this is arguably the most readable.
         name: "Pass cleanup function that depends on ref",
@@ -189,7 +199,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: error("avoidPassingDataToParentInComponent", {
-          data: '"useSomeAPI"',
+          data: '"data"',
           name: '"Child"',
         }),
       },
@@ -209,7 +219,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: [
           {
             message:
-              'Avoid passing data to parents in an effect. Instead, fetch "useFetch" in the parent and pass it down to "Child" as a prop.',
+              'Avoid passing data to parents in an effect. Instead, fetch "value" in the parent and pass it down to "Child" as a prop.',
           },
         ],
       },
@@ -225,7 +235,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: error("avoidPassingDataToParentInComponent", {
-          data: '"useSomeAPI"',
+          data: '"data"',
           name: '"Child"',
         }),
       },
@@ -241,7 +251,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: error("avoidPassingDataToParentInHook", {
-          data: '"useSomeAPI"',
+          data: '"data"',
           name: '"useCustomHook"',
         }),
       },
@@ -258,7 +268,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: error("avoidPassingDataToParentInComponent", {
-          data: '"useSomeAPI"',
+          data: '"data"',
           name: '"Child"',
         }),
       },
@@ -277,9 +287,69 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: [
           {
             message:
-              'Avoid passing data to parents in an effect. Instead, fetch "useSomeAPI" and "useOtherAPI" in the parent and pass it down to "Child" as a prop.',
+              'Avoid passing data to parents in an effect. Instead, fetch "data" and "meta" in the parent and pass it down to "Child" as a prop.',
           },
         ],
+      },
+      {
+        name: "Pass the same external state twice, reporting it once",
+        code: js`
+        const Child = ({ onResult }) => {
+          const data = useSomeAPI();
+
+          useEffect(() => {
+            onResult(data, data);
+          }, [onResult, data]);
+        }
+      `,
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"data"',
+          name: '"Child"',
+        }),
+      },
+      {
+        name: "Pass the result of an imported fetch function",
+        code: js`
+        import { fetchData } from './api';
+
+        function Child({ onFetched }) {
+          useEffect(() => {
+            onFetched(fetchData());
+          }, [onFetched]);
+        }
+      `,
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"fetchData"',
+          name: '"Child"',
+        }),
+      },
+      {
+        name: "Pass the result of a parent-provided getter",
+        code: js`
+        function Child({ getData, onFetched }) {
+          useEffect(() => {
+            onFetched(getData());
+          }, [getData, onFetched]);
+        }
+      `,
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"getData"',
+          name: '"Child"',
+        }),
+      },
+      {
+        name: "Pass an unresolved global value",
+        code: js`
+        function Child({ onFetched }) {
+          useEffect(() => {
+            onFetched(globalStore);
+          }, [onFetched]);
+        }
+      `,
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"globalStore"',
+          name: '"Child"',
+        }),
       },
       {
         name: "Pass external data and internal state (only data in message)",
@@ -294,7 +364,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: error("avoidPassingDataToParentInComponent", {
-          data: '"useSomeAPI"',
+          data: '"data"',
           name: '"Child"',
         }),
       },
@@ -311,7 +381,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: error("avoidPassingDataToParentInComponent", {
-          data: '"useSomeAPI"',
+          data: '"data"',
           name: '"Child"',
         }),
       },

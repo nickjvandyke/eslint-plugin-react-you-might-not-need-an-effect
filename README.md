@@ -292,7 +292,7 @@ function Child({ onDataFetched }) {
   const { data } = useQuery("/data");
 
   useEffect(() => {
-    // ❌ Avoid passing data to parents in an effect. Instead, fetch "useQuery" in the parent and pass it down to "Child" as a prop.
+    // ❌ Avoid passing data to parents in an effect. Instead, fetch "data" in the parent and pass it down to "Child" as a prop.
     // 📖 react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent
     onDataFetched(data);
   }, [data, onDataFetched]);
@@ -306,7 +306,7 @@ const useCustomHook = ({ onFetched }) => {
   const data = useSomeAPI();
 
   useEffect(() => {
-    // ❌ Avoid passing data to parents in an effect. Instead, return "useSomeAPI" from "useCustomHook".
+    // ❌ Avoid passing data to parents in an effect. Instead, return "data" from "useCustomHook".
     // 📖 react.dev/learn/you-might-not-need-an-effect#passing-data-to-the-parent
     onFetched(data);
   }, [onFetched, data]);

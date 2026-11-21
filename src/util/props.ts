@@ -1,5 +1,6 @@
 import type { Scope, Rule } from "eslint";
 import {
+  getCallExpr,
   getSynchronousCallChain,
   isFunctionExpression,
   someVariableInit,
@@ -62,8 +63,9 @@ const isHookCall = (init: Rule.Node): boolean => {
 /**
  * Hook return values are owned outside the component, like props, except for
  * values that React keeps stable across renders or that hold component state.
+ * `useContext` values are excluded because `isProp` already covers them.
  */
-const isExternalHookValue = (
+export const isExternalHookValue = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean =>
@@ -72,6 +74,7 @@ const isExternalHookValue = (
     (init) =>
       isHookCall(init) &&
       !isUseState(context, init) &&
+      !isUseContext(context, init) &&
       !isUseRef(context, init) &&
       !isUseMemo(context, init) &&
       !isUseCallback(context, init),
@@ -86,6 +89,24 @@ export const isExternalValue = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean => isProp(context, ref) || isExternalHookValue(context, ref);
+
+/**
+ * True when `ref` reads a value from outside the component: a global such as
+ * `window`, or a call on a global or imported function such as `fetchData()`.
+ * Imported values that are not called are excluded, e.g. a shared constant.
+ */
+export const isExternalSource = (ref: Scope.Reference): boolean => {
+  // `undefined` is written as an identifier, but it is not data.
+  if (ref.identifier.name === "undefined") return false;
+
+  // A value with no definition is a global.
+  if (!ref.resolved) return true;
+
+  const isImport = ref.resolved.defs.some(
+    (def) => def.type === "ImportBinding",
+  );
+  return isImport && getCallExpr(ref) !== undefined;
+};
 
 /** True when the synchronous call chain from `ref` reaches a prop. */
 export const isPropCall = (
