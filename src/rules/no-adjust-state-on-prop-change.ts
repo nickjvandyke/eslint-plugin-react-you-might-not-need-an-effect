@@ -7,7 +7,7 @@ import {
 } from "../util/effect.ts";
 import { formatNames } from "../util/messages.ts";
 import { isExternalValue } from "../util/props.ts";
-import { getStateName, isStateSetterCall } from "../util/state.ts";
+import { getStateName, isState, isStateSetterCall } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -28,8 +28,13 @@ const rule: Rule.RuleModule = {
       const effect = getEffect(context, node);
       if (!effect) return;
 
-      // Props, context, and external hook values change outside the component.
       // Internal state belongs to `no-chain-state-updates` instead.
+      const isSomeDepsState = effect.depsRefs
+        .flatMap((ref) => getUpstreamRefs(context, ref))
+        .some((ref) => isState(context, ref));
+      if (isSomeDepsState) return;
+
+      // Props, context, and external hook values change outside the component.
       const triggerRefs = [
         ...new Map(
           effect.depsRefs

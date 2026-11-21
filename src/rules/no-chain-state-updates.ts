@@ -1,17 +1,11 @@
 import type { Rule } from "eslint";
+import { getCallExpr, getUpstreamRefs, isSynchronous } from "../util/ast.ts";
 import {
-  getArgsUpstreamRefs,
-  getCallExpr,
-  getUpstreamRefs,
-  isSynchronous,
-} from "../util/ast.ts";
-import { getEffect } from "../util/effect.ts";
-import {
-  getStateName,
-  isState,
-  isStateSetter,
-  isStateSetterCall,
-} from "../util/state.ts";
+  getDependencyVariables,
+  getEffect,
+  getSetterArgumentVariables,
+} from "../util/effect.ts";
+import { getStateName, isState, isStateSetterCall } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -34,6 +28,9 @@ const rule: Rule.RuleModule = {
       const isSomeDepsState = effect.depsRefs
         .flatMap((ref) => getUpstreamRefs(context, ref))
         .some((ref) => isState(context, ref));
+      if (!isSomeDepsState) return;
+
+      const depVariables = getDependencyVariables(context, effect);
 
       effect.fnRefs
         .filter((ref) => isSynchronous(ref.identifier, effect.fn))
@@ -42,23 +39,22 @@ const rule: Rule.RuleModule = {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
 
-          // Avoid overlap with no-derived-state
-          const isSomeArgsState = getArgsUpstreamRefs(
+          // Avoid overlap with no-derived-state: a value written from a
+          // dependency is derived, not chained.
+          const isSomeArgsFromDeps = getSetterArgumentVariables(
             context,
             ref,
-            isStateSetter,
-          ).some((ref) => isState(context, ref));
+          ).some((variable) => depVariables.has(variable));
+          if (isSomeArgsFromDeps) return;
 
-          if (isSomeDepsState && !isSomeArgsState) {
-            const stateName = getStateName(context, ref);
-            if (!stateName) return;
+          const stateName = getStateName(context, ref);
+          if (!stateName) return;
 
-            context.report({
-              node: callExpr,
-              messageId: "avoidChainingStateUpdates",
-              data: { state: stateName },
-            });
-          }
+          context.report({
+            node: callExpr,
+            messageId: "avoidChainingStateUpdates",
+            data: { state: stateName },
+          });
         });
     },
   }),

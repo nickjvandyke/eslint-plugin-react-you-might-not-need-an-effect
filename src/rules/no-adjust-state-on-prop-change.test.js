@@ -40,6 +40,21 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        // Internal state takes precedence: `no-chain-state-updates` owns
+        // effects whose dependencies include internal state.
+        name: "Set state to literal when internal state and a prop change",
+        code: js`
+        function List({ items }) {
+          const [count, setCount] = useState(0);
+          const [selection, setSelection] = useState();
+
+          useEffect(() => {
+            setSelection(null);
+          }, [count, items]);
+        }
+      `,
+      },
+      {
         name: "Set state to a value derived from props",
         code: js`
         function Counter({ count }) {

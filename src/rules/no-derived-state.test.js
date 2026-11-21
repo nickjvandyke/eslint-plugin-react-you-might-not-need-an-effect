@@ -264,7 +264,20 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: error("avoidDerivedState", { state: "selectedPost" }),
       },
       {
-        name: "Set to a custom hook value",
+        name: "From a prop when state and prop are dependencies",
+        code: js`
+        function Component({ value }) {
+          const [state, setState] = useState();
+
+          useEffect(() => {
+            setState(value);
+          }, [state, value]);
+        }
+      `,
+        errors: error("avoidDerivedState", { state: "state" }),
+      },
+      {
+        name: "From a custom hook value",
         code: js`
         function Search() {
           const [params] = useSearchParams();

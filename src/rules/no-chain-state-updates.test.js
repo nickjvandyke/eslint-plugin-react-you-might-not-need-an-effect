@@ -103,6 +103,38 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
+      {
+        // `players` is written from a dependency, so this is derived state.
+        // `no-derived-state` reports it, and this rule must not report it too.
+        name: "Set state to external state in the dependencies when internal state changes",
+        code: js`
+        function Game() {
+          const [round, setRound] = useState(1);
+          const [isGameOver, setIsGameOver] = useState(false);
+          const { data: players } = useQuery('/players');
+
+          useEffect(() => {
+            if (round > 10) {
+              setIsGameOver(players.length === 0);
+            }
+          }, [round, players]);
+        }
+      `,
+      },
+      {
+        // `value` is a dependency, so `no-derived-state` reports it.
+        // Both rules must not report the same call.
+        name: "Set state to a prop when state and prop are dependencies",
+        code: js`
+        function Component({ value }) {
+          const [state, setState] = useState();
+
+          useEffect(() => {
+            setState(value);
+          }, [state, value]);
+        }
+      `,
+      },
     ],
     invalid: [
       {
@@ -149,23 +181,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             if (round > 10 || players.length === 0) {
               setIsGameOver(true);
-            }
-          }, [round, players]);
-        }
-      `,
-        errors: error("avoidChainingStateUpdates", { state: "isGameOver" }),
-      },
-      {
-        name: "Set state to external state when internal state changes",
-        code: js`
-        function Game() {
-          const [round, setRound] = useState(1);
-          const [isGameOver, setIsGameOver] = useState(false);
-          const { data: players } = useQuery('/players');
-
-          useEffect(() => {
-            if (round > 10) {
-              setIsGameOver(players.length === 0);
             }
           }, [round, players]);
         }
