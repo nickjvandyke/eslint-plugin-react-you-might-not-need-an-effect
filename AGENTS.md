@@ -35,7 +35,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - Test files in `src/rules/` import rule source with `.ts` extension (ESM).
 - **Formatting**: single Prettier config — trailing commas everywhere.
 - `.gitignore` keeps `dist`, `node_modules`, `.yarn/*` (except patches/plugins/releases/sdks/versions).
-- The plugin has no runtime dependencies and does not require browser globals. Global references, resolved or unresolved, behave like external globals.
+- The plugin has no runtime dependencies and does not require browser globals. Global references, resolved or unresolved, behave like external globals. A local alias of a global counts as a global.
 - Suggested companion rules for users: `react-hooks/exhaustive-deps` and `typescript-eslint/no-floating-promises`.
 - Third-party effect wrappers are matched by module + export. Only `useEffect`-equivalent wrappers are included; layout, update, async, debounced, and conditional wrappers are excluded.
 

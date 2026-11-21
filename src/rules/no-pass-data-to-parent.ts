@@ -14,6 +14,7 @@ import { formatNames, formatOwner } from "../util/messages.ts";
 import {
   isExternalHookValue,
   isExternalSource,
+  isGlobalAlias,
   isProp,
   isPropCall,
 } from "../util/props.ts";
@@ -58,9 +59,13 @@ const rule: Rule.RuleModule = {
               .map((argRef) => argRef.identifier.name),
             ...callExpr.arguments
               .flatMap((arg) => getDownstreamRefs(context, arg))
+              // Follow local aliases, e.g. `const w = window` then
+              // `onFetched(w.x)`. The message names the argument, not the
+              // value it came from.
               .filter(
                 (argRef) =>
                   isExternalSource(argRef) ||
+                  isGlobalAlias(context, argRef) ||
                   (isProp(context, argRef) &&
                     getCallExpr(argRef) !== undefined),
               )

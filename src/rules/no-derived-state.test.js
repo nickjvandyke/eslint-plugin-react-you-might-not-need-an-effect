@@ -116,9 +116,9 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        // With browser globals configured (as the README recommends), `window`
-        // resolves to a global variable with no definitions. It is still
-        // external state, not a value computed during render.
+        // With browser globals configured, `window` resolves to a global
+        // variable with no definitions. It is still external state, not a
+        // value computed during render.
         name: "Set to resolved global (external state)",
         languageOptions: {
           ...plugin.configs.recommended.languageOptions,
@@ -131,6 +131,34 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setWidth(window.innerWidth);
           }, [window.innerWidth]);
+        }
+      `,
+      },
+      {
+        // A local alias of a global is as unsafe as the global itself.
+        name: "Set to a global via a local alias",
+        code: js`
+        function WindowSize() {
+          const w = window;
+          const [width, setWidth] = useState(0);
+
+          useEffect(() => {
+            setWidth(w.innerWidth);
+          }, [w.innerWidth]);
+        }
+      `,
+      },
+      {
+        name: "Set to a global via a chain of local aliases",
+        code: js`
+        function WindowSize() {
+          const w = window;
+          const root = w;
+          const [width, setWidth] = useState(0);
+
+          useEffect(() => {
+            setWidth(root.innerWidth);
+          }, [root.innerWidth]);
         }
       `,
       },

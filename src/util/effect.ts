@@ -11,6 +11,7 @@ import {
   type ReturnStatementNode,
 } from "./ast.ts";
 import { isUseEffect } from "./hooks.ts";
+import { isGlobalAlias } from "./props.ts";
 import { isRef, isRefCurrent } from "./refs.ts";
 import { isStateSetter } from "./state.ts";
 import { unwrapExpression } from "./typescript.ts";
@@ -97,9 +98,10 @@ export const getEffect = (
 
 /**
  * Returns the variable behind a reference when React evaluates it during render.
- * Globals, imported bindings, and refs are excluded:
+ * Globals, imported bindings, refs, and local aliases of globals are excluded:
  * - Globals and imports are not re-created per render.
  * - `ref.current` is only updated after render, so it is not render-safe.
+ * - `const w = window` is as unsafe as `window`.
  */
 const getRenderVariable = (
   context: Rule.RuleContext,
@@ -109,6 +111,7 @@ const getRenderVariable = (
   if (!variable || variable.defs.length === 0) return undefined;
   const isImport = variable.defs.some((def) => def.type === "ImportBinding");
   if (isImport || isRef(context, ref) || isRefCurrent(ref)) return undefined;
+  if (isGlobalAlias(context, ref)) return undefined;
   return variable;
 };
 

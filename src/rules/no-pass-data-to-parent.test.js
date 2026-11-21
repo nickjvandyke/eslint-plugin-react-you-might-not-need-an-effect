@@ -364,6 +364,23 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }),
       },
       {
+        // The message names the argument, not the global it came from.
+        name: "Pass a global via a local alias",
+        code: js`
+        function Child({ onFetched }) {
+          const w = window;
+
+          useEffect(() => {
+            onFetched(w.location);
+          }, [onFetched]);
+        }
+      `,
+        errors: error("avoidPassingDataToParentInComponent", {
+          data: '"w"',
+          name: '"Child"',
+        }),
+      },
+      {
         name: "Pass external data and internal state (only data in message)",
         code: js`
         const Child = ({ onChanged }) => {
