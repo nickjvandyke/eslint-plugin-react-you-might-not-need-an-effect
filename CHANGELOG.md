@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.3.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.2.0...v1.3.0) (2026-11-21)
+
+
+### Features
+
+* **no-adjust-state-on-prop-change:** generalize to all external values ([cd45adc](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/cd45adc89a534cf12b836ef3cdb2ad096fdfda33))
+* **no-derived-state:** broaden detection to effect dependencies of _any_ kind ([47ad2c5](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/47ad2c5607a55e73045ebea1043ddd998606de17))
+* **no-pass-data-to-parent:** flag data from calls and globals ([5b51bfb](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/5b51bfb5d46fc360d90d37cb32f5890f79f5b6a2))
+
+
+### Bug Fixes
+
+* correct component and hook name detection edge-cases ([469d963](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/469d96346bb36e4db93c04a83530197b16612bbb))
+* do not treat calls in `async` functions as synchronous ([afe2cee](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/afe2cee7e516940865ebd91cb838803861c41343))
+* ignore unrelated call arguments when following call chains ([ee32e75](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/ee32e75d037d46eb64b617efe25735261a5f791a))
+* reduce overlap between no-derived-state, no-chain-state-updates, and no-adjust-state-on-prop-change ([8244481](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/824448102d992d8ad7978bda4a627a2bfc10eae0))
+* treat a local alias of a global as external ([b7f5130](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/b7f51304a9246f80b0115cc6aa3ad8168e3e6fd5))
+* treat configured globals like unresolved globals ([e945b9a](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/e945b9a27533495242856c03761fb0b21e28fc61))
+
 ## [1.2.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.1.0...v1.2.0) (2026-11-08)
 
 
