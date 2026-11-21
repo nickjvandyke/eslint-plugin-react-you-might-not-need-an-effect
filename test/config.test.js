@@ -10,12 +10,12 @@ describe("config", () => {
     import { useState, useEffect } from "react";
 
     const MyComponent = () => {
-      const [state, setState] = useState(0);
+      const [, setState] = useState(0);
       const [otherState, setOtherState] = useState(0);
 
       useEffect(() => {
         setState(otherState * 2);
-      }, [state]);
+      }, [otherState]);
     };
   `;
 

@@ -490,30 +490,6 @@ describe("recommended rules on real-world code", () => {
         `,
       },
       {
-        name: "React Query: fresh data synced to state",
-        code: js`
-          import { useState, useEffect } from 'react'
-          import { useQuery } from '@tanstack/react-query'
-
-          function Items() {
-            const [filter, setFilter] = useState('all')
-            const { data } = useQuery({
-              queryKey: ['items', filter],
-              queryFn: () => fetchItems(filter),
-            })
-            const [items, setItems] = useState([])
-
-            useEffect(() => {
-              if (data) {
-                setItems(data)
-              }
-            }, [data])
-
-            return <div>{items}</div>
-          }
-        `,
-      },
-      {
         // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/57
         name: "TanStack useInfinityQuery useInView with state, prop and data in queryKey",
         code: js`
@@ -640,6 +616,65 @@ describe("recommended rules on real-world code", () => {
           0,
           `Expected no lint errors for: ${name}, but got: ${JSON.stringify(
             messages,
+          )}`,
+        );
+      });
+    });
+  });
+
+  describe("should flag", () => {
+    [
+      {
+        name: "React Query: fresh data synced to state",
+        // A data hook like `useQuery` already re-renders the component when its
+        // value changes. The effect adds nothing that render does not know, so
+        // the state can be derived directly:
+        //
+        //   const items = data ?? []
+        //
+        // A callback from the library is only needed to react to new data
+        // outside of render (for example a toast or an analytics event). It is
+        // not needed to read the data into state, because the hook already
+        // re-renders the component for us.
+        code: js`
+          import { useState, useEffect } from 'react'
+          import { useQuery } from '@tanstack/react-query'
+
+          function Items() {
+            const [filter, setFilter] = useState('all')
+            const { data } = useQuery({
+              queryKey: ['items', filter],
+              queryFn: () => fetchItems(filter),
+            })
+            const [items, setItems] = useState([])
+
+            useEffect(() => {
+              if (data) {
+                setItems(data)
+              }
+            }, [data])
+
+            return <div>{items}</div>
+          }
+        `,
+        messages: [
+          {
+            ruleId: "react-you-might-not-need-an-effect/no-derived-state",
+            messageId: "avoidDerivedState",
+          },
+        ],
+      },
+    ].forEach(({ name, code, messages }) => {
+      it(name, async () => {
+        const results = await eslint.lintText(code);
+        assert.deepStrictEqual(
+          results[0].messages.map(({ ruleId, messageId }) => ({
+            ruleId,
+            messageId,
+          })),
+          messages,
+          `Expected ${name} to be flagged, but got: ${JSON.stringify(
+            results[0].messages,
           )}`,
         );
       });

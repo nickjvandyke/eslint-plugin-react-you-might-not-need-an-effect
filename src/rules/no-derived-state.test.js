@@ -58,21 +58,72 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Set to external state",
+        name: "Adjust state to a value that is not in the dependencies",
+        // The value is available during render, but the effect does not react
+        // to it. `no-adjust-state-on-prop-change` handles this case.
         code: js`
-        function Feed() {
-          const { data: posts } = useQuery('/posts');
-          const [selectedPost, setSelectedPost] = useState();
+        function List({ items }) {
+          const [selection, setSelection] = useState();
+          const { data: externalData } = useDataSource();
 
           useEffect(() => {
-            setSelectedPost(posts[0]);
-          }, [posts]);
+            setSelection(externalData);
+          }, [items]);
+        }
+      `,
+      },
+      {
+        name: "Set to a ref value in the dependencies",
+        // `ref.current` is only updated after render, so it is not render-safe.
+        code: js`
+        function Element() {
+          const ref = useRef();
+          const [width, setWidth] = useState(0);
+
+          useEffect(() => {
+            setWidth(ref.current.offsetWidth);
+          }, [ref]);
+        }
+      `,
+      },
+      {
+        // Without a dependency array there is no reactive value to compare
+        // against. `no-initialize-state` covers mount-only effects, and users
+        // are expected to enable `react-hooks/exhaustive-deps` for the rest.
+        name: "No dependency array",
+        code: js`
+        function DoubleCounter() {
+          const [count, setCount] = useState(0);
+          const [doubleCount, setDoubleCount] = useState(0);
+
+          useEffect(() => {
+            setDoubleCount(count * 2);
+          });
         }
       `,
       },
       {
         // The plugin config does not define browser globals, so `window` is unresolved.
         name: "Set to unresolved global (external state)",
+        code: js`
+        function WindowSize() {
+          const [width, setWidth] = useState(0);
+
+          useEffect(() => {
+            setWidth(window.innerWidth);
+          }, [window.innerWidth]);
+        }
+      `,
+      },
+      {
+        // With browser globals configured (as the README recommends), `window`
+        // resolves to a global variable with no definitions. It is still
+        // external state, not a value computed during render.
+        name: "Set to resolved global (external state)",
+        languageOptions: {
+          ...plugin.configs.recommended.languageOptions,
+          globals: { window: "readonly" },
+        },
         code: js`
         function WindowSize() {
           const [width, setWidth] = useState(0);
@@ -198,6 +249,34 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
     ],
     invalid: [
+      {
+        name: "Set to external state",
+        code: js`
+        function Feed() {
+          const { data: posts } = useQuery('/posts');
+          const [selectedPost, setSelectedPost] = useState();
+
+          useEffect(() => {
+            setSelectedPost(posts[0]);
+          }, [posts]);
+        }
+      `,
+        errors: error("avoidDerivedState", { state: "selectedPost" }),
+      },
+      {
+        name: "Set to a custom hook value",
+        code: js`
+        function Search() {
+          const [params] = useSearchParams();
+          const [query, setQuery] = useState();
+
+          useEffect(() => {
+            setQuery(params.get('q'));
+          }, [params]);
+        }
+      `,
+        errors: error("avoidDerivedState", { state: "query" }),
+      },
       {
         name: "From internal state",
         code: js`

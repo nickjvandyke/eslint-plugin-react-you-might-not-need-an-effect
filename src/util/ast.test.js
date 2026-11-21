@@ -87,7 +87,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
-      // False negatives from ignoring CallExpression arguments — the rule no longer traces state through fn args
+      // False negative from ignoring CallExpression arguments — the rule still
+      // does not trace state through call arguments.
+      // `setCountJson(JSON.stringify(count))` only exposes `JSON`, which is a
+      // global, so the argument never matches the `[count]` dependency.
       {
         name: "From internal state via pure global function",
         code: js`
@@ -97,41 +100,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setCountJson(JSON.stringify(count));
           }, [count]);
-        }
-      `,
-      },
-      {
-        name: "Set to result of pure local ArrowFunctionExpression",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const computeName = (firstName, lastName) => {
-            return firstName + ' ' + lastName;
-          }
-
-          useEffect(() => {
-            const newFullName = computeName(firstName, lastName);
-            setFullName(newFullName);
-          }, [firstName, lastName, computeName]);
-        }
-      `,
-      },
-      {
-        name: "Set to result of internal useCallback; repeat references to a useState variable",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const computeName = useCallback(() => firstName + ' ' + lastName, [firstName, lastName]);
-
-          useEffect(() => {
-            setFullName(computeName());
-          }, [computeName]);
         }
       `,
       },
@@ -322,6 +290,45 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       },
     ],
     invalid: [
+      {
+        name: "Set to result of pure local ArrowFunctionExpression",
+        code: js`
+        function Form() {
+          const [firstName, setFirstName] = useState('Dwayne');
+          const [lastName, setLastName] = useState('The Rock');
+          const [fullName, setFullName] = useState('');
+
+          const computeName = (firstName, lastName) => {
+            return firstName + ' ' + lastName;
+          }
+
+          useEffect(() => {
+            const newFullName = computeName(firstName, lastName);
+            setFullName(newFullName);
+          }, [firstName, lastName, computeName]);
+        }
+      `,
+        errors: avoidDerivedState("fullName"),
+      },
+      {
+        // The effect only exposes `computeName` to the setter call, and that is
+        // declared during render. The `useCallback` arguments stay opaque.
+        name: "Set to result of internal useCallback",
+        code: js`
+        function Form() {
+          const [firstName, setFirstName] = useState('Dwayne');
+          const [lastName, setLastName] = useState('The Rock');
+          const [fullName, setFullName] = useState('');
+
+          const computeName = useCallback(() => firstName + ' ' + lastName, [firstName, lastName]);
+
+          useEffect(() => {
+            setFullName(computeName());
+          }, [computeName]);
+        }
+      `,
+        errors: avoidDerivedState("fullName"),
+      },
       {
         name: "Doubly nested scopes in effect body",
         code: js`
