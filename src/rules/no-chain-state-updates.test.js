@@ -187,6 +187,28 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
         errors: error("avoidChainingStateUpdates", { state: "state" }),
       },
+      {
+        // The unrelated call reads state, but that state is not written by the
+        // setter. Only the setter's own arguments count as written values.
+        name: "Wrapper setter with an unrelated state read",
+        code: js`
+        function MyComponent() {
+          const [count, setCount] = useState(0);
+          const [selection, setSelection] = useState();
+          const [otherState, setOtherState] = useState();
+
+          function update() {
+            console.log(otherState);
+            setSelection('Hello World');
+          }
+
+          useEffect(() => {
+            update();
+          }, [count]);
+        }
+      `,
+        errors: error("avoidChainingStateUpdates", { state: "selection" }),
+      },
     ],
   },
 );

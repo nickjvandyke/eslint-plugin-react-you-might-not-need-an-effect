@@ -10,7 +10,7 @@ import {
 } from "../util/components.ts";
 import { getEffect } from "../util/effect.ts";
 import { formatNames, formatOwner } from "../util/messages.ts";
-import { isPropCall } from "../util/props.ts";
+import { isProp, isPropCall } from "../util/props.ts";
 import { isState } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
@@ -40,8 +40,8 @@ const rule: Rule.RuleModule = {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;
 
-          const stateRefs = getArgsUpstreamRefs(context, ref).filter((r) =>
-            isState(context, r),
+          const stateRefs = getArgsUpstreamRefs(context, ref, isProp).filter(
+            (r) => isState(context, r),
           );
           if (stateRefs.length === 0) return;
 

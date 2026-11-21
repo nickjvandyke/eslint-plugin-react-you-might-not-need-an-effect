@@ -53,7 +53,7 @@ const rule: Rule.RuleModule = {
           // - a global, or a call on a global or imported function
           // - a call on a prop, which the parent can call directly
           const names = [
-            ...getArgsUpstreamRefs(context, ref)
+            ...getArgsUpstreamRefs(context, ref, isProp)
               .filter((argRef) => isExternalHookValue(context, argRef))
               .map((argRef) => argRef.identifier.name),
             ...callExpr.arguments

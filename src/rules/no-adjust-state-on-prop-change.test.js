@@ -312,6 +312,29 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           values: '"filter" and "data"',
         }),
       },
+      {
+        // The unrelated call reads the dependency, but that value is not
+        // written to the state. Only the setter's own arguments count.
+        name: "Wrapper setter with an unrelated dependency read",
+        code: js`
+        function List({ items }) {
+          const [selection, setSelection] = useState();
+
+          function update() {
+            console.log(items);
+            setSelection(null);
+          }
+
+          useEffect(() => {
+            update();
+          }, [items]);
+        }
+      `,
+        errors: error("avoidAdjustingStateWhenAValueChanges", {
+          state: "selection",
+          values: '"items"',
+        }),
+      },
     ],
   },
 );

@@ -12,6 +12,7 @@ import {
 } from "./ast.ts";
 import { isUseEffect } from "./hooks.ts";
 import { isRef, isRefCurrent } from "./refs.ts";
+import { isStateSetter } from "./state.ts";
 import { unwrapExpression } from "./typescript.ts";
 
 /** A cleanup return always has an argument, because bare `return`s are skipped. */
@@ -135,6 +136,6 @@ export const getSetterArgumentVariables = (
   context: Rule.RuleContext,
   setterRef: Scope.Reference,
 ): Scope.Variable[] =>
-  getArgsUpstreamRefs(context, setterRef)
+  getArgsUpstreamRefs(context, setterRef, isStateSetter)
     .map((ref) => getRenderVariable(context, ref))
     .filter(isDefined);

@@ -6,7 +6,12 @@ import {
   isSynchronous,
 } from "../util/ast.ts";
 import { getEffect } from "../util/effect.ts";
-import { getStateName, isState, isStateSetterCall } from "../util/state.ts";
+import {
+  getStateName,
+  isState,
+  isStateSetter,
+  isStateSetterCall,
+} from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -38,9 +43,11 @@ const rule: Rule.RuleModule = {
           if (!callExpr) return;
 
           // Avoid overlap with no-derived-state
-          const isSomeArgsState = getArgsUpstreamRefs(context, ref).some(
-            (ref) => isState(context, ref),
-          );
+          const isSomeArgsState = getArgsUpstreamRefs(
+            context,
+            ref,
+            isStateSetter,
+          ).some((ref) => isState(context, ref));
 
           if (isSomeDepsState && !isSomeArgsState) {
             const stateName = getStateName(context, ref);

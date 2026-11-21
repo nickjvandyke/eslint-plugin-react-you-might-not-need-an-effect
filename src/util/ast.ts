@@ -205,17 +205,28 @@ export const getCallExpr = (
 };
 
 /**
- * Collects the references inside the arguments of every call on the upstream
- * chain from `ref`, plus their own upstream references.
+ * Collects the references inside the arguments of the calls on the synchronous
+ * chain from `ref` that lead to a target matched by `isTarget`, plus their own
+ * upstream references.
+ *
+ * `isTarget` keeps unrelated calls out. A wrapper setter may call
+ * `console.log(otherState)` before `setState(next)`. `otherState` is not an
+ * argument of the state update, so it must not count as one.
  */
 export const getArgsUpstreamRefs = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
+  isTarget: (context: Rule.RuleContext, ref: Scope.Reference) => boolean,
 ): Scope.Reference[] =>
-  getUpstreamRefs(context, ref)
-    .flatMap((upRef) => getCallExpr(upRef)?.arguments ?? [])
+  getSynchronousCallChain(context, ref)
+    .filter((chainRef) =>
+      getSynchronousCallChain(context, chainRef).some((ref) =>
+        isTarget(context, ref),
+      ),
+    )
+    .flatMap((chainRef) => getCallExpr(chainRef)?.arguments ?? [])
     .flatMap((arg) => getDownstreamRefs(context, arg))
-    .flatMap((ref) => getUpstreamRefs(context, ref));
+    .flatMap((argRef) => getUpstreamRefs(context, argRef));
 
 /** Finds the scope reference that resolves the given identifier. */
 export const getRef = (
