@@ -125,6 +125,18 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        // `arguments` has no definitions, like a global, but the parent cannot
+        // read it.
+        name: "Pass arguments",
+        code: js`
+        function Child({ onFetched }) {
+          useEffect(() => {
+            onFetched(arguments);
+          }, [onFetched]);
+        }
+      `,
+      },
+      {
         // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/37
         // Alternate solutions exist, but this is arguably the most readable.
         name: "Pass cleanup function that depends on ref",

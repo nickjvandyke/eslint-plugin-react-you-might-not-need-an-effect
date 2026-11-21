@@ -39,10 +39,14 @@ const rule: Rule.RuleModule = {
 
       // Trace both the body setter and cleanup refs through alias chains.
       // If they share any upstream variable, the cleanup references the same setter.
+      // Globals have no definitions and are never setters, so skip them: a
+      // shared global (e.g. `window`) is not a subscription signal.
       const cleanupVars = new Set<Scope.Variable>();
       for (const ref of cleanupRefs) {
         for (const upRef of getUpstreamRefs(context, ref)) {
-          if (upRef.resolved) cleanupVars.add(upRef.resolved);
+          if (upRef.resolved && upRef.resolved.defs.length > 0) {
+            cleanupVars.add(upRef.resolved);
+          }
         }
       }
 

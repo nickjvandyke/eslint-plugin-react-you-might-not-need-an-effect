@@ -89,9 +89,6 @@ export default [
   "rules": {
     "react-you-might-not-need-an-effect/no-derived-state": "warn",
   },
-  "env": {
-    "browser": true,
-  },
   "parserOptions": {
     "ecmaFeatures": {
       "jsx": true,
@@ -118,9 +115,6 @@ export default defineConfig({
     ...reactYouMightNotNeedAnEffect.configs.strict.rules,
     // Or enable only specific rules
     "react-you-might-not-need-an-effect/no-derived-state": "warn",
-  },
-  env: {
-    browser: true,
   },
 });
 ```

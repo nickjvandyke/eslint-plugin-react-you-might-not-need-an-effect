@@ -96,11 +96,18 @@ export const isExternalValue = (
  * Imported values that are not called are excluded, e.g. a shared constant.
  */
 export const isExternalSource = (ref: Scope.Reference): boolean => {
-  // `undefined` is written as an identifier, but it is not data.
-  if (ref.identifier.name === "undefined") return false;
+  // `undefined` and `arguments` are identifiers, but they are not data that a
+  // parent could read.
+  if (
+    ref.identifier.name === "undefined" ||
+    ref.identifier.name === "arguments"
+  ) {
+    return false;
+  }
 
-  // A value with no definition is a global.
-  if (!ref.resolved) return true;
+  // A value with no definition is a global, either configured by the user
+  // (`window`) or provided by the `ecmaVersion` (`Math`).
+  if (!ref.resolved || ref.resolved.defs.length === 0) return true;
 
   const isImport = ref.resolved.defs.some(
     (def) => def.type === "ImportBinding",

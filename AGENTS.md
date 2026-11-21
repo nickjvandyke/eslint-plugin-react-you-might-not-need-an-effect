@@ -22,7 +22,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - **9 rules** in `src/rules/`, each a separate `.ts` file with a co-located `.test.js` file.
 - **Utilities**: `src/util/ast.ts` (AST traversal, ref analysis, constant checks), `src/util/typescript.ts` (TypeScript wrappers and type-only keys), `src/util/hooks.ts` (React hook and third-party effect detection), `src/util/components.ts` (component, HOC, and custom hook detection), `src/util/effect.ts` (effect function, deps, cleanup, and dependency-variable extraction), `src/util/state.ts` (state and setter detection), `src/util/props.ts` (prop and external value detection), `src/util/refs.ts` (ref detection).
 - **Test pattern**: Unit tests are co-located with the source they cover. Rule tests live in `src/rules/*.test.js`; utility tests live in `src/util/*.test.js`. Each imports `RuleTester` from `eslint` + `plugin` from `../index.ts`, and defines `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`.
-- **Integration tests**: `test/` holds only cross-cutting tests. `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
+- **Integration tests**: `test/` holds only cross-cutting tests. `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/globals.test.js` (configured and unconfigured browser globals give the same results), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
 
 ## Key conventions
 
@@ -35,7 +35,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - Test files in `src/rules/` import rule source with `.ts` extension (ESM).
 - **Formatting**: single Prettier config — trailing commas everywhere.
 - `.gitignore` keeps `dist`, `node_modules`, `.yarn/*` (except patches/plugins/releases/sdks/versions).
-- The plugin has no runtime dependencies. Unresolved global references behave like external globals, so browser globals are not required for analysis.
+- The plugin has no runtime dependencies and does not require browser globals. Global references, resolved or unresolved, behave like external globals.
 - Suggested companion rules for users: `react-hooks/exhaustive-deps` and `typescript-eslint/no-floating-promises`.
 - Third-party effect wrappers are matched by module + export. Only `useEffect`-equivalent wrappers are included; layout, update, async, debounced, and conditional wrappers are excluded.
 
