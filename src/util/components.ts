@@ -2,6 +2,15 @@ import type { Rule } from "eslint";
 import { getRef, isFunctionExpression } from "./ast.ts";
 import { getOutermostWrapper, unwrapExpression } from "./typescript.ts";
 
+/** Components start with an uppercase letter. */
+const COMPONENT_NAME = /^[A-Z]/;
+
+/** Hooks start with `use` and then an uppercase letter or a digit. */
+const HOOK_NAME = /^use[A-Z0-9]/;
+
+/** True when `name` is a hook name. */
+export const isHookName = (name: string): boolean => HOOK_NAME.test(name);
+
 /** True when `node` defines a capitalized component function or variable. */
 export const isComponent = (node: Rule.Node): boolean => {
   const init =
@@ -14,7 +23,7 @@ export const isComponent = (node: Rule.Node): boolean => {
         init !== undefined &&
         (isFunctionExpression(init) || init.type === "CallExpression"))) &&
     node.id?.type === "Identifier" &&
-    node.id.name[0].toUpperCase() === node.id.name[0]
+    COMPONENT_NAME.test(node.id.name)
   );
 };
 
@@ -69,7 +78,7 @@ export const isHOC = (context: Rule.RuleContext, node: Rule.Node): boolean => {
   );
 };
 
-/** True when `node` defines a hook: a `use` prefix and a capitalized next character. */
+/** True when `node` defines a hook: a `use` prefix and an uppercase or digit next character. */
 export const isCustomHook = (node: Rule.Node): boolean => {
   const init =
     node.type === "VariableDeclarator" && node.init
@@ -83,13 +92,7 @@ export const isCustomHook = (node: Rule.Node): boolean => {
   ) {
     return false;
   }
-  return (
-    node.id?.type === "Identifier" &&
-    node.id.name.startsWith("use") &&
-    node.id.name.length > 3 &&
-    node.id.name[3] !== undefined &&
-    node.id.name[3] === node.id.name[3].toUpperCase()
-  );
+  return node.id?.type === "Identifier" && isHookName(node.id.name);
 };
 
 /**

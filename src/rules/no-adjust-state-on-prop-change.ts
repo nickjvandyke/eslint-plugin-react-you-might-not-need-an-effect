@@ -5,6 +5,7 @@ import {
   getEffect,
   getSetterArgumentVariables,
 } from "../util/effect.ts";
+import { formatNames } from "../util/messages.ts";
 import { isExternalValue } from "../util/props.ts";
 import { getStateName, isStateSetterCall } from "../util/state.ts";
 
@@ -64,10 +65,9 @@ const rule: Rule.RuleModule = {
             messageId: "avoidAdjustingStateWhenAValueChanges",
             data: {
               state: stateName,
-              values: triggerRefs
-                .map((r) => r.identifier.name)
-                .map((n) => `"${n}"`)
-                .join(" and "),
+              values: formatNames(
+                triggerRefs.map((ref) => ref.identifier.name),
+              ),
             },
           });
         });

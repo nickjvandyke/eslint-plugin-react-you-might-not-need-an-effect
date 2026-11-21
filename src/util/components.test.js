@@ -115,6 +115,54 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
 );
 
 new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
+  "components: name shape",
+  noPassLiveStateToParent,
+  {
+    valid: [
+      {
+        // `_` is not an uppercase letter, so this is not a component.
+        name: "Underscore-prefixed function is not a component",
+        code: js`
+        const _Child = ({ onFetched }) => {
+          const [data, setData] = useState();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+      },
+      {
+        name: "Dollar-prefixed function is not a component",
+        code: js`
+        const $Child = ({ onFetched }) => {
+          const [data, setData] = useState();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+      },
+      {
+        // React requires `use` followed by an uppercase letter or a digit.
+        name: "Hook name with an underscore is not a custom hook",
+        code: js`
+        function use_counter({ onFetched }) {
+          const [data, setData] = useState();
+
+          useEffect(() => {
+            onFetched(data);
+          }, [onFetched, data]);
+        }
+      `,
+      },
+    ],
+    invalid: [],
+  },
+);
+
+new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
   "components: HOCs and function expressions",
   noPassLiveStateToParent,
   {

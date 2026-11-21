@@ -6,10 +6,10 @@ import {
 } from "../util/ast.ts";
 import {
   findEnclosingComponentOrHook,
-  getComponentOrHookName,
   isCustomHook,
 } from "../util/components.ts";
 import { getEffect } from "../util/effect.ts";
+import { formatNames, formatOwner } from "../util/messages.ts";
 import { isPropCall } from "../util/props.ts";
 import { isState } from "../util/state.ts";
 
@@ -54,18 +54,8 @@ const rule: Rule.RuleModule = {
               ? "avoidPassingLiveStateToParentInHook"
               : "avoidPassingLiveStateToParentInComponent",
             data: {
-              state: stateRefs
-                .map((r) => r.identifier.name)
-                .map((n) => `"${n}"`)
-                .join(" and "),
-              name: (() => {
-                const n = getComponentOrHookName(containingNode);
-                return n
-                  ? `"${n}"`
-                  : isInCustomHook
-                    ? "this custom hook"
-                    : "this component";
-              })(),
+              state: formatNames(stateRefs.map((r) => r.identifier.name)),
+              name: formatOwner(containingNode),
             },
           });
         });

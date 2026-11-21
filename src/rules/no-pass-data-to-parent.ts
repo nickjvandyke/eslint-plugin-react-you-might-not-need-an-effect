@@ -7,10 +7,10 @@ import {
 } from "../util/ast.ts";
 import {
   findEnclosingComponentOrHook,
-  getComponentOrHookName,
   isCustomHook,
 } from "../util/components.ts";
 import { getEffect } from "../util/effect.ts";
+import { formatNames, formatOwner } from "../util/messages.ts";
 import {
   isExternalHookValue,
   isExternalSource,
@@ -78,15 +78,8 @@ const rule: Rule.RuleModule = {
               ? "avoidPassingDataToParentInHook"
               : "avoidPassingDataToParentInComponent",
             data: {
-              data: dataNames.map((n) => `"${n}"`).join(" and "),
-              name: (() => {
-                const n = getComponentOrHookName(containingNode);
-                return n
-                  ? `"${n}"`
-                  : isInCustomHook
-                    ? "this custom hook"
-                    : "this component";
-              })(),
+              data: formatNames(dataNames),
+              name: formatOwner(containingNode),
             },
           });
         });

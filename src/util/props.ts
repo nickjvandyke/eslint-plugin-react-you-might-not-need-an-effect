@@ -5,7 +5,7 @@ import {
   isFunctionExpression,
   someVariableInit,
 } from "./ast.ts";
-import { isComponent, isCustomHook, isHOC } from "./components.ts";
+import { isComponent, isCustomHook, isHOC, isHookName } from "./components.ts";
 import {
   isUseCallback,
   isUseContext,
@@ -45,7 +45,7 @@ export const isProp = (
     );
   });
 
-/** React names every hook `use` followed by a capital letter. */
+/** React names every hook `use` followed by an uppercase letter or a digit. */
 const isHookCall = (init: Rule.Node): boolean => {
   if (init.type !== "CallExpression") return false;
   const callee = unwrapExpression(init.callee);
@@ -57,7 +57,7 @@ const isHookCall = (init: Rule.Node): boolean => {
           callee.property.type === "Identifier"
         ? callee.property.name
         : undefined;
-  return name !== undefined && /^use[A-Z0-9]/.test(name);
+  return name !== undefined && isHookName(name);
 };
 
 /**
