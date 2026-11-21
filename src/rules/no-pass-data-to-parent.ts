@@ -99,9 +99,11 @@ const rule: Rule.RuleModule = {
   }),
 };
 
-// The context object passed to `useContext` is never data.
-// `getArgsUpstreamRefs` can reach it through the `useContext` call that
-// declares the value we actually pass to the parent.
+/**
+ * The context object passed to `useContext` is never data.
+ * `getArgsUpstreamRefs` can reach it through the `useContext` call that
+ * declares the value we actually pass to the parent.
+ */
 const isContextObject = (
   context: Rule.RuleContext,
   ref: Scope.Reference,

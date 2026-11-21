@@ -2,9 +2,11 @@ import type { Rule } from "eslint";
 import { getRef } from "./ast.ts";
 import { unwrapExpression } from "./typescript.ts";
 
-// React-compatible packages that expose the same hook API.
-// Kept intentionally small: renamed imports from other packages still fall
-// back to name matching.
+/**
+ * React-compatible packages that expose the same hook API.
+ * Kept intentionally small: renamed imports from other packages still fall
+ * back to name matching.
+ */
 const REACT_MODULES = new Set([
   "react",
   "preact/hooks",
@@ -12,9 +14,11 @@ const REACT_MODULES = new Set([
   "@wordpress/element",
 ]);
 
-// Third-party hooks with `useEffect` semantics, matched by module + export.
-// Layout, update-only, async, debounced, conditional, and interval wrappers are
-// excluded because their timing or cleanup differs.
+/**
+ * Third-party hooks with `useEffect` semantics, matched by module + export.
+ * Layout, update-only, async, debounced, conditional, and interval wrappers are
+ * excluded because their timing or cleanup differs.
+ */
 const EFFECT_HOOKS: Record<string, Set<string>> = {
   "react-use": new Set([
     "useMount",
@@ -29,8 +33,10 @@ const EFFECT_HOOKS: Record<string, Set<string>> = {
   "use-deep-compare-effect": new Set(["default"]),
 };
 
-// Resolves an identifier to the module it was imported from and the export name.
-// Returns `default` or `namespace` for default and namespace imports.
+/**
+ * Resolves an identifier to the module it was imported from and the export name.
+ * Returns `default` or `namespace` for default and namespace imports.
+ */
 const getImportBinding = (
   context: Rule.RuleContext,
   node: Rule.Node,
@@ -62,9 +68,11 @@ const getImportBinding = (
   };
 };
 
-// Resolves an identifier to the name it was imported from a React-compatible
-// package. Returns `default` or `namespace` for default and namespace imports.
-// Returns `undefined` when the identifier is not such an import.
+/**
+ * Resolves an identifier to the name it was imported from a React-compatible
+ * package. Returns `default` or `namespace` for default and namespace imports.
+ * Returns `undefined` when the identifier is not such an import.
+ */
 const getReactImport = (
   context: Rule.RuleContext,
   node: Rule.Node,
@@ -77,10 +85,12 @@ const getReactImport = (
   return binding.imported;
 };
 
-// Detects third-party effect wrappers by module + export:
-// - `import { useMount } from "react-use"`
-// - `import * as reactUse from "react-use"` + `reactUse.useMount`
-// - `import useDeepCompareEffect from "use-deep-compare-effect"`
+/**
+ * Detects third-party effect wrappers by module + export:
+ * - `import { useMount } from "react-use"`
+ * - `import * as reactUse from "react-use"` + `reactUse.useMount`
+ * - `import useDeepCompareEffect from "use-deep-compare-effect"`
+ */
 const isThirdPartyEffectHook = (
   context: Rule.RuleContext,
   node: Rule.Node,
@@ -124,14 +134,16 @@ const isReactNamespace = (
   return imported === "default" || imported === "namespace";
 };
 
-// Detects React hook calls, including renamed imports:
-// - `useState`
-// - `import { useState as stateUser } from "react"`
-// - `React.useState`
-// - `import * as R from "react"` + `R.useState`
-// - `import R from "react"` + `R.useState`
-//
-// Takes the `CallExpression` node.
+/**
+ * Detects React hook calls, including renamed imports:
+ * - `useState`
+ * - `import { useState as stateUser } from "react"`
+ * - `React.useState`
+ * - `import * as R from "react"` + `R.useState`
+ * - `import R from "react"` + `R.useState`
+ *
+ * Takes the `CallExpression` node.
+ */
 const isReactHook = (
   context: Rule.RuleContext,
   node: Rule.Node,
@@ -178,18 +190,25 @@ export const isUseCallback = (
   node: Rule.Node,
 ): boolean => isReactHook(context, node, "useCallback");
 
-// `useContext` returns a value that is owned by a parent, just like a prop.
-// It changes outside the component and re-renders the component on change.
+/**
+ * True when `node` calls `useContext`.
+ *
+ * `useContext` returns a value that is owned by a parent, just like a prop.
+ * It changes outside the component and re-renders the component on change.
+ */
 export const isUseContext = (
   context: Rule.RuleContext,
   node: Rule.Node,
 ): boolean => isReactHook(context, node, "useContext");
 
-// Does not include `useLayoutEffect`.
-// When used correctly, it interacts with the DOM = external system = (probably) valid effect.
-// When used incorrectly, it's probably too difficult to accurately analyze anyway.
-//
-// Also matches third-party wrappers with `useEffect` semantics.
+/**
+ * True when `node` calls `useEffect`, including third-party wrappers with
+ * `useEffect` semantics.
+ *
+ * Does not include `useLayoutEffect`.
+ * When used correctly, it interacts with the DOM = external system = (probably) valid effect.
+ * When used incorrectly, it's probably too difficult to accurately analyze anyway.
+ */
 export const isUseEffect = (
   context: Rule.RuleContext,
   node: Rule.Node,

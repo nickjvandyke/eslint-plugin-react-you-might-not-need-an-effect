@@ -14,7 +14,7 @@ import { isUseEffect } from "./hooks.ts";
 import { isRef, isRefCurrent } from "./refs.ts";
 import { unwrapExpression } from "./typescript.ts";
 
-// A cleanup return always has an argument, because bare `return`s are skipped.
+/** A cleanup return always has an argument, because bare `return`s are skipped. */
 export type CleanupReturn = ReturnStatementNode & { argument: Rule.Node };
 
 export interface Effect {
@@ -66,6 +66,12 @@ const getEffectCleanup = (
   );
 };
 
+/**
+ * Returns the effect function and its dependencies for a `useEffect`-style
+ * call. Returns `undefined` when the node is not an effect or the first
+ * argument is not a function. A missing dependency array yields no
+ * dependencies.
+ */
 export const getEffect = (
   context: Rule.RuleContext,
   node: Rule.Node,
@@ -88,10 +94,12 @@ export const getEffect = (
   };
 };
 
-// Returns the variable behind a reference when React evaluates it during render.
-// Globals, imported bindings, and refs are excluded:
-// - Globals and imports are not re-created per render.
-// - `ref.current` is only updated after render, so it is not render-safe.
+/**
+ * Returns the variable behind a reference when React evaluates it during render.
+ * Globals, imported bindings, and refs are excluded:
+ * - Globals and imports are not re-created per render.
+ * - `ref.current` is only updated after render, so it is not render-safe.
+ */
 const getRenderVariable = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -103,12 +111,14 @@ const getRenderVariable = (
   return variable;
 };
 
-// One variable per distinct render value in the dependency array.
-// Every dependency is available during render, by definition.
-// Include their upstream references so a derived dependency (e.g.
-// `const name = firstName + lastName`) still matches `firstName`.
-// An omitted dependency array yields no dependencies, so mount-only effects
-// fall out here (`no-initialize-state` covers those).
+/**
+ * One variable per distinct render value in the dependency array.
+ * Every dependency is available during render, by definition.
+ * Includes their upstream references so a derived dependency (e.g.
+ * `const name = firstName + lastName`) still matches `firstName`.
+ * An omitted dependency array yields no dependencies, so mount-only effects
+ * fall out here (`no-initialize-state` covers those).
+ */
 export const getDependencyVariables = (
   context: Rule.RuleContext,
   effect: Effect,
@@ -120,7 +130,7 @@ export const getDependencyVariables = (
       .filter(isDefined),
   );
 
-// The render values written by the setter.
+/** The render values written by the setter. */
 export const getSetterArgumentVariables = (
   context: Rule.RuleContext,
   setterRef: Scope.Reference,

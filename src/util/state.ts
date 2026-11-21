@@ -2,8 +2,10 @@ import type { Rule, Scope } from "eslint";
 import { getSynchronousCallChain, someVariableInit } from "./ast.ts";
 import { isUseState } from "./hooks.ts";
 
-// Reads the local name from a pattern element, including defaults
-// like `const [count = 0, setCount] = useState()`.
+/**
+ * Reads the local name from a pattern element, including defaults
+ * like `const [count = 0, setCount] = useState()`.
+ */
 const getPatternName = (
   element: Rule.Node | null | undefined,
 ): string | undefined => {
@@ -15,8 +17,10 @@ const getPatternName = (
   return undefined;
 };
 
-// Whether the reference is an element of a `useState` tuple.
-// Index 0 is the state value, index 1 is the setter.
+/**
+ * Whether the reference is an element of a `useState` tuple.
+ * Index 0 is the state value, index 1 is the setter.
+ */
 const isUseStateTupleElement = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -36,16 +40,19 @@ const isUseStateTupleElement = (
     );
   });
 
+/** True when `ref` is the state value of a `useState` tuple. */
 export const isState = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean => isUseStateTupleElement(context, ref, 0);
 
+/** True when `ref` is the setter of a `useState` tuple. */
 export const isStateSetter = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean => isUseStateTupleElement(context, ref, 1);
 
+/** True when the synchronous call chain from `ref` reaches a state setter. */
 export const isStateSetterCall = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -54,6 +61,7 @@ export const isStateSetterCall = (
     isStateSetter(context, callChainRef),
   );
 
+/** Returns the state or setter name for the `useState` call behind `ref`. */
 export const getStateName = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -66,8 +74,11 @@ export const getStateName = (
   );
 };
 
-// Callers pass a ref that is already a state setter call (filtered by
-// `isStateSetterCall`), so the call chain contains the written setter.
+/**
+ * Returns the `useState` declarator behind the state setter call at `ref`.
+ * Callers pass a ref that is already a state setter call (filtered by
+ * `isStateSetterCall`), so the call chain contains the written setter.
+ */
 export const getUseStateDeclarator = (
   context: Rule.RuleContext,
   ref: Scope.Reference,

@@ -59,6 +59,12 @@ const rule: Rule.RuleModule = {
   }),
 };
 
+/**
+ * Returns the prop that triggers a full state reset, if any.
+ *
+ * The effect must reset every `useState` value in the component to its initial
+ * value. Any prop in the effect dependencies is then the trigger.
+ */
 const findPropUsedToResetAllState = (
   context: Rule.RuleContext,
   effectFnRefs: Scope.Reference[],
@@ -90,6 +96,12 @@ const findPropUsedToResetAllState = (
     : undefined;
 };
 
+/**
+ * True when the setter writes the same value that `useState` uses as its
+ * initial value. Follows wrapper setters and treats a missing argument as
+ * `undefined`. Compares the source text of the written value and the
+ * initializer.
+ */
 const isSetStateToInitialValue = (
   context: Rule.RuleContext,
   setterRef: Scope.Reference,
@@ -136,6 +148,11 @@ const isSetStateToInitialValue = (
   );
 };
 
+/**
+ * Counts `useState` calls inside the component. Includes call arguments so
+ * wrappers like `memo` and `forwardRef` expose the function body that holds
+ * the hooks.
+ */
 const countUseStates = (
   context: Rule.RuleContext,
   componentNode: Rule.Node | undefined,

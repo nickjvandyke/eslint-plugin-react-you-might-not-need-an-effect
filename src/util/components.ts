@@ -2,6 +2,7 @@ import type { Rule } from "eslint";
 import { getRef, isFunctionExpression } from "./ast.ts";
 import { getOutermostWrapper, unwrapExpression } from "./typescript.ts";
 
+/** True when `node` defines a capitalized component function or variable. */
 export const isComponent = (node: Rule.Node): boolean => {
   const init =
     node.type === "VariableDeclarator" && node.init
@@ -17,10 +18,14 @@ export const isComponent = (node: Rule.Node): boolean => {
   );
 };
 
+/**
+ * True when `node` is a component wrapped by an unknown HOC, either inline or
+ * in a separate export. `memo` and `forwardRef` are pure and do not count.
+ */
 export const isHOC = (context: Rule.RuleContext, node: Rule.Node): boolean => {
   const knownPureHocs = ["memo", "forwardRef"];
 
-  // e.g. `const MyComponent = withRouter(() => ...)`
+  /** e.g. `const MyComponent = withRouter(() => ...)` */
   const isWrappedInline = (n: Rule.Node): boolean => {
     if (n.type !== "VariableDeclarator" || !n.init) return false;
     const init = unwrapExpression(n.init);
@@ -34,7 +39,7 @@ export const isHOC = (context: Rule.RuleContext, node: Rule.Node): boolean => {
     );
   };
 
-  // e.g. `export default withRouter(MyComponent);`
+  /** e.g. `export default withRouter(MyComponent);` */
   const isWrappedSeparately = (n: Rule.Node): boolean => {
     const id =
       n.type === "VariableDeclarator" || n.type === "FunctionDeclaration"
@@ -64,6 +69,7 @@ export const isHOC = (context: Rule.RuleContext, node: Rule.Node): boolean => {
   );
 };
 
+/** True when `node` defines a hook: a `use` prefix and a capitalized next character. */
 export const isCustomHook = (node: Rule.Node): boolean => {
   const init =
     node.type === "VariableDeclarator" && node.init
@@ -86,11 +92,13 @@ export const isCustomHook = (node: Rule.Node): boolean => {
   );
 };
 
-// Returns the component or custom hook that contains the `useEffect` node.
-//
-// Per the `isComponent` etc. internals, this will return undefined for some non-idiomatic component definitions.
-// e.g. `function buildComponent(arg1, arg2) { return <div />; }`
-// Not sure we can account for that without introducing false positives, and those are rare and arguably bad practice.
+/**
+ * Returns the component or custom hook that contains the `useEffect` node.
+ *
+ * Per the `isComponent` etc. internals, this will return undefined for some non-idiomatic component definitions.
+ * e.g. `function buildComponent(arg1, arg2) { return <div />; }`
+ * Not sure we can account for that without introducing false positives, and those are rare and arguably bad practice.
+ */
 export const findEnclosingComponentOrHook = (
   context: Rule.RuleContext,
   node: Rule.Node | undefined,
@@ -104,8 +112,11 @@ export const findEnclosingComponentOrHook = (
   }
 };
 
-// Extracts the component/hook name from a node found by `findEnclosingComponentOrHook`.
-// Returns `undefined` for anonymous functions or when the node cannot be identified.
+/**
+ * Extracts the component/hook name from a node found by
+ * `findEnclosingComponentOrHook`. Returns `undefined` for anonymous functions
+ * or when the node cannot be identified.
+ */
 export const getComponentOrHookName = (
   containingNode: Rule.Node | undefined,
 ): string | undefined => {

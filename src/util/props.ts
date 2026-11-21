@@ -14,9 +14,13 @@ import {
 } from "./hooks.ts";
 import { getOutermostWrapper, unwrapExpression } from "./typescript.ts";
 
-// Returns false for props of HOCs (e.g. `withRouter`) because they usually have side effects.
-// Also returns true for `useContext` values, because they are owned by an ancestor
-// and change outside the component, just like props.
+/**
+ * True when `ref` is a prop or a `useContext` value.
+ *
+ * Returns false for props of HOCs (e.g. `withRouter`) because they usually have side effects.
+ * `useContext` values count because they are owned by an ancestor and change
+ * outside the component, just like props.
+ */
 export const isProp = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -40,7 +44,7 @@ export const isProp = (
     );
   });
 
-// React names every hook `use` followed by a capital letter.
+/** React names every hook `use` followed by a capital letter. */
 const isHookCall = (init: Rule.Node): boolean => {
   if (init.type !== "CallExpression") return false;
   const callee = unwrapExpression(init.callee);
@@ -55,8 +59,10 @@ const isHookCall = (init: Rule.Node): boolean => {
   return name !== undefined && /^use[A-Z0-9]/.test(name);
 };
 
-// Hook return values are owned outside the component, like props, except for
-// values that React keeps stable across renders or that hold component state.
+/**
+ * Hook return values are owned outside the component, like props, except for
+ * values that React keeps stable across renders or that hold component state.
+ */
 const isExternalHookValue = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -71,14 +77,17 @@ const isExternalHookValue = (
       !isUseCallback(context, init),
   );
 
-// Whether the ref holds a value that lives outside the component: a prop, a
-// `useContext` value, or an external hook return value. Internal state belongs
-// to `no-chain-state-updates` instead.
+/**
+ * Whether the ref holds a value that lives outside the component: a prop, a
+ * `useContext` value, or an external hook return value. Internal state belongs
+ * to `no-chain-state-updates` instead.
+ */
 export const isExternalValue = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
 ): boolean => isProp(context, ref) || isExternalHookValue(context, ref);
 
+/** True when the synchronous call chain from `ref` reaches a prop. */
 export const isPropCall = (
   context: Rule.RuleContext,
   ref: Scope.Reference,

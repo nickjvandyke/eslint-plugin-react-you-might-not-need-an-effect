@@ -28,12 +28,14 @@ export type ReturnStatementNode = Extract<
   { type: "ReturnStatement" }
 >;
 
-// Type guard for `Array.prototype.filter` that also removes `null`.
+/** Type guard for `Array.prototype.filter` that also removes `null`. */
 export const isDefined = <T>(value: T | null | undefined): value is T =>
   value != null;
 
-// AST nodes are objects with a `type` property. Used to validate children that
-// come from `visitorKeys`, which are typed as `unknown`.
+/**
+ * AST nodes are objects with a `type` property. Used to validate children that
+ * come from `visitorKeys`, which are typed as `unknown`.
+ */
 const isNode = (value: unknown): value is Rule.Node =>
   typeof value === "object" && value !== null && "type" in value;
 
@@ -47,9 +49,11 @@ export const isFunctionExpression = (
 ): node is FunctionExpressionNode =>
   node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression";
 
-// Returns the node that holds a definition's runtime value: the initializer of
-// a variable, or the body of a function, class, or catch clause.
-// Returns `undefined` for definitions that have no analyzable value.
+/**
+ * Returns the node that holds a definition's runtime value: the initializer of
+ * a variable, or the body of a function, class, or catch clause.
+ * Returns `undefined` for definitions that have no analyzable value.
+ */
 export const getDefinitionValueNode = (
   def: Scope.Definition,
 ): Rule.Node | undefined => {
@@ -68,6 +72,13 @@ export const getDefinitionValueNode = (
   }
 };
 
+/**
+ * Walks upstream from a reference. Visits the reference, then the references
+ * inside each of its definitions. The walk stops at import bindings and
+ * function parameters, and visits each reference once.
+ *
+ * `visit` returns `false` to stop the walk at that branch.
+ */
 export const ascend = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -90,6 +101,11 @@ export const ascend = (
     .forEach((ref) => ascend(context, ref, visit, visited));
 };
 
+/**
+ * Walks every descendant of `node` using the visitor keys of the current
+ * parser. Skips call arguments and type-only keys unless
+ * `options.includeArguments` is set. Visits each node once.
+ */
 export const descend = (
   context: Rule.RuleContext,
   node: Rule.Node,
@@ -124,6 +140,7 @@ export const descend = (
     .forEach((child) => descend(context, child, visit, options, visited));
 };
 
+/** Every reference reachable upstream from `ref`, including `ref` itself. */
 export const getUpstreamRefs = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -136,6 +153,7 @@ export const getUpstreamRefs = (
   return refs;
 };
 
+/** Every descendant node of `topNode` whose `type` matches `type`. */
 export const getDownstreamNodes = <T extends Rule.Node["type"]>(
   context: Rule.RuleContext,
   topNode: Rule.Node,
@@ -157,6 +175,7 @@ export const getDownstreamNodes = <T extends Rule.Node["type"]>(
   return nodes;
 };
 
+/** Every identifier descendant of `node`, resolved to a scope reference. */
 export const getDownstreamRefs = (
   context: Rule.RuleContext,
   node: Rule.Node,
@@ -166,10 +185,12 @@ export const getDownstreamRefs = (
     .map((identifier) => getRef(context, identifier))
     .filter(isDefined);
 
-// Finds the call expression that invokes the reference, if any.
-// Walks up through member accesses (`fn`, `obj.fn`, `obj.a.fn`) and transparent
-// TypeScript wrappers. Returns `undefined` when the reference is not the
-// eventual callee, e.g. when it is an argument.
+/**
+ * Finds the call expression that invokes the reference, if any.
+ * Walks up through member accesses (`fn`, `obj.fn`, `obj.a.fn`) and transparent
+ * TypeScript wrappers. Returns `undefined` when the reference is not the
+ * eventual callee, e.g. when it is an argument.
+ */
 export const getCallExpr = (
   ref: Scope.Reference,
 ): CallExpressionNode | undefined => {
@@ -183,6 +204,10 @@ export const getCallExpr = (
     : undefined;
 };
 
+/**
+ * Collects the references inside the arguments of every call on the upstream
+ * chain from `ref`, plus their own upstream references.
+ */
 export const getArgsUpstreamRefs = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
@@ -192,6 +217,7 @@ export const getArgsUpstreamRefs = (
     .flatMap((arg) => getDownstreamRefs(context, arg))
     .flatMap((ref) => getUpstreamRefs(context, ref));
 
+/** Finds the scope reference that resolves the given identifier. */
 export const getRef = (
   context: Rule.RuleContext,
   identifier: Rule.Node,
@@ -200,8 +226,10 @@ export const getRef = (
     .getScope(identifier)
     ?.references.find((ref) => ref.identifier === identifier);
 
-// Runs `check` on the unwrapped initializer of each variable that defines the
-// reference. Returns true when any definition matches.
+/**
+ * Runs `check` on the unwrapped initializer of each variable that defines the
+ * reference. Returns true when any definition matches.
+ */
 export const someVariableInit = (
   ref: Scope.Reference,
   check: (init: Rule.Node, declarator: VariableDeclaratorNode) => boolean,
@@ -213,6 +241,7 @@ export const someVariableInit = (
     return check(unwrapExpression(def.node.init), def.node);
   });
 
+/** True when a definition assigns a literal, template, array, or object. */
 export const isConstant = (ref: Scope.Reference): boolean =>
   someVariableInit(
     ref,
@@ -223,6 +252,11 @@ export const isConstant = (ref: Scope.Reference): boolean =>
       init.type === "ObjectExpression",
   );
 
+/**
+ * True when `node` runs to completion before `within` continues. Returns false
+ * inside async functions, `await` expressions, `void` expressions, and nested
+ * functions that may run later.
+ */
 export const isSynchronous = (node: Rule.Node, within: Rule.Node): boolean => {
   if (isFunction(node) && node.async) {
     // An async function returns a promise, so its body does not run to
@@ -248,6 +282,11 @@ export const isSynchronous = (node: Rule.Node, within: Rule.Node): boolean => {
   }
 };
 
+/**
+ * Returns the references on the synchronous call chain that starts at `ref`.
+ * Includes called references and stable `const` aliases. Returns an empty array
+ * when `ref` is never called or the chain is asynchronous.
+ */
 export const getSynchronousCallChain = (
   context: Rule.RuleContext,
   ref: Scope.Reference,
