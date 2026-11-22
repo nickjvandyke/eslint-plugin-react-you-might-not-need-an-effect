@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.3.0...v1.3.1) (2026-11-22)
+
+
+### Bug Fixes
+
+* follow call arguments when tracing values ([d8060f4](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/d8060f494b8caa920c516ca902b94287aa76043d))
+* treat immediately invoked functions as synchronous ([aa24a42](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/aa24a42f9047ba1f08e104d11d44e24c6fdbe4ac))
+
 ## [1.3.0](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.2.0...v1.3.0) (2026-11-21)
 
 
