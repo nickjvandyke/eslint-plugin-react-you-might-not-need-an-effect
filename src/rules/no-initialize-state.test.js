@@ -42,22 +42,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        // Don't know why someone would use a synchronous IIFE here,
-        // hence we don't make the effort to flag it, but just documenting this behavior.
-        name: "To literal inside synchronous IIFE",
-        code: js`
-        function MyComponent() {
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            (() => {
-              setState("Hello");
-            })();
-          }, []);
-        }
-      `,
-      },
-      {
         name: "To literal inside IIFE inside callback",
         code: js`
         import { useEffect, useState } from 'react';
@@ -147,6 +131,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
 
           return <div>{state}</div>;
+        }
+      `,
+        errors: error("avoidInitializingState", {
+          state: "state",
+          arguments: '"Hello"',
+        }),
+      },
+      {
+        // An immediately invoked function runs when the effect runs.
+        name: "To literal inside synchronous IIFE",
+        code: js`
+        function MyComponent() {
+          const [state, setState] = useState();
+
+          useEffect(() => {
+            (() => {
+              setState("Hello");
+            })();
+          }, []);
         }
       `,
         errors: error("avoidInitializingState", {

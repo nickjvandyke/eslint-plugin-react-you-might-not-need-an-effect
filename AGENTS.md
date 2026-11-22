@@ -43,6 +43,6 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 
 - Rules analyze `useEffect` calls by traversing references upstream (to find what feeds the effect) and downstream (to find what the effect touches).
 - The `ascend`/`descend` utilities trace through variable definitions but **stop at import bindings** (external functions are opaque). `descend` walks call arguments, so data inside calls (dependency arrays, setter arguments, cleanup bodies) is found. `ascend` stops at hook calls other than `useMemo` and `useCallback`, because a hook returns a new value that its arguments only configure. `getSynchronousCallChain` stops at a value produced by a call, because calling that value does not run the arguments of the call that produced it.
-- Synchronous call chains within the effect body are traced; async/promise/`void` chains are treated as valid external synchronization.
+- Synchronous call chains within the effect body are traced; async/promise/`void` chains are treated as valid external synchronization. An immediately invoked function runs now, so it stays synchronous; a callback that may run later does not.
 - Effects with a cleanup return statement are generally treated as valid subscriptions and skipped by most rules.
 - Derived vs adjust split: `no-derived-state` owns setters whose arguments come from effect dependencies. Trigger-only dependencies belong to `no-adjust-state-on-prop-change` when they are external (props, `useContext`, hook values) and to `no-chain-state-updates` when they are internal state.

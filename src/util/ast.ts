@@ -1,5 +1,10 @@
 import type { Scope, Rule } from "eslint";
-import { isTypeOnlyKey, isWrapper, unwrapExpression } from "./typescript.ts";
+import {
+  getOutermostWrapper,
+  isTypeOnlyKey,
+  isWrapper,
+  unwrapExpression,
+} from "./typescript.ts";
 
 export type FunctionNode = Extract<
   Rule.Node,
@@ -309,6 +314,17 @@ export const isConstant = (ref: Scope.Reference): boolean =>
   );
 
 /**
+ * True when `node` is invoked right away, e.g. an immediately invoked function
+ * expression. Its body runs while the caller continues.
+ */
+const isImmediatelyInvoked = (node: FunctionNode): boolean => {
+  const callee = getOutermostWrapper(node);
+  return (
+    callee.parent.type === "CallExpression" && callee.parent.callee === callee
+  );
+};
+
+/**
  * True when `node` runs to completion before `within` continues. Returns false
  * inside async functions, `await` expressions, `void` expressions, and nested
  * functions that may run later.
@@ -328,11 +344,15 @@ export const isSynchronous = (node: Rule.Node, within: Rule.Node): boolean => {
     node.type === "AwaitExpression" ||
     // Inside an async function that is not awaited.
     // `typescript-eslint/no-floating-promises` rule enforces the leading `void`.
-    (node.type === "UnaryExpression" && node.operator === "void") ||
-    // Inside a named or anonymous function that may be called later, either as a callback or by the developer.
-    isFunction(node)
+    (node.type === "UnaryExpression" && node.operator === "void")
   ) {
     return false;
+  } else if (isFunction(node)) {
+    // A function may run later, unless it is invoked right away. An IIFE runs
+    // now, so its own position decides whether the chain is synchronous.
+    return isImmediatelyInvoked(node)
+      ? isSynchronous(getOutermostWrapper(node).parent, within)
+      : false;
   } else {
     return isSynchronous(node.parent, within);
   }

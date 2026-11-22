@@ -356,6 +356,22 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }),
       },
       {
+        // An immediately invoked function runs when the effect runs.
+        name: "Reset all state inside an immediately invoked function",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            (() => setUser(null))();
+          }, [userId]);
+        }
+      `,
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
+      },
+      {
         name: "Reset all state when state is read in render",
         code: js`
         function ProfilePage({ userId }) {
