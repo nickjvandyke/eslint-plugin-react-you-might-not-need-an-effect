@@ -112,6 +112,56 @@ const findDerivedStateDiagnostic = (diagnostics, filename) => {
 };
 
 describe("oxlint", () => {
+  it("does not treat an ordinary callback named useEffect as a React effect", async () => {
+    const diagnostics = await lintWithOxlint(
+      "adapter.js",
+      js`
+      function useEffect(callback) { callback(); }
+      export function Adapter({ report }) {
+        useEffect(() => report(Date.now()), []);
+      }
+    `,
+    );
+    assert.deepEqual(diagnostics, []);
+  });
+
+  it("does not treat an ordinary React object as a React namespace", async () => {
+    const diagnostics = await lintWithOxlint(
+      "adapter.js",
+      js`
+      const React = {
+        useState(value) { return [value]; },
+        useEffect(callback) { callback(); },
+      };
+      export function Adapter({ report }) {
+        const [value] = React.useState(7);
+        React.useEffect(() => report(value), [value]);
+      }
+    `,
+    );
+    assert.deepEqual(diagnostics, []);
+  });
+
+  it("retains the CommonJS React namespace", async () => {
+    const diagnostics = await lintWithOxlint(
+      "adapter.js",
+      js`
+      const React = require("react");
+      export function Adapter({ report }) {
+        const [value] = React.useState(7);
+        React.useEffect(() => report(value), [value]);
+      }
+    `,
+    );
+    assert.ok(
+      diagnostics.some(
+        (diagnostic) =>
+          diagnostic.code ===
+          "react-you-might-not-need-an-effect(no-pass-live-state-to-parent)",
+      ),
+    );
+  });
+
   it("loads the plugin and runs the recommended config", async () => {
     const diagnostics = await lintWithOxlint("form.js", javascriptCode);
     findDerivedStateDiagnostic(diagnostics, "form.js");

@@ -3,6 +3,7 @@ import plugin from "../index.ts";
 import noDerivedState from "../rules/no-derived-state.ts";
 import noInitializeState from "../rules/no-initialize-state.ts";
 import noPassDataToParent from "../rules/no-pass-data-to-parent.ts";
+import noPassLiveStateToParent from "../rules/no-pass-live-state-to-parent.ts";
 
 const js = String.raw;
 const config = { ...plugin.configs.recommended, rules: {} };
@@ -510,3 +511,195 @@ new RuleTester(config).run("hooks: useRef imports", noPassDataToParent, {
   ],
   invalid: [],
 });
+
+const reactBindings = [
+  [
+    "ES namespace default alias",
+    'import * as ReactModule from "react"; const React = ReactModule.default;',
+    "React.useEffect",
+    "React.useState",
+  ],
+  ["unresolved globals", "", "useEffect", "useState"],
+  ["global namespace", "", "React.useEffect", "React.useState"],
+  [
+    "ES module namespace",
+    'import * as React from "react";',
+    "React.useEffect",
+    "React.useState",
+  ],
+  [
+    "ES module aliases",
+    'import { useEffect as effect, useState as state } from "react";',
+    "effect",
+    "state",
+  ],
+  [
+    "CommonJS namespace",
+    'const React = require("react");',
+    "React.useEffect",
+    "React.useState",
+  ],
+  [
+    "CommonJS destructuring",
+    'const { useEffect, useState } = require("react");',
+    "useEffect",
+    "useState",
+  ],
+  [
+    "CommonJS aliases",
+    'const { useEffect: effect, useState: state } = require("react");',
+    "effect",
+    "state",
+  ],
+  [
+    "CommonJS members",
+    'const useEffect = require("react").useEffect; const useState = require("react").useState;',
+    "useEffect",
+    "useState",
+  ],
+  [
+    "UMD global alias",
+    "const React = globalThis.React;",
+    "React.useEffect",
+    "React.useState",
+  ],
+  [
+    "global hook aliases",
+    "const effect = useEffect; const state = useState;",
+    "effect",
+    "state",
+  ],
+  [
+    "namespace hook aliases",
+    'import React from "react"; const effect = React.useEffect; const state = React.useState;',
+    "effect",
+    "state",
+  ],
+];
+
+const ordinaryEffects = [
+  [
+    "ordinary global named namespace",
+    "globalThis.namespace = { useEffect(callback) { callback(); } }; const React = namespace;",
+    "React.useEffect",
+  ],
+  [
+    "local function",
+    "function useEffect(callback) { callback(); }",
+    "useEffect",
+  ],
+  ["local callback", "const useEffect = callback => callback();", "useEffect"],
+  [
+    "local namespace",
+    "const React = { useEffect(callback) { callback(); } };",
+    "React.useEffect",
+  ],
+  ["other module", 'import { useEffect } from "ordinary-reader";', "useEffect"],
+  [
+    "other default import",
+    'import React from "ordinary-reader";',
+    "React.useEffect",
+  ],
+  [
+    "other namespace import",
+    'import * as React from "ordinary-reader";',
+    "React.useEffect",
+  ],
+  [
+    "other CommonJS module",
+    'const React = require("ordinary-reader");',
+    "React.useEffect",
+  ],
+  [
+    "shadowed require",
+    'function require() { return { useEffect(callback) { callback(); } }; } const React = require("react");',
+    "React.useEffect",
+  ],
+  [
+    "reassigned hook",
+    'import { useEffect as effect } from "react"; let useEffect = effect; useEffect = callback => callback();',
+    "useEffect",
+  ],
+  [
+    "reassigned namespace",
+    'let React = require("react"); React = { useEffect(callback) { callback(); } };',
+    "React.useEffect",
+  ],
+  [
+    "cyclic aliases",
+    "var React = alias; var alias = React;",
+    "React.useEffect",
+  ],
+];
+
+new RuleTester(config).run(
+  "hooks: effect binding provenance",
+  noPassDataToParent,
+  {
+    valid: [
+      ...ordinaryEffects.map(([name, declaration, effect]) => ({
+        name,
+        code: `${declaration}\nfunction Adapter({ report }) { ${effect}(() => report(Date.now()), []); }`,
+      })),
+      {
+        name: "parameter shadows a hook",
+        code: js`
+        function Adapter({ report, useEffect }) {
+          useEffect(() => report(Date.now()), []);
+        }
+      `,
+      },
+      {
+        name: "parameter shadows the namespace",
+        code: js`
+        function Adapter({ report, React }) {
+          React.useEffect(() => report(Date.now()), []);
+        }
+      `,
+      },
+    ],
+    invalid: reactBindings.map(([name, declaration, effect]) => ({
+      name,
+      code: `${declaration}\nfunction Adapter({ report }) { ${effect}(() => report(Date.now()), []); }`,
+      errors: [{ messageId: "avoidPassingDataToParentInComponent" }],
+    })),
+  },
+);
+
+new RuleTester(config).run(
+  "hooks: state binding provenance",
+  noPassLiveStateToParent,
+  {
+    valid: [
+      {
+        name: "local synchronous namespace",
+        code: js`
+        const React = {
+          useState(value) { return [value]; },
+          useEffect(callback) { callback(); },
+        };
+        function Adapter({ report }) {
+          const [value] = React.useState(7);
+          React.useEffect(() => report(value), [value]);
+        }
+      `,
+      },
+      {
+        name: "ordinary local state factory in a real effect",
+        code: js`
+        import { useEffect } from "react";
+        function useState(value) { return [value]; }
+        function Adapter({ report }) {
+          const [value] = useState(7);
+          useEffect(() => report(value), [value]);
+        }
+      `,
+      },
+    ],
+    invalid: reactBindings.map(([name, declaration, effect, state]) => ({
+      name,
+      code: `${declaration}\nfunction Adapter({ report }) { const [value] = ${state}(7); ${effect}(() => report(value), [value]); }`,
+      errors: [{ messageId: "avoidPassingLiveStateToParentInComponent" }],
+    })),
+  },
+);

@@ -4,8 +4,7 @@ import { unwrapExpression } from "./typescript.ts";
 
 /**
  * React-compatible packages that expose the same hook API.
- * Kept intentionally small: renamed imports from other packages still fall
- * back to name matching.
+ * Local bindings and imports from other packages do not establish this API.
  */
 const REACT_MODULES = new Set([
   "react",
@@ -13,6 +12,7 @@ const REACT_MODULES = new Set([
   "preact/compat",
   "@wordpress/element",
 ]);
+const REACT_NAMESPACE = Symbol("React namespace");
 
 /**
  * Third-party hooks with `useEffect` semantics, matched by module + export.
@@ -69,20 +69,108 @@ const getImportBinding = (
 };
 
 /**
- * Resolves an identifier to the name it was imported from a React-compatible
- * package. Returns `default` or `namespace` for default and namespace imports.
- * Returns `undefined` when the identifier is not such an import.
+ * Resolves React imports, stable aliases, CommonJS imports and globals.
+ * Only identifiers without local definitions retain the global-name fallback.
  */
-const getReactImport = (
+const getReactBinding = (
   context: Rule.RuleContext,
   node: Rule.Node,
-): string | undefined => {
-  const binding = getImportBinding(context, node);
-  if (!binding || !REACT_MODULES.has(binding.source)) {
+  visited: Set<Rule.Node> = new Set(),
+): string | typeof REACT_NAMESPACE | undefined => {
+  node = unwrapExpression(node);
+  if (visited.has(node)) return undefined;
+  visited.add(node);
+
+  if (node.type === "Identifier") {
+    const variable = getRef(context, node)?.resolved;
+    const definitions = variable?.defs ?? [];
+    if (definitions.length === 0) {
+      return node.name === "React" ? REACT_NAMESPACE : node.name;
+    }
+
+    const binding = getImportBinding(context, node);
+    if (binding) {
+      if (!REACT_MODULES.has(binding.source)) return undefined;
+      return binding.imported === "default" || binding.imported === "namespace"
+        ? REACT_NAMESPACE
+        : binding.imported;
+    }
+
+    if (definitions.length !== 1) return undefined;
+    const [definition] = definitions;
+    if (definition.type !== "Variable" || !definition.node.init) {
+      return undefined;
+    }
+    if (
+      variable?.references.some(
+        (ref) => ref.isWrite() && ref.writeExpr !== definition.node.init,
+      )
+    ) {
+      return undefined;
+    }
+
+    const imported = getReactBinding(context, definition.node.init, visited);
+    if (definition.node.id.type === "Identifier") return imported;
+    if (
+      definition.node.id.type === "ObjectPattern" &&
+      imported === REACT_NAMESPACE
+    ) {
+      const property = definition.node.id.properties.find(
+        (property) =>
+          property.type === "Property" &&
+          property.value.type === "Identifier" &&
+          property.value.name === node.name,
+      );
+      if (property?.type === "Property") {
+        const name = getPropertyName(property.key, property.computed);
+        return name === "default" ? REACT_NAMESPACE : name;
+      }
+    }
     return undefined;
   }
 
-  return binding.imported;
+  if (node.type === "MemberExpression") {
+    const name = getPropertyName(node.property, node.computed);
+    if (
+      name === "React" &&
+      node.object.type === "Identifier" &&
+      ["globalThis", "window", "self", "global"].includes(node.object.name) &&
+      !getRef(context, node.object)?.resolved?.defs.length
+    ) {
+      return REACT_NAMESPACE;
+    }
+    const imported = getReactBinding(context, node.object, visited);
+    if (imported !== REACT_NAMESPACE) return undefined;
+    return name === "default" ? REACT_NAMESPACE : name;
+  }
+
+  if (
+    node.type === "CallExpression" &&
+    node.callee.type === "Identifier" &&
+    node.callee.name === "require" &&
+    !getRef(context, node.callee)?.resolved?.defs.length &&
+    node.arguments.length === 1
+  ) {
+    const [source] = node.arguments;
+    if (
+      source.type === "Literal" &&
+      typeof source.value === "string" &&
+      REACT_MODULES.has(source.value)
+    ) {
+      return REACT_NAMESPACE;
+    }
+  }
+  return undefined;
+};
+
+const getPropertyName = (
+  node: Rule.Node,
+  computed: boolean,
+): string | undefined => {
+  if (!computed && node.type === "Identifier") return node.name;
+  if (node.type === "Literal" && typeof node.value === "string")
+    return node.value;
+  return undefined;
 };
 
 /**
@@ -125,13 +213,8 @@ const isReactNamespace = (
   context: Rule.RuleContext,
   node: Rule.Node,
 ): boolean => {
-  if (node.type !== "Identifier") return false;
-
-  // Fast path, also covers globals, UMD builds, and auto-imported `React`.
-  if (node.name === "React") return true;
-
-  const imported = getReactImport(context, node);
-  return imported === "default" || imported === "namespace";
+  const imported = getReactBinding(context, node);
+  return imported === REACT_NAMESPACE;
 };
 
 /**
@@ -154,10 +237,7 @@ const isReactHook = (
   const callee = unwrapExpression(node.callee);
 
   if (callee.type === "Identifier") {
-    // Fast path, also covers globals, UMD builds, and auto-imported hooks.
-    if (callee.name === hookName) return true;
-
-    return getReactImport(context, callee) === hookName;
+    return getReactBinding(context, callee) === hookName;
   }
 
   if (callee.type === "MemberExpression") {
