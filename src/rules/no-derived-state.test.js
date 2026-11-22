@@ -589,6 +589,42 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
+        // The written value comes from a call argument, no matter how many
+        // variables sit between the dependency and the setter.
+        name: "From internal state via a call result variable",
+        code: js`
+        function Counter() {
+          const [count, setCount] = useState(0);
+          const [countJson, setCountJson] = useState();
+
+          useEffect(() => {
+            const value = JSON.stringify(count);
+            setCountJson(value);
+          }, [count]);
+        }
+      `,
+        errors: error("avoidDerivedState", { state: "countJson" }),
+      },
+      {
+        // Arguments of a call written to state are data, even when the callee
+        // is imported and its implementation is unavailable.
+        name: "From internal state via external function",
+        code: js`
+        import { computeName } from 'library';
+
+        function Component() {
+          const [firstName] = useState('Dwayne');
+          const [lastName] = useState('The Rock');
+          const [fullName, setFullName] = useState('');
+
+          useEffect(() => {
+            setFullName(computeName(firstName, lastName));
+          }, [firstName, lastName])
+        }
+      `,
+        errors: error("avoidDerivedState", { state: "fullName" }),
+      },
+      {
         name: "Set to result of semi-pure function defined outside effect",
         code: js`
         function Form() {

@@ -43,13 +43,31 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
+        // A callback that never runs does not handle an event when the effect runs.
+        name: "Condition inside a callback that is never called",
+        code: js`
+        function Form() {
+          const [dataToSubmit, setDataToSubmit] = useState();
+
+          useEffect(() => {
+            const fn = () => {
+              if (dataToSubmit) submitData(dataToSubmit);
+            };
+            console.log(fn);
+          }, [dataToSubmit]);
+        }
+      `,
+      },
+    ],
+    invalid: [
+      {
         // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/70
+        // The effect still reacts to the prop by conditionally writing to storage,
+        // so wrapping the prop in a validation call does not make it valid.
         name: "Respond to prop passed to fn",
         code: js`
         import { useEffect } from 'react'
 
-        // Captures an optional URL search param and persists it to localStorage + cookie.
-        // First-touch attribution: never overwrites an existing code.
         export function useSaveReferralCode(refCode) {
           useEffect(() => {
             const valid = validateReferralCode(refCode)
@@ -57,9 +75,37 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [refCode])
         }
       `,
+        errors: error("avoidPropHandler", { name: "valid" }),
       },
-    ],
-    invalid: [
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/70
+        name: "Respond to prop passed to fn in the condition",
+        code: js`
+        import { useEffect } from 'react'
+
+        export function useSaveReferralCode(refCode) {
+          useEffect(() => {
+            if (validateReferralCode(refCode)) saveReferredByCode(refCode)
+          }, [refCode])
+        }
+      `,
+        errors: error("avoidPropHandler", { name: "refCode" }),
+      },
+      {
+        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/7
+        name: "Derived condition from state passed to functions",
+        code: js`
+        function Klarna({ klarnaAppId }) {
+          const [countryCode] = useState(qs.parse('countryCode=meow'));
+          const klarnaEnabled = useSelector('store') && shouldEnable(countryCode);
+
+          useEffect(() => {
+            if (klarnaEnabled) loadKlarna(klarnaAppId);
+          }, [klarnaEnabled, klarnaAppId]);
+        }
+      `,
+        errors: error("avoidEventHandler", { name: "klarnaEnabled" }),
+      },
       {
         name: "Using props to handle an event and call an external function",
         code: js`
@@ -190,7 +236,7 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         import { useEffect } from "react";
 
         function Form({ value }) {
-          const derived = value + 2;
+          const derived = String(value);
 
           useEffect(() => {
             if (derived === "a") return;

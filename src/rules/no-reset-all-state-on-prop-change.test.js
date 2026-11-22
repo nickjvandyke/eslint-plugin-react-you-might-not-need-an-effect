@@ -114,6 +114,21 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         };
       `,
       },
+      {
+        // The setter is only inside a callback that never runs, so the effect
+        // does not reset state when the prop changes.
+        name: "Set state inside a callback that is never called",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            const reset = () => setUser(null);
+            console.log(reset);
+          }, [userId]);
+        }
+      `,
+      },
     ],
     invalid: [
       {
@@ -313,6 +328,23 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           const [user, setUser] = useState(null);
 
           const resetUser = () => setUser(null);
+
+          useEffect(() => {
+            resetUser();
+          }, [userId]);
+        }
+      `,
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
+      },
+      {
+        name: "Reset all state via a useCallback wrapper setter",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          const resetUser = useCallback(() => setUser(null), []);
 
           useEffect(() => {
             resetUser();

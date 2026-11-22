@@ -5,12 +5,13 @@ import {
   getDownstreamNodes,
   getSynchronousCallChain,
   getUpstreamRefs,
+  isSynchronous,
 } from "../util/ast.ts";
 import {
   findEnclosingComponentOrHook,
   isCustomHook,
 } from "../util/components.ts";
-import { getEffect } from "../util/effect.ts";
+import { getEffect, type Effect } from "../util/effect.ts";
 import { isUseState } from "../util/hooks.ts";
 import { isProp } from "../util/props.ts";
 import {
@@ -43,8 +44,7 @@ const rule: Rule.RuleModule = {
 
       const propUsedToResetAllState = findPropUsedToResetAllState(
         context,
-        effect.fnRefs,
-        effect.depsRefs,
+        effect,
         node,
       );
 
@@ -67,11 +67,13 @@ const rule: Rule.RuleModule = {
  */
 const findPropUsedToResetAllState = (
   context: Rule.RuleContext,
-  effectFnRefs: Scope.Reference[],
-  depsRefs: Scope.Reference[],
+  effect: Effect,
   useEffectNode: Rule.Node,
 ): Scope.Reference | undefined => {
-  const stateSetterRefs = effectFnRefs
+  const stateSetterRefs = effect.fnRefs
+    // A setter inside a callback that may run later does not reset state when
+    // the effect runs, so it does not count.
+    .filter((ref) => isSynchronous(ref.identifier, effect.fn))
     .filter((ref) => isStateSetterCall(context, ref))
     // The same setter can be called more than once in one effect.
     // Count each state setter once.
@@ -90,7 +92,7 @@ const findPropUsedToResetAllState = (
       );
 
   return isAllStateReset
-    ? depsRefs
+    ? effect.depsRefs
         .flatMap((ref) => getUpstreamRefs(context, ref))
         .find((ref) => isProp(context, ref))
     : undefined;
@@ -149,9 +151,7 @@ const isSetStateToInitialValue = (
 };
 
 /**
- * Counts `useState` calls inside the component. Includes call arguments so
- * wrappers like `memo` and `forwardRef` expose the function body that holds
- * the hooks.
+ * Counts `useState` calls inside the component.
  */
 const countUseStates = (
   context: Rule.RuleContext,
@@ -161,11 +161,11 @@ const countUseStates = (
     return 0;
   }
 
-  // Include call arguments so wrappers like `memo` and `forwardRef` expose the
-  // function body that holds the hooks.
-  return getDownstreamNodes(context, componentNode, "CallExpression", {
-    includeArguments: true,
-  }).filter((node) => isUseState(context, node)).length;
+  // Includes call arguments, so wrappers like `memo` and `forwardRef` expose
+  // the function body that holds the hooks.
+  return getDownstreamNodes(context, componentNode, "CallExpression").filter(
+    (node) => isUseState(context, node),
+  ).length;
 };
 
 export default rule;

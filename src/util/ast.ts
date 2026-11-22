@@ -49,6 +49,61 @@ export const isFunctionExpression = (
 ): node is FunctionExpressionNode =>
   node.type === "FunctionExpression" || node.type === "ArrowFunctionExpression";
 
+/** Hooks start with `use` and then an uppercase letter or a digit. */
+const HOOK_NAME = /^use[A-Z0-9]/;
+
+/** True when `name` is a hook name. */
+export const isHookName = (name: string): boolean => HOOK_NAME.test(name);
+
+/**
+ * Hooks whose return value is computed from their arguments.
+ * Every other hook returns a new value, and its arguments only configure it.
+ */
+const ARGUMENT_DERIVED_HOOKS: ReadonlySet<string> = new Set([
+  "useMemo",
+  "useCallback",
+]);
+
+/** The name of a call's callee, e.g. `useState` in `React.useState(value)`. */
+const getCalleeName = (callee: Rule.Node): string | undefined => {
+  const node = unwrapExpression(callee);
+  if (node.type === "Identifier") {
+    return node.name;
+  } else if (
+    node.type === "MemberExpression" &&
+    !node.computed &&
+    node.property.type === "Identifier"
+  ) {
+    return node.property.name;
+  }
+  return undefined;
+};
+
+/**
+ * Returns the call at the root of a member chain, e.g. `useQuery(id)` in
+ * `useQuery(id).data`.
+ */
+const getRootCall = (node: Rule.Node): Rule.Node => {
+  let current = unwrapExpression(node);
+  while (current.type === "MemberExpression") {
+    current = unwrapExpression(current.object);
+  }
+  return current;
+};
+
+/**
+ * True when `node` is a value of a hook call that returns a value independent
+ * of its arguments, e.g. `useState(initialValue)` or `useQuery({ queryKey })`.
+ */
+const isHookRoot = (node: Rule.Node): boolean => {
+  const root = getRootCall(node);
+  if (root.type !== "CallExpression") return false;
+  const name = getCalleeName(root.callee);
+  return (
+    name !== undefined && isHookName(name) && !ARGUMENT_DERIVED_HOOKS.has(name)
+  );
+};
+
 /**
  * Returns the node that holds a definition's runtime value: the initializer of
  * a variable, or the body of a function, class, or catch clause.
@@ -58,8 +113,15 @@ export const getDefinitionValueNode = (
   def: Scope.Definition,
 ): Rule.Node | undefined => {
   switch (def.type) {
-    case "Variable":
-      return def.node.init ?? undefined;
+    case "Variable": {
+      const init = def.node.init;
+      // A hook value is a new root, not a value derived from its arguments.
+      // `useState(prop)` and `useQuery({ queryKey: [state] })` must stop here.
+      if (init && isHookRoot(unwrapExpression(init))) {
+        return undefined;
+      }
+      return init ?? undefined;
+    }
     case "FunctionName":
     case "ClassName":
     case "CatchClause":
@@ -103,15 +165,13 @@ export const ascend = (
 
 /**
  * Walks every descendant of `node` using the visitor keys of the current
- * parser. Skips call arguments and type-only keys unless
- * `options.includeArguments` is set. Visits each node once.
+ * parser. Skips type-only keys, which hold no runtime references, and visits
+ * each node once.
  */
 export const descend = (
   context: Rule.RuleContext,
   node: Rule.Node,
   visit: (node: Rule.Node) => void,
-  // Call arguments are skipped by default. Set this to walk them too.
-  options: { includeArguments?: boolean } = {},
   visited: Set<Rule.Node> = new Set(),
 ): void => {
   if (visited.has(node)) {
@@ -120,24 +180,16 @@ export const descend = (
   visit(node);
   visited.add(node);
 
-  const { includeArguments = false } = options;
-
   (context.sourceCode.visitorKeys[node.type] ?? [])
-    // Many times simpler to just ignore arguments (to CallExpressions and NewExpressions).
-    // Too complicated to follow them, and often we can't at all (imported functions).
-    // Assuming they are used in a particular way introduces false positives, and sometimes libraries _intend_ for such uses.
-    // Ignoring introduces some false negatives for uncommon patterns, but that's much preferred.
-    // Also ignore type-only keys: they hold no runtime references.
-    .filter(
-      (key) => (includeArguments || key !== "arguments") && !isTypeOnlyKey(key),
-    )
+    // Ignore type-only keys: they hold no runtime references.
+    .filter((key) => !isTypeOnlyKey(key))
     .flatMap((key): unknown[] => {
       const child: unknown = Reflect.get(node, key);
       return Array.isArray(child) ? child : [child];
     })
     // Children can be absent (optional `visitorKeys`, skipped array holes).
     .filter(isNode)
-    .forEach((child) => descend(context, child, visit, options, visited));
+    .forEach((child) => descend(context, child, visit, visited));
 };
 
 /** Every reference reachable upstream from `ref`, including `ref` itself. */
@@ -158,20 +210,14 @@ export const getDownstreamNodes = <T extends Rule.Node["type"]>(
   context: Rule.RuleContext,
   topNode: Rule.Node,
   type: T,
-  options: { includeArguments?: boolean } = {},
 ): Extract<Rule.Node, { type: T }>[] => {
   const nodes: Extract<Rule.Node, { type: T }>[] = [];
-  descend(
-    context,
-    topNode,
-    (node) => {
-      if (node.type === type) {
-        // `node.type` does not narrow through a generic type parameter.
-        nodes.push(node as Extract<Rule.Node, { type: T }>);
-      }
-    },
-    options,
-  );
+  descend(context, topNode, (node) => {
+    if (node.type === type) {
+      // `node.type` does not narrow through a generic type parameter.
+      nodes.push(node as Extract<Rule.Node, { type: T }>);
+    }
+  });
   return nodes;
 };
 
@@ -179,9 +225,8 @@ export const getDownstreamNodes = <T extends Rule.Node["type"]>(
 export const getDownstreamRefs = (
   context: Rule.RuleContext,
   node: Rule.Node,
-  options: { includeArguments?: boolean } = {},
 ): Scope.Reference[] =>
-  getDownstreamNodes(context, node, "Identifier", options)
+  getDownstreamNodes(context, node, "Identifier")
     .map((identifier) => getRef(context, identifier))
     .filter(isDefined);
 
@@ -294,6 +339,28 @@ export const isSynchronous = (node: Rule.Node, within: Rule.Node): boolean => {
 };
 
 /**
+ * True when a definition of `ref` holds a call. The value of a call is the
+ * result, so calling `ref` does not run the arguments of that call.
+ * E.g. `new ResizeObserver(handler)` stores the handler; it does not call it.
+ * `useMemo` and `useCallback` are excluded because they return the value
+ * computed from their arguments, so calling that value does run them.
+ */
+const isCallResult = (ref: Scope.Reference): boolean =>
+  (ref.resolved?.defs ?? []).some((def) => {
+    if (def.type !== "Variable" || def.node.init == null) {
+      return false;
+    }
+    const init = unwrapExpression(def.node.init);
+    if (init.type === "NewExpression") {
+      return true;
+    } else if (init.type !== "CallExpression") {
+      return false;
+    }
+    const name = getCalleeName(init.callee);
+    return name === undefined || !ARGUMENT_DERIVED_HOOKS.has(name);
+  });
+
+/**
  * Returns the references on the synchronous call chain that starts at `ref`.
  * Includes called references and stable `const` aliases. Returns an empty array
  * when `ref` is never called or the chain is asynchronous.
@@ -377,6 +444,8 @@ export const getSynchronousCallChain = (
     } else {
       return false;
     }
+    // Do not walk into the arguments of the call that produced the value.
+    return isCallResult(upRef) ? false : undefined;
   });
   return callExprRefs;
 };

@@ -4,9 +4,10 @@ import {
   getRef,
   getSynchronousCallChain,
   isFunctionExpression,
+  isHookName,
   someVariableInit,
 } from "./ast.ts";
-import { isComponent, isCustomHook, isHOC, isHookName } from "./components.ts";
+import { isComponent, isCustomHook, isHOC } from "./components.ts";
 import {
   isUseCallback,
   isUseContext,

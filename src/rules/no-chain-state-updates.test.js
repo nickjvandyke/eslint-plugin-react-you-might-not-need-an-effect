@@ -90,16 +90,17 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        // Because we don't trace the args passed to `JSON.stringify` (hard to generalize)
-        name: "JSON.stringifying internal state in deps",
+        // `count` is read inside a call argument written to state.
+        // `no-derived-state` owns this case, and this rule must not report it too.
+        name: "Set state to a value derived through a call argument",
         code: js`
-        function Feed() {
-          const [posts, setPosts] = useState([]);
-          const [scrollPosition, setScrollPosition] = useState(0);
+        function Counter() {
+          const [count, setCount] = useState(0);
+          const [countJson, setCountJson] = useState();
 
           useEffect(() => {
-            setScrollPosition(0);
-          }, [JSON.stringify(posts)]);
+            setCountJson(JSON.stringify(count));
+          }, [count]);
         }
       `,
       },
@@ -137,6 +138,22 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       },
     ],
     invalid: [
+      {
+        // `posts` is read inside a call argument in the dependency array.
+        // Arguments are data, so the state dependency is found.
+        name: "JSON.stringifying internal state in deps",
+        code: js`
+        function Feed() {
+          const [posts, setPosts] = useState([]);
+          const [scrollPosition, setScrollPosition] = useState(0);
+
+          useEffect(() => {
+            setScrollPosition(0);
+          }, [JSON.stringify(posts)]);
+        }
+      `,
+        errors: error("avoidChainingStateUpdates", { state: "scrollPosition" }),
+      },
       {
         name: "Set state to literal when internal state changes",
         code: js`

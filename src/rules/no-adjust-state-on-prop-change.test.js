@@ -133,6 +133,35 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
+      {
+        // `count` is read inside a call argument written to state.
+        // `no-derived-state` owns this case, and this rule must not report it too.
+        name: "Set state to a value derived through a call argument",
+        code: js`
+        function Counter({ count }) {
+          const [countJson, setCountJson] = useState();
+
+          useEffect(() => {
+            setCountJson(JSON.stringify(count));
+          }, [count]);
+        }
+      `,
+      },
+      {
+        // A member access on a hook result is still the hook's value. The hook
+        // arguments in `useQuery(id)` do not become dependencies of `data`.
+        name: "Hook result member access does not expose hook arguments",
+        code: js`
+        function Items({ id }) {
+          const data = useQuery(id).data;
+          const [selection, setSelection] = useState(null);
+
+          useEffect(() => {
+            setSelection(null);
+          }, [data]);
+        }
+      `,
+      },
     ],
     invalid: [
       {

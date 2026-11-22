@@ -87,22 +87,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
-      // False negative from ignoring CallExpression arguments — the rule still
-      // does not trace state through call arguments.
-      // `setCountJson(JSON.stringify(count))` only exposes `JSON`, which is a
-      // global, so the argument never matches the `[count]` dependency.
-      {
-        name: "From internal state via pure global function",
-        code: js`
-        function Counter({ count }) {
-          const [countJson, setCountJson] = useState();
-
-          useEffect(() => {
-            setCountJson(JSON.stringify(count));
-          }, [count]);
-        }
-      `,
-      },
       {
         name: "Defined-then-called async external global function",
         code: js`
@@ -290,6 +274,21 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       },
     ],
     invalid: [
+      {
+        // Arguments of a call written to state are data, so the dependency is
+        // found even when the callee is a global we cannot analyze.
+        name: "From internal state via pure global function",
+        code: js`
+        function Counter({ count }) {
+          const [countJson, setCountJson] = useState();
+
+          useEffect(() => {
+            setCountJson(JSON.stringify(count));
+          }, [count]);
+        }
+      `,
+        errors: avoidDerivedState("countJson"),
+      },
       {
         name: "Set to result of pure local ArrowFunctionExpression",
         code: js`

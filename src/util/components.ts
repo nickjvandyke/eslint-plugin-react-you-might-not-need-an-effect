@@ -1,15 +1,9 @@
 import type { Rule } from "eslint";
-import { getRef, isFunctionExpression } from "./ast.ts";
+import { getRef, isFunctionExpression, isHookName } from "./ast.ts";
 import { getOutermostWrapper, unwrapExpression } from "./typescript.ts";
 
 /** Components start with an uppercase letter. */
 const COMPONENT_NAME = /^[A-Z]/;
-
-/** Hooks start with `use` and then an uppercase letter or a digit. */
-const HOOK_NAME = /^use[A-Z0-9]/;
-
-/** True when `name` is a hook name. */
-export const isHookName = (name: string): boolean => HOOK_NAME.test(name);
 
 /** True when `node` defines a capitalized component function or variable. */
 export const isComponent = (node: Rule.Node): boolean => {

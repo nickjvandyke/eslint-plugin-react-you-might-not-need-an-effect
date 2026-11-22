@@ -32,10 +32,7 @@ const rule: Rule.RuleModule = {
       if (bodySetters.length === 0) return;
 
       const cleanupArg = effect.cleanup.argument;
-      // Include call arguments so setters passed to cleanup helpers are found.
-      const cleanupRefs = getDownstreamRefs(context, cleanupArg, {
-        includeArguments: true,
-      });
+      const cleanupRefs = getDownstreamRefs(context, cleanupArg);
 
       // Trace both the body setter and cleanup refs through alias chains.
       // If they share any upstream variable, the cleanup references the same setter.

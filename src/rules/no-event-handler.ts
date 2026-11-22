@@ -3,6 +3,7 @@ import {
   getDownstreamNodes,
   getDownstreamRefs,
   getUpstreamRefs,
+  isSynchronous,
 } from "../util/ast.ts";
 import { getEffect } from "../util/effect.ts";
 import { isProp } from "../util/props.ts";
@@ -35,6 +36,9 @@ const rule: Rule.RuleModule = {
         .filter((ifNode) => !ifNode.alternate)
         .map((ifNode) => ifNode.test)
         .flatMap((ifTestNode) => getDownstreamRefs(context, ifTestNode))
+        // A callback that may run later is not an event handler driven by the
+        // effect, so its conditions do not count.
+        .filter((ifTestRef) => isSynchronous(ifTestRef.identifier, effect.fn))
         .forEach((ifTestRef) => {
           const upstreamRefs = getUpstreamRefs(context, ifTestRef);
 
