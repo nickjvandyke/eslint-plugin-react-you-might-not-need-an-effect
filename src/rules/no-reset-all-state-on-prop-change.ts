@@ -3,6 +3,7 @@ import { unwrapExpression } from "../util/typescript.ts";
 import {
   getCallExpr,
   getDownstreamNodes,
+  getRef,
   getSynchronousCallChain,
   getUpstreamRefs,
   isSynchronous,
@@ -14,11 +15,7 @@ import {
 import { getEffect, type Effect } from "../util/effect.ts";
 import { isUseState } from "../util/hooks.ts";
 import { isProp } from "../util/props.ts";
-import {
-  getUseStateDeclarator,
-  isStateSetter,
-  isStateSetterCall,
-} from "../util/state.ts";
+import { getUseStateDeclarator, isStateSetterCall } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -70,21 +67,33 @@ const findPropUsedToResetAllState = (
   effect: Effect,
   useEffectNode: Rule.Node,
 ): Scope.Reference | undefined => {
-  const stateSetterRefs = effect.fnRefs
+  const synchronousSetterRefs = effect.fnRefs
     // A setter inside a callback that may run later does not reset state when
     // the effect runs, so it does not count.
     .filter((ref) => isSynchronous(ref.identifier, effect.fn))
-    .filter((ref) => isStateSetterCall(context, ref))
-    // The same setter can be called more than once in one effect.
-    // Count each state setter once.
-    .filter(
-      (ref, index, refs) =>
-        refs.findIndex((other) => other.resolved === ref.resolved) === index,
-    );
+    .filter((ref) => isStateSetterCall(context, ref));
+
+  // Check every call before deduplicating. An effect that resets state and then
+  // overwrites it in a second call is not a reset, even though the state itself
+  // only appears once after deduplication.
+  const everySynchronousCallSetsInitialValue = synchronousSetterRefs.every(
+    (ref) => isSetStateToInitialValue(context, ref),
+  );
+
+  const seenDeclarators = new Set<Rule.Node>();
+  const stateSetterRefs = synchronousSetterRefs
+    // The same setter can be reached more than once in one effect, e.g. by a
+    // helper call and a direct call. Count each state once.
+    .filter((ref) => {
+      const declarator = getUseStateDeclarator(context, ref);
+      if (!declarator || seenDeclarators.has(declarator)) return false;
+      seenDeclarators.add(declarator);
+      return true;
+    });
 
   const isAllStateReset =
     stateSetterRefs.length > 0 &&
-    stateSetterRefs.every((ref) => isSetStateToInitialValue(context, ref)) &&
+    everySynchronousCallSetsInitialValue &&
     stateSetterRefs.length ===
       countUseStates(
         context,
@@ -99,6 +108,21 @@ const findPropUsedToResetAllState = (
 };
 
 /**
+ * True when `node` is an identifier that resolves to a function parameter.
+ * This means a wrapper function forwards the value it receives.
+ */
+const isParameterIdentifier = (
+  context: Rule.RuleContext,
+  node: Rule.Node | undefined,
+): boolean => {
+  if (!node) return false;
+  const identifier = unwrapExpression(node);
+  if (identifier.type !== "Identifier") return false;
+  const ref = getRef(context, identifier);
+  return ref?.resolved?.defs.some((def) => def.type === "Parameter") ?? false;
+};
+
+/**
  * True when the setter writes the same value that `useState` uses as its
  * initial value. Follows wrapper setters and treats a missing argument as
  * `undefined`. Compares the source text of the written value and the
@@ -108,13 +132,31 @@ const isSetStateToInitialValue = (
   context: Rule.RuleContext,
   setterRef: Scope.Reference,
 ): boolean => {
-  // A wrapper setter may take no arguments and call the real setter inside.
-  // Prefer the call that the state setter itself receives.
-  const setterCallRef =
-    getSynchronousCallChain(context, setterRef).find(
-      (chainRef) => isStateSetter(context, chainRef) && getCallExpr(chainRef),
-    ) ?? setterRef;
-  const callExpr = getCallExpr(setterCallRef);
+  // A helper or alias may call the state setter itself. The chain runs from the
+  // outermost call to the call that reaches the setter. Start at the innermost
+  // call, which carries the written value, and step outward only while that
+  // value is a parameter of the wrapping helper. For example:
+  //   const run = (fallback) => setUser(userId ?? fallback);
+  //   run(null);
+  // `setUser(userId ?? fallback)` carries the value. It is not the parameter,
+  // so the written value is not `null`.
+  const setterCalls = getSynchronousCallChain(context, setterRef)
+    .filter(
+      (chainRef) =>
+        getCallExpr(chainRef) !== undefined &&
+        isStateSetterCall(context, chainRef),
+    )
+    .reverse();
+  let index = 0;
+  let callExpr = getCallExpr(setterCalls[index] ?? setterRef);
+  while (
+    callExpr !== undefined &&
+    index < setterCalls.length - 1 &&
+    isParameterIdentifier(context, callExpr.arguments[0])
+  ) {
+    index++;
+    callExpr = getCallExpr(setterCalls[index]);
+  }
   if (!callExpr) return false;
   const rawSetStateToValue = callExpr.arguments[0];
   const setStateToValue = rawSetStateToValue

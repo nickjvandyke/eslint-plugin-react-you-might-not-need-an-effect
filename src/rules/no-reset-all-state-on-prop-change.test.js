@@ -129,6 +129,49 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
+      {
+        // The helper call has no argument, but the real setter call writes
+        // `null`, which is not the `undefined` initial value.
+        name: "Set state to a non-initial value inside a helper",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState();
+
+          useEffect(() => {
+            const run = () => setUser(null);
+            run();
+          }, [userId]);
+        }
+      `,
+      },
+      {
+        // The helper guards the value, so the caller argument is not written.
+        name: "Set state to a guarded value inside a helper",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+          const run = (fallback) => setUser(userId ?? fallback);
+
+          useEffect(() => {
+            run(null);
+          }, [userId]);
+        }
+      `,
+      },
+      {
+        // Resetting and then overwriting the same state is not a reset.
+        name: "Reset state then overwrite it",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            setUser(null);
+            setUser(userId);
+          }, [userId]);
+        }
+      `,
+      },
     ],
     invalid: [
       {
@@ -384,6 +427,75 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [userId]);
 
           return <div>{user}{user}{comment}</div>;
+        }
+      `,
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
+      },
+      {
+        name: "Reset all state through a setter alias",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+          const resetUser = setUser;
+
+          useEffect(() => {
+            resetUser(null);
+          }, [userId]);
+        }
+      `,
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
+      },
+      {
+        name: "Reset all state through a helper",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            const run = () => setUser(null);
+            run();
+          }, [userId]);
+        }
+      `,
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
+      },
+      {
+        // The helper and the direct call reach the same state. It still counts
+        // as one reset of one state.
+        name: "Reset the same state through a helper and a direct call",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUser] = useState(null);
+
+          useEffect(() => {
+            const run = () => setUser(null);
+            run();
+            setUser(null);
+          }, [userId]);
+        }
+      `,
+        errors: error("avoidResettingAllStateWhenAPropChanges", {
+          prop: "userId",
+        }),
+      },
+      {
+        // The wrapper forwards its argument, so the no-argument call resets to
+        // the `undefined` initial value.
+        name: "Reset all state through a wrapper setter with no argument",
+        code: js`
+        function ProfilePage({ userId }) {
+          const [user, setUserReal] = useState();
+          const setUser = (value) => setUserReal(value);
+
+          useEffect(() => {
+            setUser();
+          }, [userId]);
         }
       `,
         errors: error("avoidResettingAllStateWhenAPropChanges", {
