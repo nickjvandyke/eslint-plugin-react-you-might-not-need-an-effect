@@ -1,8 +1,9 @@
 {
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*", "./test/**/*.ts"],
   "compilerOptions": {
     "target": "es2022",
     "lib": ["es2022"],
+    "types": ["node"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "strict": true,

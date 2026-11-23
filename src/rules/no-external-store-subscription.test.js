@@ -84,21 +84,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "ResizeObserver pattern (setter only in callback)",
-        code: js`
-        function C({ ref }) {
-          const [size, setSize] = useState();
-          useEffect(() => {
-            const observer = new ResizeObserver((entry) => {
-              setSize(entry.contentRect.width);
-            });
-            observer.observe(ref.current);
-            return () => observer.disconnect();
-          }, [ref]);
-        }
-      `,
-      },
-      {
         name: "Store subscribe returns unsubscribe, no sync setter in body",
         code: js`
         function useStoreValue(store) {
@@ -153,18 +138,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Synchronous IIFE wrapping setter, cleanup not connected",
-        code: js`
-        function C() {
-          const [x, setX] = useState(0);
-          useEffect(() => {
-            (() => { setX(readExternal()); })();
-            return () => console.log('cleanup');
-          }, []);
-        }
-      `,
-      },
-      {
         name: "void expression wrapping synchronous setter, cleanup not connected",
         code: js`
         function C() {
@@ -209,22 +182,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
               window.removeEventListener('online', updateState);
               window.removeEventListener('offline', updateState);
             };
-          }, []);
-          return isOnline;
-        }
-      `,
-        errors: error("avoidExternalStoreSubscription", { state: "isOnline" }),
-      },
-      {
-        name: "Inline arrow cleanup with same closure chain",
-        code: js`
-        function useOnlineStatus() {
-          const [isOnline, setIsOnline] = useState(true);
-          useEffect(() => {
-            const update = () => setIsOnline(navigator.onLine);
-            update();
-            window.addEventListener('online', update);
-            return () => window.removeEventListener('online', update);
           }, []);
           return isOnline;
         }
@@ -286,37 +243,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         ],
       },
       {
-        name: "Split handler and synchronous setter, handler in cleanup",
-        code: js`
-        function C() {
-          const [value, setValue] = useState(0);
-          useEffect(() => {
-            setValue(readExternal());
-            const handler = (v) => setValue(v);
-            const sub = external.subscribe(handler);
-            return () => sub.unsubscribe(handler);
-          }, []);
-        }
-      `,
-        errors: error("avoidExternalStoreSubscription", { state: "value" }),
-      },
-      {
-        name: "Intermediate synchronous function call pattern",
-        code: js`
-        function useStoreValue(store) {
-          const [value, setValue] = useState(0);
-          useEffect(() => {
-            const update = () => setValue(store.get());
-            update();
-            store.onChange(update);
-            return () => store.offChange(update);
-          }, [store]);
-          return value;
-        }
-      `,
-        errors: error("avoidExternalStoreSubscription", { state: "value" }),
-      },
-      {
         name: "Multiple sync setters, cleanup references one via arrow body",
         code: js`
         function C() {
@@ -343,34 +269,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setCount(readExternal());
             return () => setCount(c => c + 1);
-          }, []);
-        }
-      `,
-        errors: error("avoidExternalStoreSubscription", { state: "count" }),
-      },
-      {
-        name: "Body aliases setter directly, cleanup uses original name",
-        code: js`
-        function C() {
-          const [count, setCount] = useState(0);
-          useEffect(() => {
-            const update = setCount;
-            update(readExternal());
-            return () => setCount(0);
-          }, []);
-        }
-      `,
-        errors: error("avoidExternalStoreSubscription", { state: "count" }),
-      },
-      {
-        name: "Body wraps setter in arrow function, cleanup uses original name",
-        code: js`
-        function C() {
-          const [count, setCount] = useState(0);
-          useEffect(() => {
-            const update = (v) => setCount(v);
-            update(readExternal());
-            return () => setCount(0);
           }, []);
         }
       `,

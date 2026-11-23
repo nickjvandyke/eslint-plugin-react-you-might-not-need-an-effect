@@ -122,10 +122,12 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           );
         }
       `,
-        errors: error("avoidPassingLiveStateToParentInComponent", {
-          state: '"text"',
-          name: '"Child"',
-        }),
+        errors: [
+          {
+            message:
+              'Avoid passing live state to parents in an effect. Instead, lift "text" to the parent and pass it down to "Child" as a prop.',
+          },
+        ],
       },
       {
         name: "Pass live internal state, empty deps",
@@ -154,10 +156,12 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onTextChanged, text]);
         }
       `,
-        errors: error("avoidPassingLiveStateToParentInHook", {
-          state: '"text"',
-          name: '"useCustomHook"',
-        }),
+        errors: [
+          {
+            message:
+              'Avoid passing live state to parents in an effect. Instead, return "text" from "useCustomHook".',
+          },
+        ],
       },
       {
         name: "Pass live internal state AND external state",
@@ -246,44 +250,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           state: '"text"',
           name: '"Child"',
         }),
-      },
-      {
-        // `messageId` + `data` renders the same template in the test and the
-        // rule, so only a literal message catches duplicated quotes.
-        name: "Message quotes each interpolated name exactly once",
-        code: js`
-        const Child = ({ onData }) => {
-          const [value, setValue] = useState();
-
-          useEffect(() => {
-            onData(value);
-          }, [onData, value]);
-        }
-      `,
-        errors: [
-          {
-            message:
-              'Avoid passing live state to parents in an effect. Instead, lift "value" to the parent and pass it down to "Child" as a prop.',
-          },
-        ],
-      },
-      {
-        name: "Message quotes each interpolated name exactly once in custom hook",
-        code: js`
-        const useCustom = ({ onData }) => {
-          const [value, setValue] = useState();
-
-          useEffect(() => {
-            onData(value);
-          }, [onData, value]);
-        }
-      `,
-        errors: [
-          {
-            message:
-              'Avoid passing live state to parents in an effect. Instead, return "value" from "useCustom".',
-          },
-        ],
       },
     ],
   },

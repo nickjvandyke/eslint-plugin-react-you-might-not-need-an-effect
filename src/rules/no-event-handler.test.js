@@ -42,22 +42,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
       },
-      {
-        // A callback that never runs does not handle an event when the effect runs.
-        name: "Condition inside a callback that is never called",
-        code: js`
-        function Form() {
-          const [dataToSubmit, setDataToSubmit] = useState();
-
-          useEffect(() => {
-            const fn = () => {
-              if (dataToSubmit) submitData(dataToSubmit);
-            };
-            console.log(fn);
-          }, [dataToSubmit]);
-        }
-      `,
-      },
     ],
     invalid: [
       {

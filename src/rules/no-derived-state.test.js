@@ -44,20 +44,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Set to derived literal on external state change",
-        code: js`
-        function Feed() {
-          const { data: posts } = useQuery('/posts');
-          const [scrollPosition, setScrollPosition] = useState(0);
-
-          useEffect(() => {
-            const initialPosition = 0;
-            setScrollPosition(initialPosition);
-          }, [posts]);
-        }
-      `,
-      },
-      {
         name: "Adjust state to a value that is not in the dependencies",
         // The value is available during render, but the effect does not react
         // to it. `no-adjust-state-on-prop-change` handles this case.
@@ -112,53 +98,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setWidth(window.innerWidth);
           }, [window.innerWidth]);
-        }
-      `,
-      },
-      {
-        // With browser globals configured, `window` resolves to a global
-        // variable with no definitions. It is still external state, not a
-        // value computed during render.
-        name: "Set to resolved global (external state)",
-        languageOptions: {
-          ...plugin.configs.recommended.languageOptions,
-          globals: { window: "readonly" },
-        },
-        code: js`
-        function WindowSize() {
-          const [width, setWidth] = useState(0);
-
-          useEffect(() => {
-            setWidth(window.innerWidth);
-          }, [window.innerWidth]);
-        }
-      `,
-      },
-      {
-        // A local alias of a global is as unsafe as the global itself.
-        name: "Set to a global via a local alias",
-        code: js`
-        function WindowSize() {
-          const w = window;
-          const [width, setWidth] = useState(0);
-
-          useEffect(() => {
-            setWidth(w.innerWidth);
-          }, [w.innerWidth]);
-        }
-      `,
-      },
-      {
-        name: "Set to a global via a chain of local aliases",
-        code: js`
-        function WindowSize() {
-          const w = window;
-          const root = w;
-          const [width, setWidth] = useState(0);
-
-          useEffect(() => {
-            setWidth(root.innerWidth);
-          }, [root.innerWidth]);
         }
       `,
       },
@@ -332,38 +271,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
-        name: "From derived internal state",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Nick');
-          const [lastName, setLastName] = useState('van Dyke');
-          const [fullName, setFullName] = useState('');
-
-          useEffect(() => {
-            const name = firstName + ' ' + lastName;
-            setFullName(name) 
-          }, [firstName, lastName]);
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "fullName" }),
-      },
-      {
-        name: "From derived internal state outside effect",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Nick');
-          const [lastName, setLastName] = useState('van Dyke');
-          const [fullName, setFullName] = useState('');
-          const name = firstName + ' ' + lastName;
-
-          useEffect(() => {
-            setFullName(name) 
-          }, [name]);
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "fullName" }),
-      },
-      {
         name: "From internal state and external state",
         code: js`
         import { usePrefix } from 'library';
@@ -390,20 +297,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setFullName(firstName + ' ' + lastName);
           }, [firstName, lastName]);
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "fullName" }),
-      },
-      {
-        name: "From intermediate prop",
-        code: js`
-        function Form({ firstName, lastName }) {
-          const [fullName, setFullName] = useState('');
-          const prefixedName = 'Dr. ' + firstName;
-
-          useEffect(() => {
-            setFullName(prefixedName + ' ' + lastName);
-          }, [prefixedName, lastName]);
         }
       `,
         errors: error("avoidDerivedState", { state: "fullName" }),
@@ -451,21 +344,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
-        name: "From props and internal state via intermediate variable",
-        code: js`
-        function Form({ title }) {
-          const [name, setName] = useState('Dwayne');
-          const [fullName, setFullName] = useState('');
-
-          useEffect(() => {
-            const newFullName = title + ' ' + name;
-            setFullName(newFullName);
-          }, [title, name]);
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "fullName" }),
-      },
-      {
         name: "From props via callback setter",
         code: js`
         import { useState, useEffect } from 'react';
@@ -479,21 +357,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }
       `,
         errors: error("avoidDerivedState", { state: "total" }),
-      },
-      {
-        name: "From props via pure derived setter",
-        code: js`
-        function DoubleCounter({ count }) {
-          const [doubleCount, setDoubleCount] = useState(0);
-
-          const derivedSetter = (count) => setDoubleCount(count * 2);
-
-          useEffect(() => {
-            derivedSetter(count);
-          }, [count]);
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "doubleCount" }),
       },
       {
         name: "Partially update complex state from props",
@@ -570,25 +433,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: error("avoidDerivedState", { state: "fullName" }),
       },
       {
-        name: "Set to result of semi-pure local FunctionDeclaration",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          useEffect(() => {
-            function computeName() {
-              return firstName + ' ' + lastName;
-            }
-
-            setFullName(computeName());
-          }, [firstName, lastName]);
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "fullName" }),
-      },
-      {
         // The written value comes from a call argument, no matter how many
         // variables sit between the dependency and the setter.
         name: "From internal state via a call result variable",
@@ -620,42 +464,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setFullName(computeName(firstName, lastName));
           }, [firstName, lastName])
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "fullName" }),
-      },
-      {
-        name: "Set to result of semi-pure function defined outside effect",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          const computeName = () => firstName + ' ' + lastName;
-
-          useEffect(() => {
-            setFullName(computeName());
-          }, [computeName]);
-        }
-      `,
-        errors: error("avoidDerivedState", { state: "fullName" }),
-      },
-      {
-        name: "Via no-arg intermediate setter",
-        code: js`
-        function Form() {
-          const [firstName, setFirstName] = useState('Dwayne');
-          const [lastName, setLastName] = useState('The Rock');
-          const [fullName, setFullName] = useState('');
-
-          useEffect(() => {
-            const doSet = () => {
-              setFullName(firstName + ' ' + lastName);
-            }
-
-            doSet();
-          }, [firstName, lastName]);
         }
       `,
         errors: error("avoidDerivedState", { state: "fullName" }),

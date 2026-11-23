@@ -22,19 +22,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "Pass derived literal value",
-        code: js`
-        const Child = ({ onTextChanged }) => {
-          const hello = "Hello";
-          const world = "World";
-          const greeting = hello + " " + world;
-          useEffect(() => {
-            onTextChanged(greeting);
-          }, [onTextChanged]);
-        }
-      `,
-      },
-      {
         name: "Pass internal state",
         code: js`
         const Child = ({ onTextChanged }) => {
@@ -210,28 +197,10 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, [onFetched, data]);
         }
       `,
-        errors: error("avoidPassingDataToParentInComponent", {
-          data: '"data"',
-          name: '"Child"',
-        }),
-      },
-      {
-        // `messageId` + `data` renders the same template in the test and the
-        // rule, so only a literal message catches duplicated quotes.
-        name: "Message quotes each interpolated name exactly once",
-        code: js`
-        const Child = ({ onData }) => {
-          const value = useFetch();
-
-          useEffect(() => {
-            onData(value);
-          }, [onData, value]);
-        }
-      `,
         errors: [
           {
             message:
-              'Avoid passing data to parents in an effect. Instead, fetch "value" in the parent and pass it down to "Child" as a prop.',
+              'Avoid passing data to parents in an effect. Instead, fetch "data" in the parent and pass it down to "Child" as a prop.',
           },
         ],
       },

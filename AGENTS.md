@@ -2,14 +2,14 @@
 
 ## Commands
 
-| Command             | What it runs                                                                  |
-| ------------------- | ----------------------------------------------------------------------------- |
-| `yarn build`        | `tsdown` — bundles `src/index.ts` → `dist/` (ESM + CJS + `.d.ts`)             |
-| `yarn typecheck`    | `tsgo` (not `tsc`)                                                            |
-| `yarn lint`         | `eslint` (flat config, `eslint.config.js`)                                    |
-| `yarn test`         | `node --import ./test/setup.js --test "src/**/*.test.js" "test/**/*.test.js"` |
-| `yarn format`       | `prettier --write .`                                                          |
-| `yarn format:check` | `prettier --check .`                                                          |
+| Command             | What it runs                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------- |
+| `yarn build`        | `tsdown` — bundles `src/index.ts` → `dist/` (ESM + CJS + `.d.ts`)                                 |
+| `yarn typecheck`    | `tsgo` (not `tsc`)                                                                                |
+| `yarn lint`         | `eslint` (flat config, `eslint.config.js`)                                                        |
+| `yarn test`         | `node --import ./test/setup.js --test "src/**/*.test.js" "test/**/*.test.js" "test/**/*.test.ts"` |
+| `yarn format`       | `prettier --write .`                                                                              |
+| `yarn format:check` | `prettier --check .`                                                                              |
 
 Pre-commit: `simple-git-hooks` → `lint-staged` → `prettier --write` on all staged files.
 
@@ -20,24 +20,36 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - **Single package** (not a monorepo). Package manager: `yarn 4.12.0`, `nodeLinker: node-modules` (not PnP).
 - **Entry**: `src/index.ts` — exports a flat ESLint plugin with 4 configs: `recommended`, `strict`, `legacy-recommended`, `legacy-strict`.
 - **9 rules** in `src/rules/`, each a separate `.ts` file with a co-located `.test.js` file.
-- **Utilities**: `src/util/ast.ts` (AST traversal, ref analysis, constant checks), `src/util/typescript.ts` (TypeScript wrappers and type-only keys), `src/util/hooks.ts` (React hook and third-party effect detection), `src/util/components.ts` (component, HOC, and custom hook detection), `src/util/effect.ts` (effect function, deps, cleanup, and dependency-variable extraction), `src/util/state.ts` (state and setter detection), `src/util/props.ts` (prop and external value detection), `src/util/refs.ts` (ref detection).
-- **Test pattern**: Unit tests are co-located with the source they cover. Rule tests live in `src/rules/*.test.js`; utility tests live in `src/util/*.test.js`. Each imports `RuleTester` from `eslint` + `plugin` from `../index.ts`, and defines `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`.
-- **Integration tests**: `test/` holds only cross-cutting tests. `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/globals.test.js` (configured and unconfigured browser globals give the same results), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
+- **Utilities**: `src/util/ast.ts` (AST traversal, ref analysis, synchronous call chains), `src/util/typescript.ts` (TypeScript wrappers and type-only keys), `src/util/hooks.ts` (React hook and third-party effect detection), `src/util/components.ts` (component, HOC, and custom hook detection), `src/util/effect.ts` (effect function, deps, cleanup, and dependency-variable extraction), `src/util/state.ts` (state and setter detection), `src/util/props.ts` (prop and external value detection), `src/util/refs.ts` (ref detection).
+- **Test pattern**: Rule semantics live in `src/rules/*.test.js` with `RuleTester` from `eslint` + `plugin` from `../index.ts`, and define `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`. Syntax and boundary behavior is verified generatively in `test/property.test.ts`, not in `src/util/`.
+- **Integration tests**: `test/` holds only cross-cutting tests. `test/property.test.ts` (property-based tests with `fast-check`: transparent syntax must preserve diagnostics, opaque boundaries must suppress them, state-setter rules must partition), `test/effect-hooks.test.ts` (third-party effect hook lookup table), `test/edge-cases.test.ts` (regression and message-wording cases), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
 
 ## Key conventions
 
 - ESLint **flat config only** in this repo (`eslint.config.js`). Uses `@eslint/js` recommended + `eslint-plugin-eslint-plugin` + `eslint-plugin-n`.
 - `**/*.ts` files use the `typescript-eslint` recommended config, scoped with `tseslint.config` and `files`/`extends`. It enables `@typescript-eslint/no-unused-vars` and disables core `no-unused-vars`/`no-undef` for TypeScript. `tsgo` also checks `noUnusedLocals` and `noUnusedParameters`.
 - Tests need Node >= 22.18 (they import `.ts` files directly, which needs native type stripping). The published package keeps `engines.node` at `>=14`.
+- Integration tests in `test/*.test.ts` are typechecked: `tsconfig.json` includes `test/**/*.ts`, and `@types/node` provides the `node:test` and `assert` types.
 - `useLayoutEffect` is intentionally excluded from all rules (considered a valid DOM-interaction effect).
 - `React.*` namespace calls (`React.useEffect`, `React.useState`) are supported alongside direct imports.
 - Renamed imports (`useState as stateUser`) are supported by resolving import bindings from `react`, `preact/hooks`, `preact/compat`, and `@wordpress/element`. Names that do not resolve to one of those imports fall back to name matching.
 - Test files in `src/rules/` import rule source with `.ts` extension (ESM).
+- Syntax transforms and opaque boundaries belong in `test/property.test.ts`. Its generators and fixtures live in `test/property/` (`axes.ts`, `builder.ts`, `fixtures.ts`, `helpers.ts`), which are typechecked but not run as tests. Fixed lookup tables and regressions live in `test/effect-hooks.test.ts` and `test/edge-cases.test.ts`. Keep `src/util/` free of test files.
 - **Formatting**: single Prettier config — trailing commas everywhere.
 - `.gitignore` keeps `dist`, `node_modules`, `.yarn/*` (except patches/plugins/releases/sdks/versions).
 - The plugin has no runtime dependencies and does not require browser globals. Global references, resolved or unresolved, behave like external globals. A local alias of a global counts as a global.
 - Suggested companion rules for users: `react-hooks/exhaustive-deps` and `typescript-eslint/no-floating-promises`.
 - Third-party effect wrappers are matched by module + export. Only `useEffect`-equivalent wrappers are included; layout, update, async, debounced, and conditional wrappers are excluded.
+
+## Test placement
+
+Keep one test per rule decision, not one test per syntax form.
+
+1. `src/rules/*.test.js` holds rule semantics. Keep one test for each distinct data source, dependency shape, cleanup behavior, and message format. Keep one synchronous case and one asynchronous case per rule.
+2. `test/property.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.
+3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `synchronousUnsafe`, `skipHooks`, or `hookMessageId`.
+4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
+5. If a rule test and a property test fail on the same change, delete the rule test. Keep the narrower one.
 
 ## Architecture notes
 

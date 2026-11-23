@@ -26,58 +26,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        name: "To external data via async IIFE",
-        code: js`
-        function MyComponent() {
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            (async () => {
-              const response = await fetch("https://api.example.com/data");
-              const data = await response.json();
-              setState(data);
-            })();
-          }, []);
-        }
-      `,
-      },
-      {
-        name: "To literal inside IIFE inside callback",
-        code: js`
-        import { useEffect, useState } from 'react';
-
-        export const MyComponent = () => {
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            window.addEventListener('load', () => {
-              (() => {
-                setState('Loaded');
-              })();
-            });
-          }, []);
-        };
-      `,
-      },
-      {
-        name: "To literal inside callback inside IIFE",
-        code: js`
-        import { useEffect, useState } from 'react';
-
-        export const MyComponent = () => {
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            (() => {
-              window.addEventListener('load', () => {
-                setState('Loaded');
-              });
-            })();
-          }, []);
-        };
-      `,
-      },
-      {
         // We ignore this because `react-hooks/exhaustive-deps` will flag the unnecessary dependency
         name: "Setter with other dependency",
         code: js`
@@ -131,25 +79,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           }, []);
 
           return <div>{state}</div>;
-        }
-      `,
-        errors: error("avoidInitializingState", {
-          state: "state",
-          arguments: '"Hello"',
-        }),
-      },
-      {
-        // An immediately invoked function runs when the effect runs.
-        name: "To literal inside synchronous IIFE",
-        code: js`
-        function MyComponent() {
-          const [state, setState] = useState();
-
-          useEffect(() => {
-            (() => {
-              setState("Hello");
-            })();
-          }, []);
         }
       `,
         errors: error("avoidInitializingState", {
@@ -252,23 +181,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setState("Hello");
           }, [setState]);
-        }
-      `,
-        errors: error("avoidInitializingState", {
-          state: "state",
-          arguments: '"Hello"',
-        }),
-      },
-      {
-        name: "Only aliased setter in deps",
-        code: js`
-        function MyComponent() {
-          const [state, setState] = useState();
-          const setAlias = setState;
-
-          useEffect(() => {
-            setState("Hello");
-          }, [setAlias]);
         }
       `,
         errors: error("avoidInitializingState", {

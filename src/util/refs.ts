@@ -20,12 +20,24 @@ export const isRef = (
  * For example when receiving a ref from props.
  */
 export const isRefCurrent = (ref: Scope.Reference): boolean => {
-  const parent = getOutermostWrapper(ref.identifier).parent;
-  return (
-    parent.type === "MemberExpression" &&
-    parent.property.type === "Identifier" &&
-    parent.property.name === "current"
-  );
+  let node: Rule.Node = ref.identifier;
+  while (true) {
+    // Walk through TypeScript and optional-chain wrappers, e.g.
+    // `props.elementRef?.current`.
+    const wrapper = getOutermostWrapper(node);
+    const parent = wrapper.parent;
+    if (parent.type !== "MemberExpression" || parent.object !== wrapper) {
+      return false;
+    }
+    if (
+      parent.property.type === "Identifier" &&
+      parent.property.name === "current"
+    ) {
+      return true;
+    }
+    // The ref is a member of a larger object, e.g. `props.elementRef`.
+    node = parent;
+  }
 };
 
 /** True when the synchronous call chain from `ref` reaches a ref object. */

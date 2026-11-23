@@ -52,23 +52,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
       },
       {
-        // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/31
-        // Verifies that the rule doesn't crash when it can't find the containing component to count `useState`s.
-        // This *is* a rule-break, but detecting the lowercased function name would probably introduce more false positives than it'd save in false negatives.
-        name: "Reset all state when a prop changes inside lowercased function definition",
-        code: js`
-        function buildComponent() {
-          const [comment, setComment] = useState('type something');
-
-          useEffect(() => {
-            setComment('type something');
-          }, [userId]);
-
-          return <div>hi</div>;
-        }
-      `,
-      },
-      {
         name: "Reset all state when a prop changes in a custom hook",
         code: js`
         function useCustomHook({ userId }) {
@@ -112,21 +95,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
 
           return null;
         };
-      `,
-      },
-      {
-        // The setter is only inside a callback that never runs, so the effect
-        // does not reset state when the prop changes.
-        name: "Set state inside a callback that is never called",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-
-          useEffect(() => {
-            const reset = () => setUser(null);
-            console.log(reset);
-          }, [userId]);
-        }
       `,
       },
       {
@@ -210,39 +178,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }),
       },
       {
-        name: "Reset all state when a prop changes in memoized component",
-        code: js`
-        const ProfilePage = memo(({ userId }) => {
-          const [user, setUser] = useState(null);
-          const [comment, setComment] = useState('type something');
-
-          useEffect(() => {
-            setUser(null);
-            setComment('type something');
-          }, [userId]);
-        })
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
-        name: "Reset all state via an alias declared in the effect",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-
-          useEffect(() => {
-            const reset = setUser;
-            reset(null);
-          }, [userId]);
-        }
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
         name: "Reset all state by calling the same setter twice",
         code: js`
         function ProfilePage({ userId }) {
@@ -251,23 +186,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           useEffect(() => {
             setUser(null);
             setUser(null);
-          }, [userId]);
-        }
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
-        name: "Reset all state with an unused alias also declared",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-
-          useEffect(() => {
-            const reset = setUser;
-            setUser(null);
-            console.log(reset);
           }, [userId]);
         }
       `,
@@ -374,90 +292,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
 
           useEffect(() => {
             resetUser();
-          }, [userId]);
-        }
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
-        name: "Reset all state via a useCallback wrapper setter",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-
-          const resetUser = useCallback(() => setUser(null), []);
-
-          useEffect(() => {
-            resetUser();
-          }, [userId]);
-        }
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
-        // An immediately invoked function runs when the effect runs.
-        name: "Reset all state inside an immediately invoked function",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-
-          useEffect(() => {
-            (() => setUser(null))();
-          }, [userId]);
-        }
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
-        name: "Reset all state when state is read in render",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-          const [comment, setComment] = useState('type something');
-
-          useEffect(() => {
-            setUser(null);
-            setComment('type something');
-          }, [userId]);
-
-          return <div>{user}{user}{comment}</div>;
-        }
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
-        name: "Reset all state through a setter alias",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-          const resetUser = setUser;
-
-          useEffect(() => {
-            resetUser(null);
-          }, [userId]);
-        }
-      `,
-        errors: error("avoidResettingAllStateWhenAPropChanges", {
-          prop: "userId",
-        }),
-      },
-      {
-        name: "Reset all state through a helper",
-        code: js`
-        function ProfilePage({ userId }) {
-          const [user, setUser] = useState(null);
-
-          useEffect(() => {
-            const run = () => setUser(null);
-            run();
           }, [userId]);
         }
       `,

@@ -302,17 +302,6 @@ export const someVariableInit = (
     return check(unwrapExpression(def.node.init), def.node);
   });
 
-/** True when a definition assigns a literal, template, array, or object. */
-export const isConstant = (ref: Scope.Reference): boolean =>
-  someVariableInit(
-    ref,
-    (init) =>
-      init.type === "Literal" ||
-      init.type === "TemplateLiteral" ||
-      init.type === "ArrayExpression" ||
-      init.type === "ObjectExpression",
-  );
-
 /**
  * True when `node` is invoked right away, e.g. an immediately invoked function
  * expression. Its body runs while the caller continues.

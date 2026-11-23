@@ -171,23 +171,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: error("avoidChainingStateUpdates", { state: "isGameOver" }),
       },
       {
-        name: "Set state to derived literal when internal state changes",
-        code: js`
-        function Game() {
-          const [round, setRound] = useState(1);
-          const [isGameOver, setIsGameOver] = useState(false);
-
-          useEffect(() => {
-            if (round > 10) {
-              const finalRound = true;
-              setIsGameOver(finalRound);
-            }
-          }, [round]);
-        }
-      `,
-        errors: error("avoidChainingStateUpdates", { state: "isGameOver" }),
-      },
-      {
         name: "Set state to literal when internal or external state changes",
         code: js`
         function Game() {
