@@ -191,22 +191,6 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         errors: error("avoidEventHandler", { name: "dataToSubmit" }),
       },
       {
-        // An immediately invoked function runs when the effect runs.
-        name: "Condition inside an immediately invoked function",
-        code: js`
-        function Form() {
-          const [dataToSubmit, setDataToSubmit] = useState();
-
-          useEffect(() => {
-            (() => {
-              if (dataToSubmit) submitData(dataToSubmit);
-            })();
-          }, [dataToSubmit]);
-        }
-      `,
-        errors: error("avoidEventHandler", { name: "dataToSubmit" }),
-      },
-      {
         name: "Member access and double test in condition",
         code: js`
         function Form() {

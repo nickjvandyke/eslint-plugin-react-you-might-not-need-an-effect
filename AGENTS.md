@@ -47,7 +47,7 @@ Keep one test per rule decision, not one test per syntax form.
 
 1. `src/rules/*.test.js` holds rule semantics. Keep one test for each distinct data source, dependency shape, cleanup behavior, and message format. Keep one synchronous case and one asynchronous case per rule.
 2. `test/property.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.
-3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `synchronousUnsafe`, `skipHooks`, or `hookMessageId`.
+3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `skipHooks` or `hookMessageId`.
 4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
 5. If a rule test and a property test fail on the same change, delete the rule test. Keep the narrower one.
 

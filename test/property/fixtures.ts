@@ -32,7 +32,6 @@ export const templates: Template[] = [
   {
     rule: "no-event-handler",
     messageId: "avoidEventHandler",
-    synchronousUnsafe: true,
     body: (ctx) => ({
       pre: [ctx.state("dataToSubmit", "setDataToSubmit")],
       effect: ctx.effect(

@@ -118,9 +118,7 @@ describe("property: synchronous effect bodies preserve every finding", () => {
     fc.assert(
       fc.property(
         fc.record({
-          template: oneOf(
-            templates.filter((template) => !template.synchronousUnsafe),
-          ),
+          template: oneOf(templates),
           input: combination({
             containers: containers.filter((container) => !container.hook),
             bodyWrappers: synchronousBodyWrappers,

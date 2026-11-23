@@ -59,8 +59,6 @@ export interface Template {
   extraExpected?: Diagnostic[];
   /** Skip custom hook containers, which some rules treat differently. */
   skipHooks?: boolean;
-  /** Synchronous body wrappers change the rule's semantics. */
-  synchronousUnsafe?: boolean;
   body: (ctx: TemplateContext) => { pre: string[]; effect: string };
 }
 
