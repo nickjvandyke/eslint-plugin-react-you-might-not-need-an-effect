@@ -1,7 +1,7 @@
 # ESLint – React – You Might Not Need An Effect
 
 [![NPM version](https://img.shields.io/npm/v/eslint-plugin-react-you-might-not-need-an-effect?color=3BB143)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect?activeTab=versions)
-[![NPM Downloads](https://img.shields.io/npm/dm/eslint-plugin-react-you-might-not-need-an-effect?color=000080)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect)
+[![NPM Downloads](https://img.shields.io/npm/dm/eslint-plugin-react-you-might-not-need-an-effect?color=000080&cacheSeconds=25200)](https://www.npmjs.com/package/eslint-plugin-react-you-might-not-need-an-effect)
 
 [ESLint](https://eslint.org/) (and [Oxlint](#oxlint)) plugin to catch [unnecessary `useEffect`s](https://react.dev/learn/you-might-not-need-an-effect) to make your React code easier to follow, faster to run, and less error-prone. Highly recommended for new React developers as you learn React's mental model. Even experienced developers will likely learn something new!
 
