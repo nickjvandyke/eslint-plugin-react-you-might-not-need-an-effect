@@ -1,11 +1,17 @@
+import type plugin from "../../src/index.ts";
 import type { BodyWrapper } from "./axes/execution-boundaries.ts";
 import type { Template, TemplateContext } from "./builder.ts";
 
 // ---------------------------------------------------------------------------
 
-export const templates: Template[] = [
-  {
-    rule: "no-derived-state",
+type RuleName = keyof typeof plugin.rules;
+
+/**
+ * One template per rule. A missing, stale, or duplicate rule is a type error,
+ * so the property matrix cannot silently skip a rule.
+ */
+const templatesByRule = {
+  "no-derived-state": {
     messageId: "avoidDerivedState",
     body: (ctx) => ({
       pre: [
@@ -18,8 +24,7 @@ export const templates: Template[] = [
       ),
     }),
   },
-  {
-    rule: "no-chain-state-updates",
+  "no-chain-state-updates": {
     messageId: "avoidChainingStateUpdates",
     body: (ctx) => ({
       pre: [
@@ -29,8 +34,7 @@ export const templates: Template[] = [
       effect: ctx.effect(`setIsEven(true)`, `[${ctx.hop("count")}]`),
     }),
   },
-  {
-    rule: "no-event-handler",
+  "no-event-handler": {
     messageId: "avoidEventHandler",
     body: (ctx) => ({
       pre: [ctx.state("dataToSubmit", "setDataToSubmit")],
@@ -40,8 +44,7 @@ export const templates: Template[] = [
       ),
     }),
   },
-  {
-    rule: "no-adjust-state-on-prop-change",
+  "no-adjust-state-on-prop-change": {
     messageId: "avoidAdjustingStateWhenAValueChanges",
     body: (ctx) => ({
       // `useState()` initializes to `undefined`, so setting `null` is not a
@@ -53,16 +56,14 @@ export const templates: Template[] = [
       ),
     }),
   },
-  {
-    rule: "no-initialize-state",
+  "no-initialize-state": {
     messageId: "avoidInitializingState",
     body: (ctx) => ({
       pre: [ctx.state("message", "setMessage")],
       effect: ctx.effect(`setMessage(${ctx.set(`'Hello'`)})`, "[]"),
     }),
   },
-  {
-    rule: "no-external-store-subscription",
+  "no-external-store-subscription": {
     messageId: "avoidExternalStoreSubscription",
     body: (ctx) => ({
       pre: [
@@ -76,8 +77,7 @@ export const templates: Template[] = [
       ),
     }),
   },
-  {
-    rule: "no-reset-all-state-on-prop-change",
+  "no-reset-all-state-on-prop-change": {
     messageId: "avoidResettingAllStateWhenAPropChanges",
     // Custom hooks cannot receive `key`, so the rule skips them.
     skipHooks: true,
@@ -86,8 +86,7 @@ export const templates: Template[] = [
       effect: ctx.effect("setUser(null)", `[${ctx.hop(ctx.prop("userId"))}]`),
     }),
   },
-  {
-    rule: "no-pass-live-state-to-parent",
+  "no-pass-live-state-to-parent": {
     messageId: "avoidPassingLiveStateToParentInComponent",
     hookMessageId: "avoidPassingLiveStateToParentInHook",
     body: (ctx) => ({
@@ -98,8 +97,7 @@ export const templates: Template[] = [
       ),
     }),
   },
-  {
-    rule: "no-pass-data-to-parent",
+  "no-pass-data-to-parent": {
     messageId: "avoidPassingDataToParentInComponent",
     hookMessageId: "avoidPassingDataToParentInHook",
     body: (ctx) => ({
@@ -110,7 +108,11 @@ export const templates: Template[] = [
       ),
     }),
   },
-];
+} satisfies Record<RuleName, Omit<Template, "rule">>;
+
+export const templates: Template[] = (
+  Object.keys(templatesByRule) as RuleName[]
+).map((rule) => ({ rule, ...templatesByRule[rule] }));
 
 // A valid effect that no rule should flag. It still has deps and state, so
 // wrappers must not create a false positive.

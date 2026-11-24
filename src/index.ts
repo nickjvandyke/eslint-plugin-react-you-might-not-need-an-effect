@@ -73,13 +73,13 @@ type Plugin = ESLint.Plugin & {
 // The configs reference `plugin` itself, so they are assigned after it exists.
 // `Object.assign` mutates and returns the same object, so the identity that
 // ESLint relies on for plugin resolution is preserved.
-const pluginWithConfigs: Plugin = Object.assign(plugin, {
+const pluginWithConfigs = Object.assign(plugin, {
   configs: {
     recommended: flat("warn", "recommended"),
     strict: flat("error", "strict"),
     "legacy-recommended": legacy("warn"),
     "legacy-strict": legacy("error"),
   },
-});
+}) satisfies Plugin;
 
 export default pluginWithConfigs;
