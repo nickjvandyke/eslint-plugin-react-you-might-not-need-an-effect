@@ -75,7 +75,6 @@ for (const template of templates) {
             templateResult(template, input.container),
           );
         }),
-        { numRuns: 100 },
       );
     });
   });
@@ -87,7 +86,6 @@ describe("property: valid code survives transparent syntax", () => {
       fc.property(combination(), (input) => {
         checkProgram(validTemplate, input, []);
       }),
-      { numRuns: 100 },
     );
   });
 });
@@ -108,7 +106,6 @@ describe("property: deferred effect bodies suppress every finding", () => {
           checkProgram(template, input, []);
         },
       ),
-      { numRuns: 120 },
     );
   });
 });
@@ -132,7 +129,6 @@ describe("property: synchronous effect bodies preserve every finding", () => {
           );
         },
       ),
-      { numRuns: 120 },
     );
   });
 });
@@ -229,7 +225,6 @@ describe("property: state-setter rules partition one setter", () => {
           );
         },
       ),
-      { numRuns: 300 },
     );
   });
 });
@@ -255,7 +250,6 @@ describe("property: component boundaries", () => {
           checkProgram(template, input, []);
         },
       ),
-      { numRuns: 100 },
     );
   });
 });
@@ -302,7 +296,6 @@ describe("property: prop access shapes", () => {
           ]);
         },
       ),
-      { numRuns: 60 },
     );
   });
 
@@ -356,7 +349,6 @@ describe("property: prop access shapes", () => {
           checkProgram(template, input, []);
         },
       ),
-      { numRuns: 60 },
     );
   });
 });
@@ -427,7 +419,6 @@ describe("property: browser globals", () => {
           );
         },
       ),
-      { numRuns: 60 },
     );
   });
 });
@@ -445,7 +436,6 @@ describe("property: state and setter shapes", () => {
       fc.property(combination({ stateShapes: opaqueStateShapes }), (input) => {
         checkProgram(derived, input, []);
       }),
-      { numRuns: 60 },
     );
   });
 });
@@ -488,7 +478,6 @@ describe("property: TypeScript type-only syntax", () => {
           { ts: true },
         );
       }),
-      { numRuns: 60 },
     );
   });
 
@@ -497,7 +486,6 @@ describe("property: TypeScript type-only syntax", () => {
       fc.property(combination(), (input) => {
         checkProgram(asConstTemplate, input, [], { ts: true });
       }),
-      { numRuns: 60 },
     );
   });
 });
@@ -528,7 +516,6 @@ describe("property: TypeScript-only wrappers", () => {
           );
         },
       ),
-      { numRuns: 80 },
     );
   });
 
@@ -542,7 +529,6 @@ describe("property: TypeScript-only wrappers", () => {
           { ts: true },
         );
       }),
-      { numRuns: 80 },
     );
   });
 });
@@ -584,7 +570,6 @@ describe("property: effect callback boundaries", () => {
           checkProgram(template, input, []);
         },
       ),
-      { numRuns: 60 },
     );
   });
 
@@ -613,7 +598,6 @@ describe("property: effect callback boundaries", () => {
           checkProgram(template, input, []);
         },
       ),
-      { numRuns: 60 },
     );
   });
 
@@ -641,6 +625,7 @@ describe("property: effect callback boundaries", () => {
           code,
         );
       }),
+      // A closed domain of 4 values. More runs only replay cases.
       { numRuns: 20 },
     );
   });
@@ -674,6 +659,7 @@ describe("property: deep local call chains terminate", () => {
           code,
         );
       }),
+      // A closed domain of 25 values. More runs only replay cases.
       { numRuns: 50 },
     );
   });
@@ -706,6 +692,7 @@ describe("property: message formatting", () => {
           `${expected}\n${message.message}`,
         );
       }),
+      // A closed domain of 5 values. More runs only replay cases.
       { numRuns: 20 },
     );
   });
