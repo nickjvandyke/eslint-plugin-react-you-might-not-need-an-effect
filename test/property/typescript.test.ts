@@ -1,9 +1,8 @@
 import { describe, it } from "node:test";
 import fc from "fast-check";
-import { diagnostic } from "../harness.ts";
-import { containers, tsContainers } from "./axes/containers.ts";
+import { tsContainers } from "./axes/containers.ts";
 import { tsPropShapes } from "./axes/property-access.ts";
-import { combination, templateResult } from "./builder.ts";
+import { combination } from "./builder.ts";
 import { checkProgram, runProperty } from "./check.ts";
 import {
   asConstTemplate,
@@ -18,7 +17,7 @@ describe("property: TypeScript type-only syntax", () => {
         checkProgram(
           typeOnlyTemplate,
           input,
-          [diagnostic("no-initialize-state", "avoidInitializingState")],
+          typeOnlyTemplate.expected(input.container),
           { ts: true },
         );
       }),
@@ -28,31 +27,28 @@ describe("property: TypeScript type-only syntax", () => {
   it("treats an as-const local object as data, not a parent value", () => {
     runProperty(
       fc.property(combination(), (input) => {
-        checkProgram(asConstTemplate, input, [], { ts: true });
+        checkProgram(
+          asConstTemplate,
+          input,
+          asConstTemplate.expected(input.container),
+          { ts: true },
+        );
       }),
     );
   });
 });
 
 describe("property: TypeScript-only wrappers", () => {
-  const componentContainers = containers.filter((container) => !container.hook);
-
   it("reads props through an asserted props object", () => {
     runProperty(
-      fc.property(
-        combination({
-          containers: componentContainers,
-          propShapes: tsPropShapes,
-        }),
-        (input) => {
-          checkProgram(
-            passLiveTemplate,
-            input,
-            templateResult(passLiveTemplate, input.container),
-            { ts: true },
-          );
-        },
-      ),
+      fc.property(combination({ propShapes: tsPropShapes }), (input) => {
+        checkProgram(
+          passLiveTemplate,
+          input,
+          passLiveTemplate.expected(input.container),
+          { ts: true },
+        );
+      }),
     );
   });
 
@@ -62,7 +58,7 @@ describe("property: TypeScript-only wrappers", () => {
         checkProgram(
           passLiveTemplate,
           input,
-          templateResult(passLiveTemplate, input.container),
+          passLiveTemplate.expected(input.container),
           { ts: true },
         );
       }),

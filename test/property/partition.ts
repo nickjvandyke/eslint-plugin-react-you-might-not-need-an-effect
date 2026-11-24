@@ -11,8 +11,9 @@ export const partitionTemplate = (
   written: WrittenSource,
   cleanup: boolean,
 ): Template => ({
-  rule: "",
-  messageId: "",
+  // The caller computes the expected diagnostic from the trigger and written
+  // value, so this template carries no rule outcome.
+  expected: () => [],
   body: (ctx) => {
     const helpers: PartitionHelpers = {
       prop: ctx.prop,

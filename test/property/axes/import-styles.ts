@@ -68,23 +68,15 @@ export const resolvers = (style: ImportStyle): HookNames => {
   };
 };
 
-const assertModule = (style: ImportStyle): void => {
-  if (style.module === null) {
-    throw new Error(`The ${style.form} import form needs a module`);
-  }
-};
-
 export const header = (
   style: ImportStyle,
   extras: readonly string[],
 ): string => {
   if (style.module === null) return "";
   if (style.form === "namespace" || style.form === "namespaceAlias") {
-    assertModule(style);
     return `import * as ${style.namespace ?? "React"} from '${style.module}';`;
   }
   if (style.form === "default") {
-    assertModule(style);
     return `import ReactAlias from '${style.module}';`;
   }
   const hooks =

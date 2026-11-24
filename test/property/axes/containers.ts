@@ -3,7 +3,6 @@ import type { HookNames } from "./import-styles.ts";
 export interface Container {
   name: string;
   extras: readonly string[];
-  needsHoc?: boolean;
   /** A custom hook. Rules can treat hooks differently from components. */
   hook?: boolean;
   wrap: (body: string, names: HookNames, params: string) => string;
@@ -49,21 +48,18 @@ export const containers: Container[] = [
   {
     name: "memo",
     extras: ["memo"],
-    needsHoc: true,
     wrap: (body, names, params) =>
       `const C = ${names.memo}((${params}) => {\n${body}\n});`,
   },
   {
     name: "memo function expression",
     extras: ["memo"],
-    needsHoc: true,
     wrap: (body, names, params) =>
       `const C = ${names.memo}(function (${params}) {\n${body}\n});`,
   },
   {
     name: "forwardRef",
     extras: ["forwardRef"],
-    needsHoc: true,
     wrap: (body, names, params) =>
       `const C = ${names.forwardRef}((${params ? `${params}, ` : ""}ref) => {\n${body}\n});`,
   },
@@ -136,14 +132,12 @@ export const tsContainers: Container[] = [
   {
     name: "satisfies memo function expression",
     extras: ["memo"],
-    needsHoc: true,
     wrap: (body, names, params) =>
       `const C = ${names.memo}(function (${params}) {\n${body}\n}) satisfies React.FC;`,
   },
   {
     name: "asserted memo function expression",
     extras: ["memo"],
-    needsHoc: true,
     wrap: (body, names, params) =>
       `const C = ${names.memo}(function (${params}) {\n${body}\n}) as React.FC;`,
   },

@@ -1,10 +1,27 @@
 import type plugin from "../../src/index.ts";
+import { diagnostic, type Diagnostic } from "../harness.ts";
+import type { Container } from "./axes/containers.ts";
 import type { BodyWrapper } from "./axes/execution-boundaries.ts";
 import type { Template, TemplateContext } from "./builder.ts";
 
 // ---------------------------------------------------------------------------
 
-type RuleName = keyof typeof plugin.rules;
+export type RuleName = keyof typeof plugin.rules;
+
+/** The template reports `messageId` in every container. */
+const reports = (rule: RuleName, messageId: string) => (): Diagnostic[] => [
+  diagnostic(rule, messageId),
+];
+
+/** The template reports a different message in a custom hook. */
+const reportsWithHookMessage =
+  (rule: RuleName, messageId: string, hookMessageId: string) =>
+  (container: Container): Diagnostic[] => [
+    diagnostic(rule, container.hook ? hookMessageId : messageId),
+  ];
+
+/** The template is valid code and reports nothing. */
+const reportsNothing = (): Diagnostic[] => [];
 
 /**
  * One template per rule. A missing, stale, or duplicate rule is a type error,
@@ -12,7 +29,8 @@ type RuleName = keyof typeof plugin.rules;
  */
 const templatesByRule = {
   "no-derived-state": {
-    messageId: "avoidDerivedState",
+    expected: reports("no-derived-state", "avoidDerivedState"),
+    suppressedByCleanup: true,
     body: (ctx) => ({
       pre: [
         ctx.state("count", "setCount", "0"),
@@ -25,7 +43,8 @@ const templatesByRule = {
     }),
   },
   "no-chain-state-updates": {
-    messageId: "avoidChainingStateUpdates",
+    expected: reports("no-chain-state-updates", "avoidChainingStateUpdates"),
+    suppressedByCleanup: true,
     body: (ctx) => ({
       pre: [
         ctx.state("count", "setCount", "0"),
@@ -35,7 +54,8 @@ const templatesByRule = {
     }),
   },
   "no-event-handler": {
-    messageId: "avoidEventHandler",
+    expected: reports("no-event-handler", "avoidEventHandler"),
+    suppressedByCleanup: true,
     body: (ctx) => ({
       pre: [ctx.state("dataToSubmit", "setDataToSubmit")],
       effect: ctx.effect(
@@ -45,7 +65,10 @@ const templatesByRule = {
     }),
   },
   "no-adjust-state-on-prop-change": {
-    messageId: "avoidAdjustingStateWhenAValueChanges",
+    expected: reports(
+      "no-adjust-state-on-prop-change",
+      "avoidAdjustingStateWhenAValueChanges",
+    ),
     body: (ctx) => ({
       // `useState()` initializes to `undefined`, so setting `null` is not a
       // full reset by `no-reset-all-state-on-prop-change`.
@@ -57,14 +80,17 @@ const templatesByRule = {
     }),
   },
   "no-initialize-state": {
-    messageId: "avoidInitializingState",
+    expected: reports("no-initialize-state", "avoidInitializingState"),
     body: (ctx) => ({
       pre: [ctx.state("message", "setMessage")],
       effect: ctx.effect(`setMessage(${ctx.set(`'Hello'`)})`, "[]"),
     }),
   },
   "no-external-store-subscription": {
-    messageId: "avoidExternalStoreSubscription",
+    expected: reports(
+      "no-external-store-subscription",
+      "avoidExternalStoreSubscription",
+    ),
     body: (ctx) => ({
       pre: [
         ctx.state("online", "setOnline", "true"),
@@ -78,17 +104,34 @@ const templatesByRule = {
     }),
   },
   "no-reset-all-state-on-prop-change": {
-    messageId: "avoidResettingAllStateWhenAPropChanges",
-    // Custom hooks cannot receive `key`, so the rule skips them.
-    skipHooks: true,
+    // A custom hook cannot receive `key`, so the adjust rule takes over there.
+    expected: (container) =>
+      container.hook
+        ? [
+            diagnostic(
+              "no-adjust-state-on-prop-change",
+              "avoidAdjustingStateWhenAValueChanges",
+            ),
+          ]
+        : [
+            diagnostic(
+              "no-reset-all-state-on-prop-change",
+              "avoidResettingAllStateWhenAPropChanges",
+            ),
+          ],
+    needsComponentOrHook: true,
     body: (ctx) => ({
       pre: [ctx.state("user", "setUser", "null")],
       effect: ctx.effect("setUser(null)", `[${ctx.hop(ctx.prop("userId"))}]`),
     }),
   },
   "no-pass-live-state-to-parent": {
-    messageId: "avoidPassingLiveStateToParentInComponent",
-    hookMessageId: "avoidPassingLiveStateToParentInHook",
+    expected: reportsWithHookMessage(
+      "no-pass-live-state-to-parent",
+      "avoidPassingLiveStateToParentInComponent",
+      "avoidPassingLiveStateToParentInHook",
+    ),
+    needsComponentOrHook: true,
     body: (ctx) => ({
       pre: [ctx.state("data", "setData")],
       effect: ctx.effect(
@@ -98,8 +141,13 @@ const templatesByRule = {
     }),
   },
   "no-pass-data-to-parent": {
-    messageId: "avoidPassingDataToParentInComponent",
-    hookMessageId: "avoidPassingDataToParentInHook",
+    expected: reportsWithHookMessage(
+      "no-pass-data-to-parent",
+      "avoidPassingDataToParentInComponent",
+      "avoidPassingDataToParentInHook",
+    ),
+    needsComponentOrHook: true,
+    suppressedByCleanup: true,
     body: (ctx) => ({
       pre: ["const { data } = useQuery('/data');"],
       effect: ctx.effect(
@@ -117,8 +165,7 @@ export const templates: Template[] = (
 // A valid effect that no rule should flag. It still has deps and state, so
 // wrappers must not create a false positive.
 export const validTemplate: Template = {
-  rule: "",
-  messageId: "",
+  expected: reportsNothing,
   body: (ctx: TemplateContext) => ({
     pre: [ctx.state("value", "setValue", "''")],
     effect: ctx.effect(`document.title = ${ctx.hop("value")};`, "[value]"),
@@ -126,7 +173,7 @@ export const validTemplate: Template = {
 };
 
 /** Returns the canonical template for `rule`. */
-export const templateFor = (rule: string): Template => {
+export const templateFor = (rule: RuleName): Template => {
   const template = templates.find((item) => item.rule === rule);
   if (!template) throw new Error(`No template for ${rule}`);
   return template;
@@ -135,29 +182,19 @@ export const templateFor = (rule: string): Template => {
 export const passLiveTemplate = templateFor("no-pass-live-state-to-parent");
 
 /** Templates whose finding needs a container the plugin treats as a component or hook. */
-export const containerBoundaryTemplates = templates.filter((template) =>
-  [
-    "no-pass-live-state-to-parent",
-    "no-pass-data-to-parent",
-    "no-reset-all-state-on-prop-change",
-  ].includes(template.rule),
+export const containerBoundaryTemplates = templates.filter(
+  (template) => template.needsComponentOrHook,
 );
 
 /** Templates whose finding a cleanup return must suppress. */
-export const cleanupTemplates = templates.filter((template) =>
-  [
-    "no-derived-state",
-    "no-chain-state-updates",
-    "no-event-handler",
-    "no-pass-data-to-parent",
-  ].includes(template.rule),
+export const cleanupTemplates = templates.filter(
+  (template) => template.suppressedByCleanup,
 );
 
 /** Props read through context share the render-value behavior of props. */
 export const contextTemplates: Template[] = [
   {
-    rule: "no-derived-state",
-    messageId: "avoidDerivedState",
+    expected: reports("no-derived-state", "avoidDerivedState"),
     body: (ctx) => ({
       pre: [
         `const theme = ${ctx.useContext}(ThemeContext);`,
@@ -167,8 +204,7 @@ export const contextTemplates: Template[] = [
     }),
   },
   {
-    rule: "no-derived-state",
-    messageId: "avoidDerivedState",
+    expected: reports("no-derived-state", "avoidDerivedState"),
     body: (ctx) => ({
       pre: [
         `const { theme } = ${ctx.useContext}(ThemeContext);`,
@@ -182,8 +218,7 @@ export const contextTemplates: Template[] = [
 /** Ref reads are not render values. */
 export const refTemplates: Template[] = [
   {
-    rule: "",
-    messageId: "",
+    expected: reportsNothing,
     body: (ctx) => ({
       pre: [`const nodeRef = ${ctx.useRef}();`],
       effect: ctx.effect(
@@ -193,8 +228,7 @@ export const refTemplates: Template[] = [
     }),
   },
   {
-    rule: "",
-    messageId: "",
+    expected: reportsNothing,
     body: (ctx) => ({
       pre: [`const nodeRef = ${ctx.useRef}();`],
       effect: ctx.effect(
@@ -208,8 +242,7 @@ export const refTemplates: Template[] = [
     }),
   },
   {
-    rule: "",
-    messageId: "",
+    expected: reportsNothing,
     body: (ctx) => ({
       pre: [],
       effect: ctx.effect(
@@ -223,16 +256,14 @@ export const refTemplates: Template[] = [
 /** Callback parameters and render-time call results are opaque. */
 export const opaqueCallbackTemplates: Template[] = [
   {
-    rule: "",
-    messageId: "",
+    expected: reportsNothing,
     body: (ctx) => ({
       pre: [ctx.state("count", "setCount", "0"), "setCount(count * 2);"],
       effect: `${ctx.useEffect}(${ctx.prop("callback")}, []);`,
     }),
   },
   {
-    rule: "",
-    messageId: "",
+    expected: reportsNothing,
     body: (ctx) => ({
       pre: [
         ctx.state("count", "setCount", "0"),
@@ -245,8 +276,7 @@ export const opaqueCallbackTemplates: Template[] = [
 
 /** A type-only reference is not a runtime read. */
 export const typeOnlyTemplate: Template = {
-  rule: "no-initialize-state",
-  messageId: "avoidInitializingState",
+  expected: reports("no-initialize-state", "avoidInitializingState"),
   body: (ctx) => ({
     pre: [
       ctx.state("count", "setCount", "0"),
@@ -258,8 +288,7 @@ export const typeOnlyTemplate: Template = {
 
 /** A local `as const` object is data, not a parent value. */
 export const asConstTemplate: Template = {
-  rule: "",
-  messageId: "",
+  expected: reportsNothing,
   body: (ctx) => ({
     pre: ["const DATA = { ok: true } as const;"],
     effect: ctx.effect(

@@ -1,5 +1,5 @@
 import fc from "fast-check";
-import { diagnostic, type Diagnostic } from "../harness.ts";
+import type { Diagnostic } from "../harness.ts";
 import { oneOf } from "./helpers.ts";
 import { containers, type Container } from "./axes/containers.ts";
 import { effectShapes, type EffectShapeName } from "./axes/effect-shapes.ts";
@@ -42,14 +42,17 @@ export interface TemplateContext {
 }
 
 export interface Template {
-  rule: string;
-  /** Message ID for a component container. */
-  messageId: string;
-  /** Message ID for a custom hook container, when it differs. */
-  hookMessageId?: string;
-  /** Skip custom hook containers, which some rules treat differently. */
-  // TODO: Possible to not need this? Adjust the tests?
-  skipHooks?: boolean;
+  /** Rule name for failure messages. Absent for boundary fixtures. */
+  rule?: string;
+  /**
+   * The diagnostics this template must produce for `container`. An empty list
+   * means the rule must stay silent.
+   */
+  expected: (container: Container) => Diagnostic[];
+  /** The finding needs a container that the plugin treats as a component or hook. */
+  needsComponentOrHook?: boolean;
+  /** A cleanup return makes the effect a subscription, so the finding is suppressed. */
+  suppressedByCleanup?: boolean;
   body: (ctx: TemplateContext) => { pre: string[]; effect: string };
 }
 
@@ -172,7 +175,7 @@ export const importExtras = (
   style: ImportStyle,
   container: Container,
 ): readonly string[] =>
-  container.needsHoc &&
+  container.extras.length > 0 &&
   style.module === "react" &&
   (style.form === "named" || style.form === "aliased")
     ? container.extras
@@ -195,30 +198,11 @@ export const buildTemplate = (
   )}`;
 };
 
-export const templateResult = (
-  template: Template,
-  container: Container,
-): Diagnostic[] => {
-  const messageId =
-    container.hook && template.hookMessageId
-      ? template.hookMessageId
-      : template.messageId;
-  return [diagnostic(template.rule, messageId)];
-};
-
 // ---------------------------------------------------------------------------
 
-export interface ProgramInput {
-  style: ImportStyle;
-  container: Container;
-  propShape: PropShape;
-  effectShape: EffectShapeName;
-  ts: TsWrapper;
-  hops: number;
-  hopShape: HopShape;
-  stateShape: StateShape;
+export type ProgramInput = Omit<BuilderOptions, "bodyWrap"> & {
   bodyWrap: BodyWrapper;
-}
+};
 
 export const buildProgram = (template: Template, input: ProgramInput): string =>
   buildTemplate(template, {

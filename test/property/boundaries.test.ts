@@ -1,12 +1,12 @@
 import { describe, it } from "node:test";
 import fc from "fast-check";
-import { containers, opaqueContainers } from "./axes/containers.ts";
+import { opaqueContainers } from "./axes/containers.ts";
 import {
   deferredBodyWrappers,
   synchronousBodyWrappers,
 } from "./axes/execution-boundaries.ts";
 import { opaqueStateShapes } from "./axes/state-declarations.ts";
-import { combination, templateResult } from "./builder.ts";
+import { combination } from "./builder.ts";
 import { checkProgram, runProperty } from "./check.ts";
 import {
   cleanupBodyWrapper,
@@ -40,17 +40,10 @@ describe("property: synchronous effect bodies preserve every finding", () => {
       fc.property(
         fc.record({
           template: oneOf(templates),
-          input: combination({
-            containers: containers.filter((container) => !container.hook),
-            bodyWrappers: synchronousBodyWrappers,
-          }),
+          input: combination({ bodyWrappers: synchronousBodyWrappers }),
         }),
         ({ template, input }) => {
-          checkProgram(
-            template,
-            input,
-            templateResult(template, input.container),
-          );
+          checkProgram(template, input, template.expected(input.container));
         },
       ),
     );

@@ -56,7 +56,7 @@ One outcome can need several cases: reported and not reported, component and cus
 
 1. `src/rules/*.test.js` holds rule semantics. Cover each distinct data source, dependency shape, cleanup behavior, and message format once. Keep one synchronous case and one asynchronous case per rule.
 2. `test/property/*.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.
-3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `skipHooks` or `hookMessageId`.
+3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with the template's `expected(container)`.
 4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
 5. If a rule test and a property test both fail on one change, they pin the same outcome. Delete the rule test. Keep the narrower one.
 6. Split a test file when one section outgrows the file's theme. Do not split by `src/util` module; these cases are cross-cutting.
