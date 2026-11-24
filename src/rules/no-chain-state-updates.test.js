@@ -224,6 +224,28 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
         errors: error("avoidChainingStateUpdates", { state: "selection" }),
       },
+      {
+        name: "Reports each chained state update in one effect",
+        code: js`
+        function C() {
+          const [count, setCount] = useState(0);
+          const [isEven, setIsEven] = useState(false);
+          const [isPositive, setIsPositive] = useState(false);
+
+          useEffect(() => {
+            setIsEven(true);
+            setIsPositive(true);
+          }, [count]);
+        }
+      `,
+        errors: [
+          { messageId: "avoidChainingStateUpdates", data: { state: "isEven" } },
+          {
+            messageId: "avoidChainingStateUpdates",
+            data: { state: "isPositive" },
+          },
+        ],
+      },
     ],
   },
 );

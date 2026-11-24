@@ -482,6 +482,25 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
       `,
         errors: error("avoidDerivedState", { state: "fullName" }),
       },
+      {
+        name: "Reports each derived state update in one effect",
+        code: js`
+        function C() {
+          const [count, setCount] = useState(0);
+          const [double, setDouble] = useState(0);
+          const [triple, setTriple] = useState(0);
+
+          useEffect(() => {
+            setDouble(count * 2);
+            setTriple(count * 3);
+          }, [count]);
+        }
+      `,
+        errors: [
+          { messageId: "avoidDerivedState", data: { state: "double" } },
+          { messageId: "avoidDerivedState", data: { state: "triple" } },
+        ],
+      },
     ],
   },
 );

@@ -379,6 +379,30 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           values: '"items"',
         }),
       },
+      {
+        name: "Reports each adjusted state update in one effect",
+        code: js`
+        function List({ items }) {
+          const [selection, setSelection] = useState();
+          const [expanded, setExpanded] = useState();
+
+          useEffect(() => {
+            setSelection(null);
+            setExpanded(false);
+          }, [items]);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidAdjustingStateWhenAValueChanges",
+            data: { state: "selection", values: '"items"' },
+          },
+          {
+            messageId: "avoidAdjustingStateWhenAValueChanges",
+            data: { state: "expanded", values: '"items"' },
+          },
+        ],
+      },
     ],
   },
 );

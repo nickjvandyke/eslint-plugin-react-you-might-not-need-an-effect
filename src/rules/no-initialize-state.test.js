@@ -188,6 +188,30 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
           arguments: '"Hello"',
         }),
       },
+      {
+        name: "Reports each initialized state in one effect",
+        code: js`
+        function MyComponent() {
+          const [first, setFirst] = useState();
+          const [second, setSecond] = useState();
+
+          useEffect(() => {
+            setFirst(1);
+            setSecond(2);
+          }, []);
+        }
+      `,
+        errors: [
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "first", arguments: "1" },
+          },
+          {
+            messageId: "avoidInitializingState",
+            data: { state: "second", arguments: "2" },
+          },
+        ],
+      },
     ],
   },
 );
