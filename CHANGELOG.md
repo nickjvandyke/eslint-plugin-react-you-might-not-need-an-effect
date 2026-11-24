@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.3.2...v1.3.3) (2026-11-24)
+
+
+### Bug Fixes
+
+* resolve overlapping rules; always one rule report per setter per effect ([281ef11](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/281ef11d866a82da4357741f1b2d15598221323c))
+
 ## [1.3.2](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.3.1...v1.3.2) (2026-11-24)
 
 
