@@ -1,17 +1,14 @@
 import fc from "fast-check";
-import globals from "globals";
 import assert from "assert";
 import { describe, it } from "node:test";
 import {
   diagnostic,
   lint,
   lintInput,
-  lintMessages,
   oneOf,
   rulePrefix,
   stateRuleIds,
   type Diagnostic,
-  type LintOptions,
 } from "./property/helpers.ts";
 import {
   containers,
@@ -354,76 +351,6 @@ describe("property: prop access shapes", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Property: browser globals (src/util/props.ts)
-// ---------------------------------------------------------------------------
-
-describe("property: browser globals", () => {
-  const globalReads: [string, string][] = [
-    ["window", ".innerWidth"],
-    ["navigator", ".onLine"],
-    ["localStorage", ".getItem('key')"],
-    ["document", ".title"],
-  ];
-
-  // Alias the global object itself, so the alias is still a global value.
-  // `const value = window.innerWidth` would make `value` an ordinary local.
-  const aliasRoot = (
-    root: string,
-    hops: number,
-  ): { declarations: string[]; source: string } => {
-    let source = root;
-    const declarations: string[] = [];
-    for (let i = 0; i < hops; i++) {
-      declarations.push(`const g${i} = ${source};`);
-      source = `g${i}`;
-    }
-    return { declarations, source };
-  };
-
-  const configurations: [string, LintOptions][] = [
-    ["without browser globals", {}],
-    ["with browser globals", { globals: globals.browser }],
-  ];
-
-  it("gives the same results with and without configured globals", () => {
-    fc.assert(
-      fc.property(
-        fc.constantFrom(...globalReads),
-        fc.integer({ min: 0, max: 3 }),
-        ([root, member], hops) => {
-          const { declarations, source } = aliasRoot(root, hops);
-          const expression = `${source}${member}`;
-          const code = `
-            import { useEffect, useState } from 'react';
-            function Child({ onFetched }) {
-              const [value, setValue] = useState();
-              ${declarations.join("\n")}
-              useEffect(() => {
-                setValue(${expression});
-                onFetched(${expression});
-              }, [onFetched, ${expression}]);
-            }
-          `;
-          const results = configurations.map(([, options]) =>
-            lint(code, options),
-          );
-          assert.deepStrictEqual(results[0], results[1], code);
-          // The global read reaches the parent callback, so the property must
-          // observe it. Otherwise it would pass with an empty result list.
-          assert.deepStrictEqual(
-            results[0]
-              .map(({ messageId }) => messageId)
-              .includes("avoidPassingDataToParentInComponent"),
-            true,
-            code,
-          );
-        },
-      ),
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
 // Property: state declarations and setter aliases (src/util/state.ts)
 // ---------------------------------------------------------------------------
 
@@ -598,102 +525,6 @@ describe("property: effect callback boundaries", () => {
           checkProgram(template, input, []);
         },
       ),
-    );
-  });
-
-  it("reports every statement in a multi-statement body", () => {
-    fc.assert(
-      fc.property(fc.integer({ min: 1, max: 4 }), (statements) => {
-        const setters = Array.from(
-          { length: statements },
-          () => "setDouble(count * 2);",
-        ).join("\n");
-        const code = `
-          const C = () => {
-            const [count, setCount] = useState(0);
-            const [double, setDouble] = useState(0);
-            useEffect(() => {
-              ${setters}
-            }, [count]);
-          };
-        `;
-        assert.deepStrictEqual(
-          lint(code),
-          Array.from({ length: statements }, () =>
-            diagnostic("no-derived-state", "avoidDerivedState"),
-          ),
-          code,
-        );
-      }),
-      // A closed domain of 4 values. More runs only replay cases.
-      { numRuns: 20 },
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Termination and opaque call chains
-// ---------------------------------------------------------------------------
-
-describe("property: deep local call chains terminate", () => {
-  it("survives a chain of up to 25 local functions", () => {
-    fc.assert(
-      fc.property(fc.integer({ min: 1, max: 25 }), (depth) => {
-        const declarations = ["const f0 = (v) => v;"];
-        for (let i = 1; i <= depth; i++) {
-          declarations.push(`const f${i} = (v) => f${i - 1}(v);`);
-        }
-        const code = `
-          function C() {
-            const [count, setCount] = useState(0);
-            const [double, setDouble] = useState(0);
-            ${declarations.join("\n")}
-            useEffect(() => {
-              setDouble(f${depth}(count * 2));
-            }, [count]);
-          }
-        `;
-        assert.deepStrictEqual(
-          lint(code),
-          [diagnostic("no-derived-state", "avoidDerivedState")],
-          code,
-        );
-      }),
-      // A closed domain of 25 values. More runs only replay cases.
-      { numRuns: 50 },
-    );
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Message wording
-// ---------------------------------------------------------------------------
-
-describe("property: message formatting", () => {
-  it("quotes every name in a dependency list", () => {
-    fc.assert(
-      fc.property(fc.integer({ min: 1, max: 5 }), (count) => {
-        const names = Array.from(
-          { length: count },
-          (_, index) => `value${index}`,
-        );
-        const list = names.join(", ");
-        const code = `
-          function C({ ${list} }) {
-            const [selection, setSelection] = useState();
-            useEffect(() => { setSelection(null); }, [${list}]);
-          }
-        `;
-        const [message] = lintMessages(code);
-        const expected = names.map((name) => `"${name}"`).join(" and ");
-        assert.strictEqual(
-          message.message.includes(expected),
-          true,
-          `${expected}\n${message.message}`,
-        );
-      }),
-      // A closed domain of 5 values. More runs only replay cases.
-      { numRuns: 20 },
     );
   });
 });

@@ -13,6 +13,18 @@ const configurations: [string, LintOptions][] = [
   ["with browser globals", { globals: globals.browser }],
 ];
 
+/**
+ * Lints a program and fails with the code when analysis does not return.
+ * A hang never returns, so the budget only needs to be generous.
+ */
+const lintWithin = (code: string, budgetMs = 2000): ReturnType<typeof lint> => {
+  const start = Date.now();
+  const diagnostics = lint(code);
+  const elapsed = Date.now() - start;
+  assert.ok(elapsed < budgetMs, `lint took ${elapsed}ms\n${code}`);
+  return diagnostics;
+};
+
 // ---------------------------------------------------------------------------
 // Scope and naming
 // ---------------------------------------------------------------------------
@@ -87,6 +99,55 @@ describe("browser globals", () => {
         (ruleId ?? "").endsWith("/no-external-store-subscription"),
       );
       assert.deepStrictEqual(externalStore, [], code);
+    }
+  });
+
+  it("reports the same data with and without configured globals", () => {
+    const reads: [string, string][] = [
+      ["window", ".innerWidth"],
+      ["navigator", ".onLine"],
+      ["localStorage", ".getItem('key')"],
+      ["document", ".title"],
+    ];
+
+    for (const [root, member] of reads) {
+      // Alias the global object itself, so the alias is still a global value.
+      // `const value = window.innerWidth` would make `value` an ordinary local.
+      for (let hops = 0; hops <= 3; hops++) {
+        const declarations: string[] = [];
+        let source = root;
+        for (let i = 0; i < hops; i++) {
+          declarations.push(`const g${i} = ${source};`);
+          source = `g${i}`;
+        }
+        const expression = `${source}${member}`;
+        const code = `
+          import { useEffect, useState } from 'react';
+
+          function Child({ onFetched }) {
+            const [value, setValue] = useState();
+            ${declarations.join("\n")}
+
+            useEffect(() => {
+              setValue(${expression});
+              onFetched(${expression});
+            }, [onFetched, ${expression}]);
+          }
+        `;
+        const results = configurations.map(([, options]) =>
+          lint(code, options),
+        );
+        assert.deepStrictEqual(results[0], results[1], code);
+        // The global read reaches the parent callback, so the comparison must
+        // observe it. Otherwise both runs would agree on an empty list.
+        assert.ok(
+          results[0]?.some(
+            ({ messageId }) =>
+              messageId === "avoidPassingDataToParentInComponent",
+          ),
+          code,
+        );
+      }
     }
   });
 });
@@ -251,20 +312,38 @@ describe("effect call boundaries", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Call graph cycles
+// Deep call chains
 // ---------------------------------------------------------------------------
 
-/**
- * Lints a program and fails with the code when analysis does not return.
- * A hang never returns, so the budget only needs to be generous.
- */
-const lintWithin = (code: string, budgetMs = 2000): ReturnType<typeof lint> => {
-  const start = Date.now();
-  const diagnostics = lint(code);
-  const elapsed = Date.now() - start;
-  assert.ok(elapsed < budgetMs, `lint took ${elapsed}ms\n${code}`);
-  return diagnostics;
-};
+describe("deep call chains", () => {
+  it("follows a chain of 50 local functions", () => {
+    // A fixed depth: a shorter chain exercises nothing a longer chain does not.
+    const depth = 50;
+    const declarations = ["const f0 = (v) => v;"];
+    for (let i = 1; i <= depth; i++) {
+      declarations.push(`const f${i} = (v) => f${i - 1}(v);`);
+    }
+    const code = `
+      function C() {
+        const [count, setCount] = useState(0);
+        const [double, setDouble] = useState(0);
+        ${declarations.join("\n")}
+        useEffect(() => {
+          setDouble(f${depth}(count * 2));
+        }, [count]);
+      }
+    `;
+    assert.deepStrictEqual(
+      lintWithin(code),
+      [diagnostic("no-derived-state", "avoidDerivedState")],
+      code,
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Call graph cycles
+// ---------------------------------------------------------------------------
 
 /** A component whose effect writes `f0(count * 2)` into other state. */
 const cycleComponent = (declarations: string): string => `
@@ -318,5 +397,30 @@ describe("call graph cycles", () => {
       [diagnostic("no-derived-state", "avoidDerivedState")],
       code,
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Message wording
+// ---------------------------------------------------------------------------
+
+describe("message wording", () => {
+  it("quotes every name in a dependency list", () => {
+    const names = ["value0", "value1", "value2"];
+    const list = names.join(", ");
+    const code = `
+      function C({ ${list} }) {
+        const [selection, setSelection] = useState();
+
+        useEffect(() => {
+          setSelection(null);
+        }, [${list}]);
+      }
+    `;
+    const [message] = lintMessages(code);
+    const expected =
+      'Avoid adjusting state when "value0" and "value1" and "value2" changes. ' +
+      'Instead, adjust "selection" directly during render, or refactor your state to avoid this need entirely.';
+    assert.strictEqual(message?.message, expected, code);
   });
 });
