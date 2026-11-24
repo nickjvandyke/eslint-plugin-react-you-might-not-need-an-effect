@@ -340,11 +340,13 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }),
       },
       {
+        // `useState()` starts as `undefined`, so writing `null` is not a full
+        // reset. A full reset belongs to `no-reset-all-state-on-prop-change`.
         name: "Set state to literal when a prop and an external hook value change",
         code: js`
         function Items({ filter }) {
           const { data } = useQuery('/items');
-          const [selection, setSelection] = useState(null);
+          const [selection, setSelection] = useState();
 
           useEffect(() => {
             setSelection(null);

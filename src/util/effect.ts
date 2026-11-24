@@ -7,13 +7,14 @@ import {
   getUpstreamRefs,
   isDefined,
   isFunction,
+  isSynchronous,
   type FunctionNode,
   type ReturnStatementNode,
 } from "./ast.ts";
 import { isUseEffect } from "./hooks.ts";
 import { isGlobalAlias } from "./props.ts";
 import { isRef, isRefCurrent } from "./refs.ts";
-import { isStateSetter } from "./state.ts";
+import { isStateSetter, isStateSetterCall } from "./state.ts";
 import { unwrapExpression } from "./typescript.ts";
 
 /** A cleanup return always has an argument, because bare `return`s are skipped. */
@@ -142,3 +143,39 @@ export const getSetterArgumentVariables = (
   getArgsUpstreamRefs(context, setterRef, isStateSetter)
     .map((ref) => getRenderVariable(context, ref))
     .filter(isDefined);
+
+/**
+ * Synchronous state setters in the effect body that the cleanup also
+ * references. A shared setter means the effect subscribes to an external
+ * store, and the cleanup removes the subscription.
+ *
+ * A shared global (e.g. `window`) is not a subscription signal, so definitions
+ * are required. Globals have no definitions.
+ */
+export const getSubscribedStateSetters = (
+  context: Rule.RuleContext,
+  effect: Effect,
+): Scope.Reference[] => {
+  if (!effect.cleanup) return [];
+
+  const bodySetters = effect.fnRefs
+    .filter((ref) => isSynchronous(ref.identifier, effect.fn))
+    .filter((ref) => isStateSetterCall(context, ref));
+  if (bodySetters.length === 0) return [];
+
+  const cleanupRefs = getDownstreamRefs(context, effect.cleanup.argument);
+  const cleanupVars = new Set<Scope.Variable>();
+  for (const ref of cleanupRefs) {
+    for (const upRef of getUpstreamRefs(context, ref)) {
+      if (upRef.resolved && upRef.resolved.defs.length > 0) {
+        cleanupVars.add(upRef.resolved);
+      }
+    }
+  }
+
+  return bodySetters.filter((ref) =>
+    getUpstreamRefs(context, ref).some(
+      (upRef) => upRef.resolved && cleanupVars.has(upRef.resolved),
+    ),
+  );
+};

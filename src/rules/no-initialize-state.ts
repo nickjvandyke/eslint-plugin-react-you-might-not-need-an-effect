@@ -1,6 +1,6 @@
 import type { Rule } from "eslint";
 import { getCallExpr, getUpstreamRefs, isSynchronous } from "../util/ast.ts";
-import { getEffect } from "../util/effect.ts";
+import { getEffect, getSubscribedStateSetters } from "../util/effect.ts";
 import {
   getStateName,
   isStateSetter,
@@ -34,9 +34,16 @@ const rule: Rule.RuleModule = {
         ).length === 0;
       if (!isEffectRunOnlyOnMount) return;
 
+      // Subscription setters belong to `no-external-store-subscription`.
+      // The cleanup references the setter, so the effect is a subscription.
+      const subscribedSetters = new Set(
+        getSubscribedStateSetters(context, effect),
+      );
+
       effect.fnRefs
         .filter((ref) => isSynchronous(ref.identifier, effect.fn))
         .filter((ref) => isStateSetterCall(context, ref))
+        .filter((ref) => !subscribedSetters.has(ref))
         .forEach((ref) => {
           const callExpr = getCallExpr(ref);
           if (!callExpr) return;

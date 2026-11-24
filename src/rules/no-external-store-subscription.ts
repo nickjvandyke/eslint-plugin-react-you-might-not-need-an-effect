@@ -1,12 +1,7 @@
-import type { Rule, Scope } from "eslint";
-import {
-  getUpstreamRefs,
-  getCallExpr,
-  getDownstreamRefs,
-  isSynchronous,
-} from "../util/ast.ts";
-import { getEffect } from "../util/effect.ts";
-import { getStateName, isStateSetterCall } from "../util/state.ts";
+import type { Rule } from "eslint";
+import { getCallExpr } from "../util/ast.ts";
+import { getEffect, getSubscribedStateSetters } from "../util/effect.ts";
+import { getStateName } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
   meta: {
@@ -24,35 +19,9 @@ const rule: Rule.RuleModule = {
   create: (context) => ({
     CallExpression: (node) => {
       const effect = getEffect(context, node);
-      if (!effect || !effect.cleanup) return;
+      if (!effect) return;
 
-      const bodySetters = effect.fnRefs
-        .filter((ref) => isSynchronous(ref.identifier, effect.fn))
-        .filter((ref) => isStateSetterCall(context, ref));
-      if (bodySetters.length === 0) return;
-
-      const cleanupArg = effect.cleanup.argument;
-      const cleanupRefs = getDownstreamRefs(context, cleanupArg);
-
-      // Trace both the body setter and cleanup refs through alias chains.
-      // If they share any upstream variable, the cleanup references the same setter.
-      // Globals have no definitions and are never setters, so skip them: a
-      // shared global (e.g. `window`) is not a subscription signal.
-      const cleanupVars = new Set<Scope.Variable>();
-      for (const ref of cleanupRefs) {
-        for (const upRef of getUpstreamRefs(context, ref)) {
-          if (upRef.resolved && upRef.resolved.defs.length > 0) {
-            cleanupVars.add(upRef.resolved);
-          }
-        }
-      }
-
-      for (const ref of bodySetters) {
-        const sharesCleanupVar = getUpstreamRefs(context, ref).some(
-          (upRef) => upRef.resolved && cleanupVars.has(upRef.resolved),
-        );
-        if (!sharesCleanupVar) continue;
-
+      for (const ref of getSubscribedStateSetters(context, effect)) {
         const callExpr = getCallExpr(ref);
         if (!callExpr) continue;
 

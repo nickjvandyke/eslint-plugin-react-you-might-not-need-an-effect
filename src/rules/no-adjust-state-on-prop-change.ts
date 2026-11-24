@@ -1,12 +1,17 @@
 import type { Rule } from "eslint";
 import { getCallExpr, getUpstreamRefs, isSynchronous } from "../util/ast.ts";
 import {
+  findEnclosingComponentOrHook,
+  isCustomHook,
+} from "../util/components.ts";
+import {
   getDependencyVariables,
   getEffect,
   getSetterArgumentVariables,
 } from "../util/effect.ts";
 import { formatNames } from "../util/messages.ts";
 import { isExternalValue } from "../util/props.ts";
+import { findPropUsedToResetAllState } from "../util/reset.ts";
 import { getStateName, isState, isStateSetterCall } from "../util/state.ts";
 
 const rule: Rule.RuleModule = {
@@ -33,6 +38,18 @@ const rule: Rule.RuleModule = {
         .flatMap((ref) => getUpstreamRefs(context, ref))
         .some((ref) => isState(context, ref));
       if (isSomeDepsState) return;
+
+      // A full reset belongs to `no-reset-all-state-on-prop-change`. That rule
+      // skips custom hooks, so this rule still reports the hook case.
+      const containingNode = findEnclosingComponentOrHook(context, node);
+      const isInCustomHook =
+        containingNode !== undefined && isCustomHook(containingNode);
+      if (
+        !isInCustomHook &&
+        findPropUsedToResetAllState(context, effect, node)
+      ) {
+        return;
+      }
 
       // Props, context, and external hook values change outside the component.
       const triggerRefs = [

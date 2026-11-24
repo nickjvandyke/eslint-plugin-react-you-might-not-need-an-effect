@@ -1,5 +1,5 @@
 import fc from "fast-check";
-import { diagnostic, sortDiagnostics, type Diagnostic } from "../harness.ts";
+import { diagnostic, type Diagnostic } from "../harness.ts";
 import { oneOf } from "./helpers.ts";
 import {
   containers,
@@ -51,9 +51,8 @@ export interface Template {
   messageId: string;
   /** Message ID for a custom hook container, when it differs. */
   hookMessageId?: string;
-  /** Diagnostics the same pattern also triggers through other rules. */
-  extraExpected?: Diagnostic[];
   /** Skip custom hook containers, which some rules treat differently. */
+  // TODO: Possible to not need this? Adjust the tests?
   skipHooks?: boolean;
   body: (ctx: TemplateContext) => { pre: string[]; effect: string };
 }
@@ -208,10 +207,7 @@ export const templateResult = (
     container.hook && template.hookMessageId
       ? template.hookMessageId
       : template.messageId;
-  return sortDiagnostics([
-    diagnostic(template.rule, messageId),
-    ...(template.extraExpected ?? []),
-  ]);
+  return [diagnostic(template.rule, messageId)];
 };
 
 // ---------------------------------------------------------------------------

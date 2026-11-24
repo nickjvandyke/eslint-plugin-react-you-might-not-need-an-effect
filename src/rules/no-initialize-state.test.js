@@ -139,6 +139,27 @@ new RuleTester({ ...plugin.configs.recommended, rules: {} }).run(
         }),
       },
       {
+        name: "Reports only the setter that is not part of a subscription",
+        code: js`
+        function MyComponent() {
+          const [status, setStatus] = useState();
+          const [online, setOnline] = useState(true);
+          const update = () => setOnline(navigator.onLine);
+
+          useEffect(() => {
+            setStatus('ready');
+            window.addEventListener('online', update);
+            update();
+            return () => window.removeEventListener('online', update);
+          }, []);
+        }
+      `,
+        errors: error("avoidInitializingState", {
+          state: "status",
+          arguments: "'ready'",
+        }),
+      },
+      {
         name: "To undefined",
         code: js`
         function MyComponent() {

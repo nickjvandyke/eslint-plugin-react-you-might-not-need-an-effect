@@ -37,6 +37,7 @@ export const lintMessages = (
   return messages;
 };
 
+// TODO: Doesn't need export
 export const sortKey = ({ ruleId, messageId }: Diagnostic): string =>
   `${ruleId}/${messageId}`;
 

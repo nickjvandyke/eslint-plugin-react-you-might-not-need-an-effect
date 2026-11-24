@@ -1,4 +1,3 @@
-import { diagnostic } from "../harness.ts";
 import type { Template, TemplateContext } from "./builder.ts";
 
 // ---------------------------------------------------------------------------
@@ -64,10 +63,6 @@ export const templates: Template[] = [
   {
     rule: "no-external-store-subscription",
     messageId: "avoidExternalStoreSubscription",
-    // A mount-only effect that calls a setter also initializes state.
-    extraExpected: [
-      diagnostic("no-initialize-state", "avoidInitializingState"),
-    ],
     body: (ctx) => ({
       pre: [
         ctx.state("online", "setOnline", "true"),
@@ -85,13 +80,6 @@ export const templates: Template[] = [
     messageId: "avoidResettingAllStateWhenAPropChanges",
     // Custom hooks cannot receive `key`, so the rule skips them.
     skipHooks: true,
-    // The prop dependency and reset value also match the adjust pattern.
-    extraExpected: [
-      diagnostic(
-        "no-adjust-state-on-prop-change",
-        "avoidAdjustingStateWhenAValueChanges",
-      ),
-    ],
     body: (ctx) => ({
       pre: [ctx.state("user", "setUser", "null")],
       effect: ctx.effect("setUser(null)", `[${ctx.hop(ctx.prop("userId"))}]`),
