@@ -22,7 +22,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - **9 rules** in `src/rules/`, each a separate `.ts` file with a co-located `.test.js` file.
 - **Utilities**: `src/util/ast.ts` (AST traversal, ref analysis, synchronous call chains), `src/util/typescript.ts` (TypeScript wrappers and type-only keys), `src/util/hooks.ts` (React hook and third-party effect detection), `src/util/components.ts` (component, HOC, and custom hook detection), `src/util/effect.ts` (effect function, deps, cleanup, and dependency-variable extraction), `src/util/state.ts` (state and setter detection), `src/util/props.ts` (prop and external value detection), `src/util/refs.ts` (ref detection).
 - **Test pattern**: Rule semantics live in `src/rules/*.test.js` with `RuleTester` from `eslint` + `plugin` from `../index.ts`, and define `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`. Syntax and boundary behavior is verified generatively in `test/property.test.ts`, not in `src/util/`.
-- **Integration tests**: `test/` holds only cross-cutting tests. `test/property.test.ts` (property-based tests with `fast-check`: transparent syntax must preserve diagnostics, opaque boundaries must suppress them, state-setter rules must partition), `test/effect-hooks.test.ts` (third-party effect hook lookup table), `test/edge-cases.test.ts` (fixed regressions, call-graph cycles, and message-wording cases), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
+- **Integration tests**: `test/` holds only cross-cutting tests. `test/property.test.ts` (property-based tests with `fast-check`: transparent syntax must preserve diagnostics, opaque boundaries must suppress them, state-setter rules must partition), `test/effect-hooks.test.ts` (third-party effect hook lookup table), `test/edge-cases.test.ts` (fixed regressions and message-wording cases), `test/termination.test.ts` (deep call chains and call-graph cycles), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
 
 ## Key conventions
 
@@ -57,6 +57,7 @@ One outcome can need several cases: reported and not reported, component and cus
 3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `skipHooks` or `hookMessageId`.
 4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
 5. If a rule test and a property test both fail on one change, they pin the same outcome. Delete the rule test. Keep the narrower one.
+6. Split a test file when one section outgrows the file's theme, or when the file passes about 500 lines. Do not split by `src/util` module; these cases are cross-cutting.
 
 ## Architecture notes
 
