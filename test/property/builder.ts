@@ -1,10 +1,6 @@
 import fc from "fast-check";
-import {
-  diagnostic,
-  oneOf,
-  sortDiagnostics,
-  type Diagnostic,
-} from "./helpers.ts";
+import { diagnostic, sortDiagnostics, type Diagnostic } from "../harness.ts";
+import { oneOf } from "./helpers.ts";
 import {
   containers,
   effectShapes,

@@ -1,15 +1,8 @@
 import fc from "fast-check";
 import assert from "assert";
 import { describe, it } from "node:test";
-import {
-  diagnostic,
-  lint,
-  lintInput,
-  oneOf,
-  rulePrefix,
-  stateRuleIds,
-  type Diagnostic,
-} from "./property/helpers.ts";
+import { diagnostic, lint, rulePrefix, type Diagnostic } from "./harness.ts";
+import { lintInput, oneOf, stateRuleIds } from "./property/helpers.ts";
 import {
   containers,
   deferredBodyWrappers,

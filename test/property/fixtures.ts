@@ -1,4 +1,4 @@
-import { diagnostic } from "./helpers.ts";
+import { diagnostic } from "../harness.ts";
 import type { Template, TemplateContext } from "./builder.ts";
 
 // ---------------------------------------------------------------------------

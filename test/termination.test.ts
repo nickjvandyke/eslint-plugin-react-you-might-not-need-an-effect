@@ -1,6 +1,8 @@
 import assert from "assert";
 import { describe, it } from "node:test";
-import { diagnostic, lint } from "./property/helpers.ts";
+import { diagnostic, lint } from "./harness.ts";
+
+const js = String.raw;
 
 /**
  * Lints a program and fails with the code when analysis does not return.
@@ -26,7 +28,7 @@ describe("deep call chains", () => {
     for (let i = 1; i <= depth; i++) {
       declarations.push(`const f${i} = (v) => f${i - 1}(v);`);
     }
-    const code = `
+    const code = js`
       function C() {
         const [count, setCount] = useState(0);
         const [double, setDouble] = useState(0);
@@ -49,7 +51,7 @@ describe("deep call chains", () => {
 // ---------------------------------------------------------------------------
 
 /** A component whose effect writes `f0(count * 2)` into other state. */
-const cycleComponent = (declarations: string): string => `
+const cycleComponent = (declarations: string): string => js`
   function C() {
     const [count, setCount] = useState(0);
     const [double, setDouble] = useState(0);

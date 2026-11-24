@@ -57,7 +57,7 @@ One outcome can need several cases: reported and not reported, component and cus
 3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `skipHooks` or `hookMessageId`.
 4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
 5. If a rule test and a property test both fail on one change, they pin the same outcome. Delete the rule test. Keep the narrower one.
-6. Split a test file when one section outgrows the file's theme, or when the file passes about 500 lines. Do not split by `src/util` module; these cases are cross-cutting.
+6. Split a test file when one section outgrows the file's theme. Do not split by `src/util` module; these cases are cross-cutting.
 
 ## Architecture notes
 

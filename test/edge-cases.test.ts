@@ -1,12 +1,9 @@
 import globals from "globals";
 import assert from "assert";
 import { describe, it } from "node:test";
-import {
-  diagnostic,
-  lint,
-  lintMessages,
-  type LintOptions,
-} from "./property/helpers.ts";
+import { diagnostic, lint, lintMessages, type LintOptions } from "./harness.ts";
+
+const js = String.raw;
 
 const configurations: [string, LintOptions][] = [
   ["without browser globals", {}],
@@ -19,7 +16,7 @@ const configurations: [string, LintOptions][] = [
 
 describe("scope and naming", () => {
   it("labels an anonymous owner as this component", () => {
-    const code = `
+    const code = js`
       import { useEffect, useState } from 'react';
 
       export default () => {
@@ -41,7 +38,7 @@ describe("scope and naming", () => {
   });
 
   it("does not leak state setters between sibling components", () => {
-    const code = `
+    const code = js`
       import { useEffect, useState } from 'react';
 
       function Sibling() {
@@ -66,7 +63,7 @@ describe("scope and naming", () => {
 
 describe("browser globals", () => {
   it("does not treat a shared global as a subscription", () => {
-    const code = `
+    const code = js`
       import { useEffect, useState } from 'react';
 
       function Store() {
@@ -109,7 +106,7 @@ describe("browser globals", () => {
           source = `g${i}`;
         }
         const expression = `${source}${member}`;
-        const code = `
+        const code = js`
           import { useEffect, useState } from 'react';
 
           function Child({ onFetched }) {
@@ -146,7 +143,7 @@ describe("browser globals", () => {
 
 describe("call aliases", () => {
   it("follows a wrapper callback alias to its prop", () => {
-    const code = `
+    const code = js`
       function Child({ onFetched }) {
         const [data, setData] = useState();
         const onFetchedWrapper = (v) => onFetched(v);
@@ -174,7 +171,7 @@ describe("call aliases", () => {
 
 describe("state tuple slots", () => {
   it("tracks object state", () => {
-    const code = `
+    const code = js`
       function DoubleCounter() {
         const [count, setCount] = useState({ value: 0 });
         const [doubleCount, setDoubleCount] = useState({ value: 0 });
@@ -192,7 +189,7 @@ describe("state tuple slots", () => {
   });
 
   it("reports a setter that is only in the setter tuple slot", () => {
-    const code = `
+    const code = js`
       import { useState } from 'react';
       function C() {
         const [, setAttempts] = useState(0);
@@ -208,7 +205,7 @@ describe("state tuple slots", () => {
   });
 
   it("reports a setter whose state value is not destructured", () => {
-    const code = `
+    const code = js`
       function C() {
         const [attempts, setAttempts] = useState(0);
         const [count] = useState(0);
@@ -229,7 +226,7 @@ describe("state tuple slots", () => {
 
 describe("effect call boundaries", () => {
   it("allows an array hole in arrow function params", () => {
-    const code = `
+    const code = js`
       function FilteredPosts({ posts }) {
         const [filteredPosts, setFilteredPosts] = useState([]);
 
@@ -246,7 +243,7 @@ describe("effect call boundaries", () => {
   });
 
   it("ignores calls to local functions that do not set state", () => {
-    const code = `
+    const code = js`
       function C() {
         const [first, setFirst] = useState('Dwayne');
         const [last, setLast] = useState('The Rock');
@@ -263,7 +260,7 @@ describe("effect call boundaries", () => {
   it("keeps a setter alias declared inside an async function opaque", () => {
     // The alias is declared inside the async function, so the chain from
     // `load()` must stop before `set(data)`.
-    const code = `
+    const code = js`
       function Component() {
         const [count, setCount] = useState(0);
         const [double, setDouble] = useState();
@@ -284,7 +281,7 @@ describe("effect call boundaries", () => {
   it("keeps internal useCallback results opaque", () => {
     // The setter receives the `useCallback` result, and that result is the
     // value computed from the callback's arguments.
-    const code = `
+    const code = js`
       function C() {
         const [name, setName] = useState('');
         const compute = useCallback(() => 'x', []);
@@ -307,7 +304,7 @@ describe("message wording", () => {
   it("quotes every name in a dependency list", () => {
     const names = ["value0", "value1", "value2"];
     const list = names.join(", ");
-    const code = `
+    const code = js`
       function C({ ${list} }) {
         const [selection, setSelection] = useState();
 
