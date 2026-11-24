@@ -128,7 +128,7 @@ Enforce these other rules in your codebase for more accurate analysis:
 
 ## 🔎 Rules
 
-See the [tests](./src/rules) for extensive (in)valid examples for each rule.
+See the [rule tests](./src/rules) for extensive (in)valid examples and the [property tests](./test/property) for the generated syntax combinations each rule is tested against.
 
 ### [no-derived-state](https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state)
 
