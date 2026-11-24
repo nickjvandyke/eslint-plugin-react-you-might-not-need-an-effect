@@ -1,11 +1,10 @@
 import { describe, it } from "node:test";
 import fc from "fast-check";
-import "./config.ts";
 import { diagnostic } from "../harness.ts";
 import { containers, tsContainers } from "./axes/containers.ts";
 import { tsPropShapes } from "./axes/property-access.ts";
 import { combination, templateResult } from "./builder.ts";
-import { checkProgram } from "./check.ts";
+import { checkProgram, runProperty } from "./check.ts";
 import {
   asConstTemplate,
   passLiveTemplate,
@@ -14,7 +13,7 @@ import {
 
 describe("property: TypeScript type-only syntax", () => {
   it("does not count type-only references as runtime reads", () => {
-    fc.assert(
+    runProperty(
       fc.property(combination(), (input) => {
         checkProgram(
           typeOnlyTemplate,
@@ -27,7 +26,7 @@ describe("property: TypeScript type-only syntax", () => {
   });
 
   it("treats an as-const local object as data, not a parent value", () => {
-    fc.assert(
+    runProperty(
       fc.property(combination(), (input) => {
         checkProgram(asConstTemplate, input, [], { ts: true });
       }),
@@ -39,7 +38,7 @@ describe("property: TypeScript-only wrappers", () => {
   const componentContainers = containers.filter((container) => !container.hook);
 
   it("reads props through an asserted props object", () => {
-    fc.assert(
+    runProperty(
       fc.property(
         combination({
           containers: componentContainers,
@@ -58,7 +57,7 @@ describe("property: TypeScript-only wrappers", () => {
   });
 
   it("sees through assertions on the component expression", () => {
-    fc.assert(
+    runProperty(
       fc.property(combination({ containers: tsContainers }), (input) => {
         checkProgram(
           passLiveTemplate,

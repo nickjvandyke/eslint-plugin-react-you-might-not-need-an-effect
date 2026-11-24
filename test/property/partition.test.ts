@@ -1,16 +1,16 @@
 import assert from "assert";
 import { describe, it } from "node:test";
 import fc from "fast-check";
-import "./config.ts";
 import { rulePrefix } from "../harness.ts";
 import { triggerSources, writtenSources } from "./axes/state-setter-sources.ts";
 import { buildProgram, combination, describeCombination } from "./builder.ts";
+import { runProperty } from "./check.ts";
 import { lintInput, oneOf, stateRuleIds } from "./helpers.ts";
 import { expectedStateRule, partitionTemplate } from "./partition.ts";
 
 describe("property: state-setter rules partition one setter", () => {
   it("reports at most one state-setter rule, and the expected one", () => {
-    fc.assert(
+    runProperty(
       fc.property(
         fc.record({
           trigger: oneOf(triggerSources),

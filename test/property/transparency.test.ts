@@ -1,10 +1,9 @@
 import { describe, it } from "node:test";
 import fc from "fast-check";
-import "./config.ts";
 import { diagnostic } from "../harness.ts";
 import { containers } from "./axes/containers.ts";
 import { combination, templateResult } from "./builder.ts";
-import { checkProgram } from "./check.ts";
+import { checkProgram, runProperty } from "./check.ts";
 import {
   contextTemplates,
   refTemplates,
@@ -20,7 +19,7 @@ for (const template of templates) {
     );
 
     it("reports the expected diagnostics for every combination", () => {
-      fc.assert(
+      runProperty(
         fc.property(combination({ containers: allowedContainers }), (input) => {
           checkProgram(
             template,
@@ -35,7 +34,7 @@ for (const template of templates) {
 
 describe("property: valid code survives transparent syntax", () => {
   it("reports nothing for every combination", () => {
-    fc.assert(
+    runProperty(
       fc.property(combination(), (input) => {
         checkProgram(validTemplate, input, []);
       }),
@@ -45,7 +44,7 @@ describe("property: valid code survives transparent syntax", () => {
 
 describe("property: value sources survive transparent syntax", () => {
   it("treats context values like props", () => {
-    fc.assert(
+    runProperty(
       fc.property(
         fc.record({
           template: oneOf(contextTemplates),
@@ -61,7 +60,7 @@ describe("property: value sources survive transparent syntax", () => {
   });
 
   it("does not treat ref reads as render values", () => {
-    fc.assert(
+    runProperty(
       fc.property(
         fc.record({
           template: oneOf(refTemplates),

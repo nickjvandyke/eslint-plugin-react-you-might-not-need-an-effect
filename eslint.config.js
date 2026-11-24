@@ -39,4 +39,18 @@ export default tseslint.config(
       ],
     },
   },
+  {
+    files: ["test/property/**/*.test.ts"],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "fc",
+          property: "assert",
+          message:
+            "Use runProperty from ./check.ts so the draw count is explicit.",
+        },
+      ],
+    },
+  },
 );

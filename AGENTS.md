@@ -15,6 +15,8 @@ Pre-commit: `simple-git-hooks` → `lint-staged` → `prettier --write` on all s
 
 Run order (CI match): `typecheck → lint → format:check → build → test`
 
+Property tests pass their draw count at the call site through `runProperty` in `test/property/check.ts`. `FC_RUNS` sets the draws (default 1000, positive integer). `FC_SEED` replays a failure from the seed that fast-check prints. Invalid values stop the run at startup.
+
 ## Project structure
 
 - **Single package** (not a monorepo). Package manager: `yarn 4.12.0`, `nodeLinker: node-modules` (not PnP).
