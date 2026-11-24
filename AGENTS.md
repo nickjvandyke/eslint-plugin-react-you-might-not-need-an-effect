@@ -21,8 +21,8 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - **Entry**: `src/index.ts` — exports a flat ESLint plugin with 4 configs: `recommended`, `strict`, `legacy-recommended`, `legacy-strict`.
 - **9 rules** in `src/rules/`, each a separate `.ts` file with a co-located `.test.js` file.
 - **Utilities**: `src/util/ast.ts` (AST traversal, ref analysis, synchronous call chains), `src/util/typescript.ts` (TypeScript wrappers and type-only keys), `src/util/hooks.ts` (React hook and third-party effect detection), `src/util/components.ts` (component, HOC, and custom hook detection), `src/util/effect.ts` (effect function, deps, cleanup, subscription setters, and dependency-variable extraction), `src/util/state.ts` (state and setter detection), `src/util/reset.ts` (full state reset detection and trigger prop), `src/util/props.ts` (prop and external value detection), `src/util/refs.ts` (ref detection).
-- **Test pattern**: Rule semantics live in `src/rules/*.test.js` with `RuleTester` from `eslint` + `plugin` from `../index.ts`, and define `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`. Syntax and boundary behavior is verified generatively in `test/property.test.ts`, not in `src/util/`.
-- **Integration tests**: `test/` holds only cross-cutting tests. `test/property.test.ts` (property-based tests with `fast-check`: transparent syntax must preserve diagnostics, opaque boundaries must suppress them, state-setter rules must partition), `test/effect-hooks.test.ts` (third-party effect hook lookup table), `test/edge-cases.test.ts` (fixed regressions and message-wording cases), `test/termination.test.ts` (deep call chains and call-graph cycles), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
+- **Test pattern**: Rule semantics live in `src/rules/*.test.js` with `RuleTester` from `eslint` + `plugin` from `../index.ts`, and define `const js = String.raw` inline. Rule test files pass `{ ...plugin.configs.recommended, rules: {} }` to `RuleTester`. Syntax and boundary behavior is verified generatively in `test/property/*.test.ts`, not in `src/util/`.
+- **Integration tests**: `test/` holds only cross-cutting tests. `test/property/*.test.ts` (property-based tests with `fast-check`: transparent syntax must preserve diagnostics, opaque boundaries must suppress them, state-setter rules must partition), `test/effect-hooks.test.ts` (third-party effect hook lookup table), `test/edge-cases.test.ts` (fixed regressions and message-wording cases), `test/termination.test.ts` (deep call chains and call-graph cycles), `test/real-world.test.js` (recommended config on valid real-world code patterns), `test/config.test.js`, `test/oxlint.test.js` (runs the built plugin through the real Oxlint CLI, so it needs `yarn build` first), and `test/setup.js`.
 
 ## Key conventions
 
@@ -34,7 +34,7 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 - `React.*` namespace calls (`React.useEffect`, `React.useState`) are supported alongside direct imports.
 - Renamed imports (`useState as stateUser`) are supported by resolving import bindings from `react`, `preact/hooks`, `preact/compat`, and `@wordpress/element`. Names that do not resolve to one of those imports fall back to name matching.
 - Test files in `src/rules/` import rule source with `.ts` extension (ESM).
-- Syntax transforms and opaque boundaries belong in `test/property.test.ts`. Its generators and fixtures live in `test/property/` (`axes.ts`, `builder.ts`, `fixtures.ts`, `helpers.ts`), which are typechecked but not run as tests. Fixed lookup tables and regressions live in `test/effect-hooks.test.ts` and `test/edge-cases.test.ts`. Keep `src/util/` free of test files.
+- Syntax transforms and opaque boundaries belong in `test/property/*.test.ts`, split by invariant (`transparency`, `boundaries`, `partition`, `typescript`). Generators, fixtures, and support live beside them in `test/property/`: `axes/` (one file per axis, named by the input dimension, never by `src/util` module), `builder.ts`, `check.ts`, `config.ts`, `fixtures.ts`, `helpers.ts`, `partition.ts`. Support files are typechecked but not run as tests. Fixed lookup tables and regressions live in `test/effect-hooks.test.ts` and `test/edge-cases.test.ts`. Keep `src/util/` free of test files.
 - **Formatting**: single Prettier config — trailing commas everywhere.
 - `.gitignore` keeps `dist`, `node_modules`, `.yarn/*` (except patches/plugins/releases/sdks/versions).
 - The plugin has no runtime dependencies and does not require browser globals. Global references, resolved or unresolved, behave like external globals. A local alias of a global counts as a global.
@@ -48,12 +48,12 @@ Put a test where the outcome it pins lives. An outcome is a conclusion the plugi
 Ask two questions before adding a case.
 
 1. Would it fail if the outcome changed? If not, it pins nothing. Delete it.
-2. Which file owns that outcome? Rule semantics go to `src/rules/*.test.js`. Syntax and traversal variation go to `test/property.test.ts`. A fixed shape that no generator reaches goes to `test/edge-cases.test.ts`.
+2. Which file owns that outcome? Rule semantics go to `src/rules/*.test.js`. Syntax and traversal variation go to `test/property/*.test.ts`. A fixed shape that no generator reaches goes to `test/edge-cases.test.ts`.
 
 One outcome can need several cases: reported and not reported, component and custom hook, synchronous and asynchronous. Each case must pin a different outcome. A second case that repeats an outcome is a duplicate, whatever syntax it uses.
 
 1. `src/rules/*.test.js` holds rule semantics. Cover each distinct data source, dependency shape, cleanup behavior, and message format once. Keep one synchronous case and one asynchronous case per rule.
-2. `test/property.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.
+2. `test/property/*.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.
 3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `skipHooks` or `hookMessageId`.
 4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
 5. If a rule test and a property test both fail on one change, they pin the same outcome. Delete the rule test. Keep the narrower one.

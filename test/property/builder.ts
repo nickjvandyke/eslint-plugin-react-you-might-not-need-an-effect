@@ -1,26 +1,22 @@
 import fc from "fast-check";
 import { diagnostic, type Diagnostic } from "../harness.ts";
 import { oneOf } from "./helpers.ts";
+import { containers, type Container } from "./axes/containers.ts";
+import { effectShapes, type EffectShapeName } from "./axes/effect-shapes.ts";
 import {
-  containers,
-  effectShapes,
-  header,
   identityBodyWrapper,
-  hopShapes,
-  importStyles,
-  propShapes,
-  resolvers,
-  stateShapes,
-  tsWrappers,
   type BodyWrapper,
-  type Container,
-  type EffectShapeName,
-  type HopShape,
+} from "./axes/execution-boundaries.ts";
+import {
+  header,
+  importStyles,
+  resolvers,
   type ImportStyle,
-  type PropShape,
-  type StateShape,
-  type TsWrapper,
-} from "./axes.ts";
+} from "./axes/import-styles.ts";
+import { propShapes, type PropShape } from "./axes/property-access.ts";
+import { stateShapes, type StateShape } from "./axes/state-declarations.ts";
+import { tsWrappers, type TsWrapper } from "./axes/type-wrappers.ts";
+import { hopShapes, type HopShape } from "./axes/variable-hops.ts";
 
 // ---------------------------------------------------------------------------
 // Program builder
