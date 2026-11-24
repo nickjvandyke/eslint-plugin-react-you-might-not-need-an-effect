@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.2](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.3.1...v1.3.2) (2026-11-24)
+
+
+### Bug Fixes
+
+* **no-event-handler:** flag conditions in synchronously called helpers ([0c86244](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/0c8624451f25804fd311deb536c93a49efe90264))
+* **no-reset-all-state-on-prop-change:** handle helper edge cases ([d2e6473](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/d2e647359d591ee1f90b1254f5d6c72f4ee22233))
+* **typescript:** handle import-equals aliases (`import x = A.b`) ([b463cf3](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/commit/b463cf3353d32701f194d84c520e6b653330b74e))
+
 ## [1.3.1](https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/compare/v1.3.0...v1.3.1) (2026-11-22)
 
 
