@@ -48,6 +48,11 @@ const getImportBinding = (
   );
   if (!def) return undefined;
 
+  // The TypeScript scope manager also reports `import x = A.b` as an
+  // `ImportBinding`. That definition names a local alias, not a module, so it
+  // has no `source`.
+  if (!("source" in def.parent)) return undefined;
+
   const source = def.parent.source.value;
   if (typeof source !== "string") return undefined;
 

@@ -166,6 +166,38 @@ describe("call aliases", () => {
 });
 
 // ---------------------------------------------------------------------------
+// TypeScript import-equals aliases
+// ---------------------------------------------------------------------------
+
+describe("TypeScript import-equals aliases", () => {
+  // https://github.com/nickjvandyke/eslint-plugin-react-you-might-not-need-an-effect/issues/90
+  it("ignores a call through a non-React alias", () => {
+    const code = js`
+      import { z } from 'zod';
+      import str = z.string;
+
+      export const schema = str();
+    `;
+    assert.deepStrictEqual(lint(code, { ts: true }), [], code);
+  });
+
+  it("does not resolve an alias of a React hook", () => {
+    // `import x = A.b` names a local alias, so it stays opaque like
+    // `const effect = React.useEffect`.
+    const code = js`
+      import React from 'react';
+      import effect = React.useEffect;
+
+      function C() {
+        const [count, setCount] = React.useState(0);
+        effect(() => { setCount(count + 1); }, [count]);
+      }
+    `;
+    assert.deepStrictEqual(lint(code, { ts: true }), [], code);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // State tuple slots
 // ---------------------------------------------------------------------------
 
