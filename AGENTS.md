@@ -43,13 +43,20 @@ Run order (CI match): `typecheck → lint → format:check → build → test`
 
 ## Test placement
 
-Keep one test per rule decision, not one test per syntax form.
+Put a test where the outcome it pins lives. An outcome is a conclusion the plugin reaches about a program: "this value is render-safe", "this cleanup makes the effect a subscription", "these two rules overlap, so one must win", "transparent syntax does not change the answer". `memo`, `as const`, and a namespace import are spellings, not outcomes.
 
-1. `src/rules/*.test.js` holds rule semantics. Keep one test for each distinct data source, dependency shape, cleanup behavior, and message format. Keep one synchronous case and one asynchronous case per rule.
+Ask two questions before adding a case.
+
+1. Would it fail if the outcome changed? If not, it pins nothing. Delete it.
+2. Which file owns that outcome? Rule semantics go to `src/rules/*.test.js`. Syntax and traversal variation go to `test/property.test.ts`. A fixed shape that no generator reaches goes to `test/edge-cases.test.ts`.
+
+One outcome can need several cases: reported and not reported, component and custom hook, synchronous and asynchronous. Each case must pin a different outcome. A second case that repeats an outcome is a duplicate, whatever syntax it uses.
+
+1. `src/rules/*.test.js` holds rule semantics. Cover each distinct data source, dependency shape, cleanup behavior, and message format once. Keep one synchronous case and one asynchronous case per rule.
 2. `test/property.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.
 3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with `skipHooks` or `hookMessageId`.
 4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
-5. If a rule test and a property test fail on the same change, delete the rule test. Keep the narrower one.
+5. If a rule test and a property test both fail on one change, they pin the same outcome. Delete the rule test. Keep the narrower one.
 
 ## Architecture notes
 
