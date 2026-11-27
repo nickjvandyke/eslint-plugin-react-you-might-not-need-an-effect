@@ -21,9 +21,9 @@ function Form() {
 
 - **Actionable guidance:** Reports each anti-pattern with a specific suggested alternative and a docs link.
 - **Deep analysis:** Analyzes state, props, contexts, refs, and their upstream sources.
-- **Dependency-aware:** Considers _when_ an effect runs to determine if its logic is actually redundant.
-- **Library-aware:** Also recognizes popular third-party `useEffect` wrappers ([see the full list](./src/util/hooks.ts)).
+- **Dependency-conscious:** Considers _when_ an effect runs to determine if its logic is actually redundant.
 - **Edge-case obsessed:** Focuses on unusual syntax and heuristics to keep the signal-to-noise ratio high.
+- **Library-aware:** Recognizes popular third-party `useEffect` wrappers.
 
 > React's [`eslint-plugin-react-hooks/set-state-in-effect`](https://react.dev/reference/eslint-plugin-react-hooks/lints/set-state-in-effect) rule flags synchronous `setState` calls inside effects, helping prevent unnecessary re-renders. However, unnecessary _effects_ go far beyond this.
 
