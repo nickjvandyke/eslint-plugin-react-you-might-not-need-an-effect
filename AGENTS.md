@@ -52,7 +52,7 @@ Ask two questions before adding a case.
 1. Would it fail if the outcome changed? If not, it pins nothing. Delete it.
 2. Which file owns that outcome? Rule semantics go to `src/rules/*.test.js`. Syntax and traversal variation go to `test/property/*.test.ts`. A fixed shape that no generator reaches goes to `test/edge-cases.test.ts`.
 
-One outcome can need several cases: reported and not reported, component and custom hook, synchronous and asynchronous. Each case must pin a different outcome. A second case that repeats an outcome is a duplicate, whatever syntax it uses.
+One outcome can need several cases: reported and not reported, component and custom hook, synchronous and asynchronous. Split when the expected results differ, or when one claim can hide another. Merge when two claims share a template and expected result but differ only by a generated input axis. Pass both axes to `combination()` in one property. A property covers the product of its axes, so splitting axes removes combinations from the sample. A second case that repeats an outcome is a duplicate, whatever syntax it uses.
 
 1. `src/rules/*.test.js` holds rule semantics. Cover each distinct data source, dependency shape, cleanup behavior, and message format once. Keep one synchronous case and one asynchronous case per rule.
 2. `test/property/*.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.

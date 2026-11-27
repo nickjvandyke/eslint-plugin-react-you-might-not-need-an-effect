@@ -39,29 +39,22 @@ describe("property: TypeScript type-only syntax", () => {
 });
 
 describe("property: TypeScript-only wrappers", () => {
-  it("reads props through an asserted props object", () => {
+  it("sees through assertions on props and on the component expression", () => {
     runProperty(
-      fc.property(combination({ propShapes: tsPropShapes }), (input) => {
-        checkProgram(
-          passLiveTemplate,
-          input,
-          passLiveTemplate.expected(input.container),
-          { ts: true },
-        );
-      }),
-    );
-  });
-
-  it("sees through assertions on the component expression", () => {
-    runProperty(
-      fc.property(combination({ containers: tsContainers }), (input) => {
-        checkProgram(
-          passLiveTemplate,
-          input,
-          passLiveTemplate.expected(input.container),
-          { ts: true },
-        );
-      }),
+      fc.property(
+        combination({
+          propShapes: tsPropShapes,
+          containers: tsContainers,
+        }),
+        (input) => {
+          checkProgram(
+            passLiveTemplate,
+            input,
+            passLiveTemplate.expected(input.container),
+            { ts: true },
+          );
+        },
+      ),
     );
   });
 });
