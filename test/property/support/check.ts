@@ -1,6 +1,6 @@
 import assert from "assert";
 import fc, { type IProperty } from "fast-check";
-import { lint, type Diagnostic } from "../harness.ts";
+import { lint, type Diagnostic } from "../../harness.ts";
 import {
   buildProgram,
   describeCombination,

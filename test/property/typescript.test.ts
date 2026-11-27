@@ -2,13 +2,13 @@ import { describe, it } from "node:test";
 import fc from "fast-check";
 import { tsContainers } from "./axes/containers.ts";
 import { tsPropShapes } from "./axes/property-access.ts";
-import { combination } from "./builder.ts";
-import { checkProgram, runProperty } from "./check.ts";
+import { combination } from "./support/builder.ts";
+import { checkProgram, runProperty } from "./support/check.ts";
 import {
   asConstTemplate,
   passLiveTemplate,
   typeOnlyTemplate,
-} from "./fixtures.ts";
+} from "./support/fixtures.ts";
 
 describe("property: TypeScript type-only syntax", () => {
   it("does not count type-only references as runtime reads", () => {

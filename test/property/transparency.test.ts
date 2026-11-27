@@ -1,14 +1,14 @@
 import { describe, it } from "node:test";
 import fc from "fast-check";
-import { combination } from "./builder.ts";
-import { checkProgram, runProperty } from "./check.ts";
+import { combination } from "./support/builder.ts";
+import { checkProgram, runProperty } from "./support/check.ts";
 import {
   contextTemplates,
   refTemplates,
   templates,
   validTemplate,
-} from "./fixtures.ts";
-import { oneOf } from "./helpers.ts";
+} from "./support/fixtures.ts";
+import { oneOf } from "./support/helpers.ts";
 
 for (const template of templates) {
   describe(`property: ${template.rule} survives transparent syntax`, () => {

@@ -48,7 +48,7 @@ export default tseslint.config(
           object: "fc",
           property: "assert",
           message:
-            "Use runProperty from ./check.ts so the draw count is explicit.",
+            "Use runProperty from ./support/check.ts so the draw count is explicit.",
         },
       ],
     },

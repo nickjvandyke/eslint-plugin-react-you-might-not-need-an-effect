@@ -3,10 +3,14 @@ import { describe, it } from "node:test";
 import fc from "fast-check";
 import { rulePrefix } from "../harness.ts";
 import { triggerSources, writtenSources } from "./axes/state-setter-sources.ts";
-import { buildProgram, combination, describeCombination } from "./builder.ts";
-import { runProperty } from "./check.ts";
-import { lintInput, oneOf } from "./helpers.ts";
-import { expectedStateRule, partitionTemplate } from "./partition.ts";
+import {
+  buildProgram,
+  combination,
+  describeCombination,
+} from "./support/builder.ts";
+import { runProperty } from "./support/check.ts";
+import { lintInput, oneOf } from "./support/helpers.ts";
+import { expectedStateRule, partitionTemplate } from "./support/partition.ts";
 
 describe("property: state-setter rules partition one setter", () => {
   it("reports exactly the expected rule and nothing else", () => {

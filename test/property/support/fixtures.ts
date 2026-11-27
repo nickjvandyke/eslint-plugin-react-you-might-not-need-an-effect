@@ -1,7 +1,7 @@
-import type plugin from "../../src/index.ts";
-import { diagnostic, type Diagnostic } from "../harness.ts";
-import type { Container } from "./axes/containers.ts";
-import type { BodyWrapper } from "./axes/execution-boundaries.ts";
+import type plugin from "../../../src/index.ts";
+import { diagnostic, type Diagnostic } from "../../harness.ts";
+import type { Container } from "../axes/containers.ts";
+import type { BodyWrapper } from "../axes/execution-boundaries.ts";
 import type { Template, TemplateContext } from "./builder.ts";
 
 // ---------------------------------------------------------------------------

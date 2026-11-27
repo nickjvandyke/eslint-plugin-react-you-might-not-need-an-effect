@@ -1,5 +1,5 @@
 import fc from "fast-check";
-import { lint, type Diagnostic } from "../harness.ts";
+import { lint, type Diagnostic } from "../../harness.ts";
 
 export const oneOf = <T>(values: readonly T[]) =>
   fc.constantFrom(...(values as [T, ...T[]]));

@@ -2,7 +2,7 @@ import type {
   PartitionHelpers,
   TriggerSource,
   WrittenSource,
-} from "./axes/state-setter-sources.ts";
+} from "../axes/state-setter-sources.ts";
 import type { Template } from "./builder.ts";
 
 /** One template per trigger and written-value pair, shared by every axis. */

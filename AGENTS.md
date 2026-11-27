@@ -15,7 +15,7 @@ Pre-commit: `simple-git-hooks` → `lint-staged` → `prettier --write` on all s
 
 Run order (CI match): `typecheck → lint → format:check → build → test`
 
-Property tests pass their draw count at the call site through `runProperty` in `test/property/check.ts`. `FC_RUNS` sets the draws (default 1000, positive integer). `FC_SEED` replays a failure from the seed that fast-check prints. Invalid values stop the run at startup.
+Property tests pass their draw count at the call site through `runProperty` in `test/property/support/check.ts`. `FC_RUNS` sets the draws (default 1000, positive integer). `FC_SEED` replays a failure from the seed that fast-check prints. Invalid values stop the run at startup.
 
 ## Project structure
 
@@ -36,7 +36,7 @@ Property tests pass their draw count at the call site through `runProperty` in `
 - `React.*` namespace calls (`React.useEffect`, `React.useState`) are supported alongside direct imports.
 - Renamed imports (`useState as stateUser`) are supported by resolving import bindings from `react`, `preact/hooks`, `preact/compat`, and `@wordpress/element`. Names that do not resolve to one of those imports fall back to name matching.
 - Test files in `src/rules/` import rule source with `.ts` extension (ESM).
-- Syntax transforms and opaque boundaries belong in `test/property/*.test.ts`, split by invariant (`transparency`, `boundaries`, `partition`, `typescript`). Generators, fixtures, and support live beside them in `test/property/`: `axes/` (one file per axis, named by the input dimension, never by `src/util` module), `builder.ts`, `check.ts`, `config.ts`, `fixtures.ts`, `helpers.ts`, `partition.ts`. Support files are typechecked but not run as tests. Fixed lookup tables and regressions live in `test/effect-hooks.test.ts` and `test/edge-cases.test.ts`. Keep `src/util/` free of test files.
+- Syntax transforms and opaque boundaries belong in `test/property/*.test.ts`, split by invariant (`transparency`, `boundaries`, `partition`, `typescript`). Invariant test files live at the root of `test/property/`. Generators and support live in subdirectories: `axes/` (one file per axis, named by the input dimension, never by `src/util` module) and `support/` (`builder.ts`, `check.ts`, `config.ts`, `fixtures.ts`, `helpers.ts`, `partition.ts`; `config.test.ts` tests the run configuration). Support files are typechecked but not run as tests. Fixed lookup tables and regressions live in `test/effect-hooks.test.ts` and `test/edge-cases.test.ts`. Keep `src/util/` free of test files.
 - **Formatting**: single Prettier config — trailing commas everywhere.
 - `.gitignore` keeps `dist`, `node_modules`, `.yarn/*` (except patches/plugins/releases/sdks/versions).
 - The plugin has no runtime dependencies and does not require browser globals. Global references, resolved or unresolved, behave like external globals. A local alias of a global counts as a global.
@@ -56,7 +56,7 @@ One outcome can need several cases: reported and not reported, component and cus
 
 1. `src/rules/*.test.js` holds rule semantics. Cover each distinct data source, dependency shape, cleanup behavior, and message format once. Keep one synchronous case and one asynchronous case per rule.
 2. `test/property/*.test.ts` holds syntax and traversal variation: aliases, hops, wrappers, IIFEs, containers, and globals. Do not repeat those variations in rule tests.
-3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/fixtures.ts` with the template's `expected(container)`.
+3. Keep a syntax test in a rule file only when that rule makes a different choice about that syntax. Mark the exception in `test/property/support/fixtures.ts` with the template's `expected(container)`.
 4. `test/effect-hooks.test.ts` holds only the third-party hook table. `test/edge-cases.test.ts` holds only fixed regressions that no property covers.
 5. If a rule test and a property test both fail on one change, they pin the same outcome. Delete the rule test. Keep the narrower one.
 6. Split a test file when one section outgrows the file's theme. Do not split by `src/util` module; these cases are cross-cutting.
